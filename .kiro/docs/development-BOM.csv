@@ -1,0 +1,202 @@
+Version,STT,Category,Component,Specification,Qty_Per_Unit,Unit_Price_VND,Extended_VND,Source,Mounting,Notes
+,,,,,,,,,,
+,,,TREKLINK DEVELOPMENT BOM (REVISED),,,,,,,"Total Budget: 50.000.000 VND | All prices include 20% overhead buffer | Reserve fund 24.6% | 17 units per version = 51 devices total"
+,,,,,,,,,,
+,,,PRICING NOTE:,,,,,,,"All Unit_Price_VND include +20% overhead to absorb exchange rate fluctuation and price volatility. Actual component cost is ~83% of listed price."
+,,,,,,,,,,
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+v0.0.2,,,PREMIUM MODULE-BASED DEVELOPMENT PCB,,,,,,,"921k VND/unit | 21700 battery (glued) | Through-hole modules on custom PCB | JLCPCB partial PCBA (SMD only)"
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+,,,,,,,,,,
+v0.0.2,1,Core Module,ESP32 DevKit CP2102 Type-C,"ESP32-WROOM-32 30-pin dev board with USB-UART + LDO, genuine Espressif",1,125880,125880,Shopee/Thegioiic,Through-hole,"DevKit for v0.0.2 programming convenience; v0.0.3+ migrates to bare module"
+v0.0.2,2,Core Module,Ra-02 SX1278 LoRa Module,"Ai-Thinker 433MHz SPI 100mW 20dBm, IPEX antenna connector, genuine",1,114000,114000,LCSC/AliExpress,Through-hole header,"Confirmed from prototype; SPI interface; source genuine Ai-Thinker LCSC C90039"
+v0.0.2,3,Core Module,Neo-6M GPS Module,"u-blox NEO-6M breakout with ceramic antenna, UART 9600baud, genuine Thegioiic",1,103200,103200,Thegioiic,Through-hole header,"Genuine from Thegioiic (confirmed); v0.0.3 upgrades to M8N"
+v0.0.2,4,Core Module,MPU6050 GY-521 IMU,"6-axis accel+gyro breakout I2C 0x68, 3.3V, InvenSense",1,53820,53820,Shopee,Through-hole header,"Fall detection sensor; INT pin unused (polling mode per design)"
+v0.0.2,5,Core Module,SSD1306 OLED 0.96 inch,"128x64 I2C 0x3C blue/white, 4-pin header VCC GND SCL SDA",1,52752,52752,Shopee,4-pin header,"Meshtastic UI display"
+,,,,,,,,,,
+v0.0.2,6,Power,TPS63802 Module (XL63802),"3.3V buck-boost 2A, TI IC on pre-built module, 96% efficiency, 11uA Iq",1,37800,37800,Shopee/AliExpress,Through-hole/castellated,"Premium TI power management; 27-day battery life estimate"
+v0.0.2,7,Power,TP5100 Charger Module,"2A Li-Ion charger 1S mode (SET pads NOT shorted), micro-USB input",1,12480,12480,Shopee,Through-hole,"1S parallel charging for 21700 cells"
+v0.0.2,8,Power,Samsung 21700 50G Cell,"INR21700-50G 5000mAh 3.7V Li-Ion, genuine Samsung Grade-A",2,62400,124800,Shopee,Glued (no holder),"Glued directly in enclosure - holder too thick for 30mm profile. 2 cells parallel = 10Ah"
+v0.0.2,9,Power,Slide Switch SPDT,"SS-22F32 1P2T 0.5A through-hole ON-OFF",1,1320,1320,Thegioiic,Through-hole,"Main power switch"
+,,,,,,,,,,
+v0.0.2,10,User Interface,Tactile Button 12x12mm,"Waterproof momentary 4-pin through-hole, cap height 12mm",4,2160,8640,Thegioiic,Through-hole,"MENU(GPIO25) SOS(GPIO34) UP(GPIO32) DOWN(GPIO35)"
+v0.0.2,11,User Interface,Passive Buzzer 9056-TS,"9x4.2mm 80dB through-hole passive (PWM driven)",1,4320,4320,Thegioiic,Through-hole,"2.7kHz resonant; GPIO 33 PWM; SOS Morse code pattern"
+v0.0.2,12,User Interface,Vibration Motor Coin,"3VDC 80mA 12000rpm coin type 10mm wired",1,10200,10200,Thegioiic,Wired,"Haptic feedback via NPN driver GPIO 4"
+v0.0.2,13,User Interface,Blue LED 5mm,"Through-hole 1.8-2V forward voltage",1,240,240,Thegioiic,Through-hole,"Status indicator GPIO 2"
+,,,,,,,,,,
+v0.0.2,14,Passive - Cap,Ceramic Cap 100nF 0603,"50V X7R SMD decoupling",10,60,600,LCSC (PCBA),SMD,"One per module/IC power pin; JLCPCB assembled"
+v0.0.2,15,Passive - Cap,Electrolytic Cap 100uF 25V,"6.3x7.7mm Samwha quality SMD/THT",3,1200,3600,LCSC/Shopee,SMD/THT,"3.3V rail + TP5100 + TPS63802 filtering"
+v0.0.2,16,Passive - Cap,Electrolytic Cap 1000uF 16V,"8x20mm through-hole battery input",1,3000,3000,Shopee,Through-hole,"Battery rail bulk cap for inrush current handling"
+v0.0.2,17,Passive - Res,Resistor 4.7kOhm 0603,"1% 1/10W SMD I2C pull-up",2,24,48,LCSC (PCBA),SMD,"I2C bus SDA + SCL pull-ups to 3.3V"
+v0.0.2,18,Passive - Res,Resistor 10kOhm 0603,"1% 1/10W SMD pull-up/pull-down",4,24,96,LCSC (PCBA),SMD,"External pull-ups for input-only GPIO 34 35"
+v0.0.2,19,Passive - Res,Resistor 100kOhm 0603,"1% 1/10W SMD voltage divider",2,24,48,LCSC (PCBA),SMD,"Battery ADC divider 100k+100k to GPIO 36"
+v0.0.2,20,Passive - Res,Resistor 220 Ohm 0603,"1% 1/10W SMD LED current limit",1,24,24,LCSC (PCBA),SMD,"LED current limiting GPIO 2"
+v0.0.2,21,Passive - Res,Resistor 1kOhm 0603,"1% 1/10W SMD base resistor",2,24,48,LCSC (PCBA),SMD,"NPN transistor base resistors for buzzer+vibrator drivers"
+,,,,,,,,,,
+v0.0.2,22,Semiconductor,S8050 NPN Transistor SOT-23,"25V 500mA SMD motor driver",1,240,240,LCSC (PCBA),SMD,"Vibration motor low-side switch GPIO 4"
+v0.0.2,23,Semiconductor,1N4001 Diode SMA,"1A 50V SMD flyback protection",1,180,180,LCSC (PCBA),SMD,"Flyback protection across vibration motor"
+,,,,,,,,,,
+v0.0.2,24,Antenna,433MHz SMA Whip Antenna,"6dBi gain 20cm SMA male premium",1,51448,51448,Shopee,External,"LoRa antenna; premium high-gain for investor demos"
+v0.0.2,25,Antenna,IPEX to SMA Pigtail Cable,"U.FL/IPEX to SMA female 10-15cm",1,18000,18000,Shopee/AliExpress,Cable,"Connects Ra-02 IPEX to PCB SMA port"
+v0.0.2,26,Antenna,SMA Female Connector PCB,"Edge-mount through-hole 50 Ohm",1,6000,6000,LCSC/Shopee,Through-hole,"PCB antenna port"
+,,,,,,,,,,
+v0.0.2,27,Connector,Pin Headers Male 2.54mm,"1x40 strip breakable",3,2400,7200,Thegioiic,Through-hole,"Module socket connections on PCB"
+v0.0.2,28,Connector,Pin Headers Female 2.54mm,"1x40 socket strip 2.54mm pitch",3,2400,7200,Thegioiic,Through-hole,"PCB sockets for pluggable modules (DevKit/Ra-02/GPS/IMU)"
+v0.0.2,29,Connector,JST-PH 2-pin Connector,"Male+Female pair 2mm pitch battery",1,1800,1800,Shopee,Through-hole,"Battery wires to PCB connection (cells glued in case)"
+v0.0.2,30,Connector,USB Type-C Female,"6-pin through-hole for charging",1,3600,3600,Shopee/LCSC,Through-hole,"Charging port routed to TP5100 input"
+,,,,,,,,,,
+v0.0.2,31,PCB Fabrication,Custom 2-Layer PCB,"~100x80mm FR-4 1.6mm HASL, JLCPCB batch amortized",1,36000,36000,JLCPCB,N/A,"Includes PCB fab + shipping amortized over batch"
+v0.0.2,32,PCB Assembly,PCBA SMD Assembly,"Economic PCBA - SMD passives + semiconductors only",1,54000,54000,JLCPCB,N/A,"Setup fee + per-board + extended part fees amortized"
+,,,,,,,,,,
+v0.0.2,33,Enclosure,3D Printed Case PETG/ABS,"~125x80x32mm top+bottom shell custom designed",1,72000,72000,Local HCMC,N/A,"Button cutouts + OLED window + SMA hole + USB port; not waterproof"
+v0.0.2,34,Enclosure,Mounting Hardware Set,"M3 standoffs x4 + screws x8 + nuts x4 nylon/brass",1,6000,6000,Thegioiic,Through-hole,"PCB mounting inside enclosure"
+,,,,,,,,,,
+v0.0.2,,SUBTOTAL,=== v0.0.2 PER-UNIT TOTAL ===,,,,"920,584",,,"34 line items | Premium tier | Investor/stakeholder demo grade"
+,,,,,,,,,,
+,,,,,,,,,,
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+v0.0.3,,,STANDARD CASTELLATED MODULE PCB,,,,,,,"817k VND/unit | 18650 battery (glued) | Castellated core modules | GPS upgraded to M8N | USB-UART on PCB"
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+,,,,,,,,,,
+v0.0.3,1,Core Module,ESP32-WROOM-32E Module,"Bare module castellated pads 4MB flash, no devkit, genuine Espressif",1,110400,110400,LCSC,Castellated reflow,"No DevKit; USB-UART added to PCB (see #6); direct castellated solder"
+v0.0.3,2,Core Module,Ra-02 SX1278 LoRa,"Ai-Thinker 433MHz SPI castellated directly on PCB",1,102000,102000,LCSC,Castellated,"Soldered flat on PCB (no header socket); same module as v0.0.2"
+v0.0.3,3,Core Module,NEO-M8N GPS Module,"u-blox M8N generation breakout, 72-ch, GLONASS+GPS, NMEA UART",1,180000,180000,AliExpress/Shopee,Header/Castellated,"Upgrade from Neo-6M; better accuracy + multi-constellation; M8 minimum per spec"
+v0.0.3,4,Core Module,MPU6050 GY-521 IMU,"Smaller castellated breakout variant I2C 0x68",1,42000,42000,AliExpress,Castellated,"Castellated variant if available else standard header"
+v0.0.3,5,Core Module,SSD1306 OLED 0.96 inch,"128x64 I2C 4-pin header same as v0.0.2",1,42000,42000,AliExpress,4-pin header,"Cheaper AliExpress sourcing vs Shopee"
+v0.0.3,6,Core IC,CH340C USB-UART IC,"SOP-16 USB to UART bridge, internal clock (no crystal)",1,6000,6000,LCSC (PCBA),SMD,"Replaces DevKit CP2102; bare ESP32 module has no USB"
+,,,,,,,,,,
+v0.0.3,7,Power,TPS63802 Module (XL63802),"3.3V buck-boost module castellated/direct solder",1,37800,37800,Shopee/AliExpress,Castellated,"Same module as v0.0.2 soldered flat; v0.0.4 migrates to bare IC"
+v0.0.3,8,Power,TP4056 Charger Module,"1A Li-Ion charger module micro-USB 1S",1,6000,6000,Shopee/AliExpress,Through-hole,"Smaller 1A charger sufficient for 18650; cheaper than TP5100"
+v0.0.3,9,Power,18650 Li-Ion Cell Samsung 30Q,"INR18650-30Q 3000mAh 3.7V genuine Samsung",2,42000,84000,Shopee,Glued (no holder),"Cells glued in enclosure; 2 parallel = 6000mAh; verify Grade-A authentic"
+v0.0.3,10,Power,Slide Switch SPDT,"SS-22F32 1P2T 0.5A through-hole ON-OFF",1,1320,1320,Thegioiic,Through-hole,"Main power switch"
+,,,,,,,,,,
+v0.0.3,11,User Interface,Tactile Button 12x12mm,"Waterproof momentary 4-pin through-hole",4,1800,7200,AliExpress/Shopee,Through-hole,"MENU SOS UP DOWN; cheaper sourcing"
+v0.0.3,12,User Interface,Passive Buzzer Small,"5x2.5mm SMD or 9056-TS equivalent 80dB+",1,3600,3600,LCSC/AliExpress,SMD/THT,"Smaller form factor if SMD; else same 9056-TS"
+v0.0.3,13,User Interface,Vibration Motor Coin 8mm,"3VDC coin type 8mm wired",1,8400,8400,AliExpress,Wired,"Slightly smaller motor for reduced enclosure"
+v0.0.3,14,User Interface,SMD LED 0805,"Blue 3.0-3.2V SMD",1,120,120,LCSC (PCBA),SMD,"GPIO 2 status"
+,,,,,,,,,,
+v0.0.3,15,Passive - Cap,Ceramic Cap 100nF 0603,"50V X7R SMD decoupling",10,60,600,LCSC (PCBA),SMD,"Same spec as v0.0.2"
+v0.0.3,16,Passive - Cap,Ceramic Cap 10uF 0805,"25V X5R SMD power filter",4,120,480,LCSC (PCBA),SMD,"ESP32 + CH340C VCC filter caps"
+v0.0.3,17,Passive - Cap,Electrolytic Cap 100uF 25V,"SMD 6.3x7.7mm Samwha",2,1200,2400,LCSC,SMD,"Power rail filtering"
+v0.0.3,18,Passive - Cap,Electrolytic Cap 470uF 16V,"10x10mm THT battery input",1,1800,1800,Shopee,Through-hole,"Battery bulk cap; smaller than 1000uF sufficient with TPS63802"
+v0.0.3,19,Passive - Res,Resistor 4.7kOhm 0603,"1% SMD I2C pull-up",2,24,48,LCSC (PCBA),SMD,"I2C SDA + SCL"
+v0.0.3,20,Passive - Res,Resistor 10kOhm 0603,"1% SMD pull-up/pull-down",6,24,144,LCSC (PCBA),SMD,"+2 for ESP32 EN pull-up and auto-reset circuit"
+v0.0.3,21,Passive - Res,Resistor 100kOhm 0603,"1% SMD voltage divider",2,24,48,LCSC (PCBA),SMD,"Battery ADC divider"
+v0.0.3,22,Passive - Res,Resistor 220 Ohm 0603,"1% SMD LED current limit",1,24,24,LCSC (PCBA),SMD,"LED current limiting"
+v0.0.3,23,Passive - Res,Resistor 1kOhm 0603,"1% SMD base resistor",2,24,48,LCSC (PCBA),SMD,"NPN base resistors"
+,,,,,,,,,,
+v0.0.3,24,Semiconductor,S8050 NPN SOT-23,"25V 500mA motor driver",1,240,240,LCSC (PCBA),SMD,"Vibration motor driver"
+v0.0.3,25,Semiconductor,SS14 Schottky Diode SMA,"1A 40V flyback",1,180,180,LCSC (PCBA),SMD,"Lower Vf drop than 1N4001"
+v0.0.3,26,Semiconductor,USBLC6-2SC6 ESD TVS,"SOT-23-6 USB ESD protection",1,1800,1800,LCSC (PCBA),SMD,"USB-C ESD protection for CH340C"
+v0.0.3,27,Semiconductor,AO3400 N-MOSFET SOT-23,"Auto-reset circuit for ESP32 programming",2,360,720,LCSC (PCBA),SMD,"DTR/RTS auto-reset to EN + GPIO0"
+,,,,,,,,,,
+v0.0.3,28,Antenna,433MHz SMA Whip Antenna,"Standard 3dBi SMA male 17.5cm",1,30000,30000,AliExpress,External,"Standard gain; sufficient for mesh range"
+v0.0.3,29,Antenna,SMA Female Connector PCB,"Edge-mount 50 Ohm, direct RF trace from Ra-02",1,4800,4800,LCSC,Through-hole,"IPEX pigtail eliminated; direct PCB RF trace to SMA"
+,,,,,,,,,,
+v0.0.3,30,Connector,USB Type-C 16-pin SMD,"Mid-mount USB 2.0 data+power",1,2400,2400,LCSC (PCBA),SMD,"Data (CH340C) + charging (TP4056)"
+v0.0.3,31,Connector,JST-PH 2-pin,"Battery connector pair 2mm pitch",1,1800,1800,Shopee,Through-hole,"Battery wires to PCB"
+v0.0.3,32,Connector,2.54mm Pin Header Strip,"1x40 male for remaining THT modules",2,1800,3600,Thegioiic,Through-hole,"Fewer needed; ESP32+Ra-02 are castellated now"
+v0.0.3,33,Connector,2.54mm Socket Strip,"1x40 female for GPS/IMU module sockets",2,1800,3600,Thegioiic,Through-hole,"GPS + IMU still on headers in v0.0.3"
+,,,,,,,,,,
+v0.0.3,34,PCB Fabrication,Custom 2-Layer PCB,"~90x65mm FR-4 1.6mm HASL JLCPCB batch amortized",1,30000,30000,JLCPCB,N/A,"Smaller board than v0.0.2; includes shipping"
+v0.0.3,35,PCB Assembly,PCBA SMD Assembly,"Economic PCBA all SMD components",1,48000,48000,JLCPCB,N/A,"More SMD than v0.0.2 but smaller board"
+,,,,,,,,,,
+v0.0.3,36,Enclosure,3D Printed Case PETG/ABS,"~100x65x20mm top+bottom shell",1,48000,48000,Local HCMC,N/A,"Smaller form factor; 18650 drives size reduction"
+v0.0.3,37,Enclosure,Mounting Hardware Set,"M3 standoffs x4 + screws x8 + nuts x4",1,4800,4800,Thegioiic,Through-hole,"Thinner profile standoffs"
+,,,,,,,,,,
+v0.0.3,,SUBTOTAL,=== v0.0.3 PER-UNIT TOTAL ===,,,,"816,372",,,"37 line items | Standard tier | M8N GPS upgrade | Castellated core modules"
+,,,,,,,,,,
+,,,,,,,,,,
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+v0.0.4,,,BUDGET-OPTIMIZED BARE IC FULLY CUSTOM PCB,,,,,,,"624k VND/unit | LiPo pouch | All bare ICs except ESP32 module | Full PCBA | Hired PCB designer"
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+,,,,,,,,,,
+v0.0.4,1,Core Module,ESP32-WROOM-32E Module,"Castellated reflow 4MB flash, genuine Espressif",1,102000,102000,LCSC,Castellated reflow,"Stays as module; bare ESP32 chip requires impractical RF layout"
+v0.0.4,2,Core IC,SX1278 Bare IC QFN-28,"Semtech LoRa transceiver 433MHz, direct IC on PCB",1,60000,60000,LCSC,SMD QFN,"Replaces Ra-02 module; eliminates module vendor dependency; requires crystal+matching network"
+v0.0.4,3,Core IC,ATGM336H-5N GPS Module,"Castellated 72-ch GPS NMEA 0183 output, ultra-low power",1,30000,30000,AliExpress/LCSC,Castellated,"NMEA output identical to Neo-6M (GPGGA/GPRMC); Meshtastic TinyGPSPlus compatible; cost-optimized"
+v0.0.4,4,Core IC,MPU6050 Bare IC QFN-24,"InvenSense 6-axis IMU direct IC on PCB",1,18000,18000,LCSC,SMD QFN,"Eliminates GY-521 breakout board"
+v0.0.4,5,Core Module,SSD1306 OLED FPC Panel,"0.96 inch 128x64 raw FPC panel with integrated driver",1,24000,24000,AliExpress,FPC connector,"Raw panel lighter + thinner than module"
+v0.0.4,6,Core IC,CP2102N USB-UART QFN-28,"Silicon Labs USB to UART bridge",1,18000,18000,LCSC (PCBA),SMD QFN,"Premium USB-UART; better driver support"
+,,,,,,,,,,
+v0.0.4,7,RF Section,32MHz Crystal 3225 SMD,"10ppm for SX1278 clock",1,3600,3600,LCSC (PCBA),SMD,"Required; Ra-02 module had this onboard"
+v0.0.4,8,RF Section,RF Matching Caps,"Ceramic 0402 for SX1278 antenna match (1.5pF+1.8pF+3.3pF)",3,600,1800,LCSC (PCBA),SMD 0402,"50-Ohm impedance matching; values from PCB layout simulation"
+v0.0.4,9,RF Section,RF Matching Inductor 0402,"Pi-network matching inductor",1,1200,1200,LCSC (PCBA),SMD 0402,"Antenna matching network component"
+v0.0.4,10,RF Section,U.FL/IPEX Connector,"Ultra-miniature coax PCB mount",1,2400,2400,LCSC (PCBA),SMD,"Compact antenna connection; replaces bulky SMA"
+,,,,,,,,,,
+v0.0.4,11,Power IC,TPS63802 Bare IC VSON-10,"TI buck-boost 2A 2.4-5.5V input adjustable output",1,60000,60000,Mouser/DigiKey/LCSC,SMD VSON-10,"Custom power section; IC costs MORE than module but eliminates vendor dependency at scale"
+v0.0.4,12,Power Passive,Power Inductor 2.2uH 1210,"Shielded 2A saturation low DCR",1,3600,3600,LCSC (PCBA),SMD,"Critical TPS63802 external inductor"
+v0.0.4,13,Power Passive,Input Caps 10uF 0805,"X5R 25V ceramic TPS63802 input",2,240,480,LCSC (PCBA),SMD,"TPS63802 datasheet recommended"
+v0.0.4,14,Power Passive,Output Caps 22uF 0805,"X5R 10V ceramic TPS63802 output",2,360,720,LCSC (PCBA),SMD,"TPS63802 datasheet recommended"
+v0.0.4,15,Power Passive,Feedback Resistors 0603,"1% precision pair for 3.3V output",2,24,48,LCSC (PCBA),SMD,"Voltage divider for TPS63802 FB pin"
+v0.0.4,16,Power IC,TP4056 Charger IC SOP-8,"1A linear Li-Ion charger standalone",1,2400,2400,LCSC (PCBA),SMD,"Bare IC with minimal external components"
+v0.0.4,17,Power Passive,TP4056 External Components,"Rprog 1.2k + LED res 1k x2 + Cin 10uF + Cout 10uF",6,120,720,LCSC (PCBA),SMD,"Standard TP4056 application circuit passives"
+v0.0.4,18,Power,LiPo Pouch Cell 5000mAh,"3.7V lithium polymer ~85x50x8mm with JST + built-in BMS protection",1,84000,84000,AliExpress/Shopee,Wired JST,"Single cell with protection; enables thinnest enclosure form factor"
+v0.0.4,19,Power,SMD Slide Switch SPDT,"1P2T compact SMD power switch",1,960,960,LCSC (PCBA),SMD,"Fully automated assembly compatible"
+,,,,,,,,,,
+v0.0.4,20,User Interface,SMD Tactile Button 6x6mm,"4-pin SMD 160gf SKRPABE010 or equiv",4,600,2400,LCSC (PCBA),SMD,"Compact SMD buttons for smallest design"
+v0.0.4,21,User Interface,SMD Passive Buzzer,"5x5x2mm magnetic MLT-5020 or equiv",1,3000,3000,LCSC (PCBA),SMD,"Fully SMD assembly; PWM driven"
+v0.0.4,22,User Interface,Vibration Motor Coin 8mm,"3VDC coin type 8mm wired smallest",1,6000,6000,AliExpress,Wired,"Smallest available coin motor"
+v0.0.4,23,User Interface,SMD LED 0402,"Blue 3.0-3.2V ultra-compact",1,60,60,LCSC (PCBA),SMD,"Smallest LED package GPIO 2"
+,,,,,,,,,,
+v0.0.4,24,Passive - Cap,Ceramic Cap 100nF 0402,"50V X7R decoupling",12,36,432,LCSC (PCBA),SMD 0402,"0402 for minimum board space; more ICs need more caps"
+v0.0.4,25,Passive - Cap,Ceramic Cap 10uF 0603,"25V X5R power filtering",4,96,384,LCSC (PCBA),SMD 0603,"ESP32+CP2102N+GPS+IMU power VCC filter"
+v0.0.4,26,Passive - Cap,Ceramic Cap 100pF 0402,"50V C0G/NP0 high-freq bypass",4,36,144,LCSC (PCBA),SMD 0402,"Crystal load caps + RF bypass"
+v0.0.4,27,Passive - Res,Resistor 4.7kOhm 0402,"1% SMD I2C pull-up",2,18,36,LCSC (PCBA),SMD 0402,"I2C pull-ups"
+v0.0.4,28,Passive - Res,Resistor 10kOhm 0402,"1% SMD various pull-ups",6,18,108,LCSC (PCBA),SMD 0402,"EN + GPIO0 + button pull-ups"
+v0.0.4,29,Passive - Res,Resistor 100kOhm 0402,"1% SMD voltage divider",2,18,36,LCSC (PCBA),SMD 0402,"Battery ADC divider"
+v0.0.4,30,Passive - Res,Resistor 220 Ohm 0402,"1% SMD LED limit",1,18,18,LCSC (PCBA),SMD 0402,"LED current limit"
+v0.0.4,31,Passive - Res,Resistor 1kOhm 0402,"1% SMD base/bias",4,18,72,LCSC (PCBA),SMD 0402,"NPN base + TP4056 LED resistors"
+,,,,,,,,,,
+v0.0.4,32,Semiconductor,S8050 NPN SOT-23,"25V 500mA motor driver",1,180,180,LCSC (PCBA),SMD,"Vibration motor driver"
+v0.0.4,33,Semiconductor,SS14 Schottky SOD-123,"1A 40V flyback diode",1,120,120,LCSC (PCBA),SMD,"Motor flyback protection"
+v0.0.4,34,Semiconductor,USBLC6-2SC6 ESD TVS,"SOT-23-6 USB ESD protection",1,1800,1800,LCSC (PCBA),SMD,"USB-C ESD protection"
+v0.0.4,35,Semiconductor,AO3400 N-MOSFET SOT-23,"Auto-reset circuit",2,360,720,LCSC (PCBA),SMD,"DTR/RTS auto-reset for programming"
+,,,,,,,,,,
+v0.0.4,36,Antenna,433MHz U.FL Antenna + Pigtail,"Compact helical/whip antenna with U.FL pigtail",1,24000,24000,AliExpress,External,"Smaller profile antenna for compact enclosure"
+,,,,,,,,,,
+v0.0.4,37,Connector,USB Type-C 16-pin SMD,"Mid-mount USB 2.0 data+power",1,2400,2400,LCSC (PCBA),SMD,"Data (CP2102N) + charging (TP4056)"
+v0.0.4,38,Connector,JST-SH 2-pin 1mm,"Ultra-compact battery connector",1,600,600,LCSC/AliExpress,SMD,"Smaller pitch for compact design"
+v0.0.4,39,Connector,FPC Connector 24-pin 0.5mm,"For OLED FPC ribbon cable",1,1200,1200,LCSC (PCBA),SMD,"Connects to raw OLED FPC panel"
+v0.0.4,40,Connector,Programming Header 1.27mm,"2x3 pin 1.27mm compact UART debug",1,600,600,LCSC,SMD/THT,"Debug header for post-assembly programming"
+,,,,,,,,,,
+v0.0.4,41,PCB Fabrication,Custom 2-Layer PCB,"~80x50mm FR-4 1.6mm ENIG JLCPCB batch amortized",1,30000,30000,JLCPCB,N/A,"ENIG finish for QFN fine-pitch; includes shipping"
+v0.0.4,42,PCB Assembly,Full PCBA Assembly,"Standard PCBA ALL components machine-placed",1,72000,72000,JLCPCB,N/A,"Full turnkey; complex QFN+RF+fine-pitch layout"
+v0.0.4,43,PCB Design,PCB Designer Fee (amortized),"Hired freelance designer for RF+power layout, per-unit share",1,24000,24000,Freelancer,N/A,"~600k-1.2M total fee / batch qty; critical for SX1278 RF section"
+,,,,,,,,,,
+v0.0.4,44,Enclosure,3D Printed Case SLA/Resin,"~80x50x15mm high-detail resin top+bottom",1,36000,36000,Local HCMC,N/A,"SLA for fine detail; O-ring groove for future waterproofing path"
+v0.0.4,45,Enclosure,Mounting Hardware Set,"M2.5 standoffs x4 + screws x8 + nuts x4 miniature",1,3600,3600,Thegioiic/AliExpress,SMD/THT,"Smaller M2.5 for compact enclosure"
+,,,,,,,,,,
+v0.0.4,,SUBTOTAL,=== v0.0.4 PER-UNIT TOTAL ===,,,,"623,838",,,"45 line items | Budget-optimized tier | All bare ICs | Production-ready architecture"
+,,,,,,,,,,
+,,,,,,,,,,
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+,,,=== BUDGET ALLOCATION (50.000.000 VND) ===,,,,,,,"17 units per version | 51 total devices | All prices include 20% overhead buffer"
+========,===,=========,===================,=======================,===,=========,=========,===========,=========,================================================
+,,,,,,,,,,
+,,,--- v0.0.2 BATCH (17 units) ---,,,,,,,,"Premium tier investor/stakeholder demos"
+,,1,BOM Cost,"920584 VND x 17 units",,,"15,649,928",,,"Includes 20% overhead buffer on all component prices"
+,,,,,,,,,,
+,,,--- v0.0.3 BATCH (17 units) ---,,,,,,,,"Standard tier pilot testing + field validation"
+,,2,BOM Cost,"816372 VND x 17 units",,,"13,878,324",,,"M8N GPS upgrade; castellated modules; 18650 battery"
+,,,,,,,,,,
+,,,--- v0.0.4 BATCH (17 units) ---,,,,,,,,"Budget-optimized pre-production validation"
+,,3,BOM Cost,"623838 VND x 17 units",,,"10,605,246",,,"Bare IC design; LiPo pouch; full PCBA; hired PCB designer"
+,,,,,,,,,,
+,,,--- SUBTOTAL ALL BATCHES ---,,,,,,,,
+,,4,Total BOM (51 devices),"Sum of all 3 batches",,,"40,133,498",,,"51 devices across 3 development versions"
+,,,,,,,,,,
+,,,--- CONTINGENCY & RESERVE FUND ---,,,,,,,,
+,,5,Reserve Fund (24.6%),"For: PCB respins / failed units / shipping / price spikes / tool purchases",,,"9,866,502",,,"Absorbs: 2+ PCB revisions per version + component price increases + JLCPCB shipping + customs + failed assembly + consumables"
+,,,,,,,,,,
+,,,=== GRAND TOTAL ===,,,,,,,,
+,,6,TOTAL BUDGET ALLOCATION,,,,"50,000,000",,,"100% of allocated 50M VND accounted for"
+,,,,,,,,,,
+,,,--- EFFECTIVE OVERHEAD BREAKDOWN ---,,,,,,,,
+,,7,Built-in price overhead (20%),"Embedded in all unit prices",,,"6,688,916",,,"~83% of listed price is actual cost; 17% is buffer"
+,,8,Explicit reserve fund (24.6%),"Separate contingency pool",,,"9,866,502",,,"For iterations + emergencies + price volatility"
+,,9,TOTAL OVERHEAD + RESERVE,"Combined safety margin",,,"16,555,418",,,"33.1% total safety margin on actual component costs (~33.4M actual spend)"
+,,,,,,,,,,
+,,,--- PER-VERSION SUMMARY ---,,,,,,,,
+,,10,v0.0.2 total (17 units + share of reserve),"15649928 + 3288834",,,18938762,,,"~1.11M VND per unit fully loaded"
+,,11,v0.0.3 total (17 units + share of reserve),"13878324 + 3411638",,,17289962,,,"~1.02M VND per unit fully loaded"
+,,12,v0.0.4 total (17 units + share of reserve),"10605246 + 3166030",,,13771276,,,"~810k VND per unit fully loaded"

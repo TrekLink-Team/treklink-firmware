@@ -1,0 +1,56 @@
+BILLS OF MATERIALS,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,Tổng quỹ (VND),1.800.000 đ,Số quỹ còn lại (VND),1.800.000 đ,Tổng chi tiêu (VND),1.605.856 đ,Tổng tiền đã trích (VND),0 đ,,,
+STT,Mã lô mua hàng,Người mua hàng,Đã giải ngân,Trạng thái đơn hàng,Link sản phẩm,Tên/Mô tả linh kiện,Số lượng/Đơn vị,Đơn vị đo,Hình thức,Cách thanh toán,Đơn giá (VND),Phí vận chuyển (VND),Tiền giảm giá (VND),Thành tiền (VND),Tổng tiền lô hàng (VND),Tổng tiền vận chuyển (VND),Tổng tiền giảm giá (VND),Tổng tiền (VND),Đã thanh toán,Bằng chứng mua hàng,Đã trích quỹ,Bằng chứng trích quỹ,Note
+1,1,Khoa,FALSE,Đã nhận hàng,Shopee,Màn hình OLED 0.96 inch 128X64 I2C,2,Cái,Mua,Chuyển khoản,43.960 đ,0 đ,0 đ,87.920 đ,297.720 đ,37.300 đ,98.344 đ,236.676 đ,TRUE,C3 PoT,FALSE,[URL],Đã đặt hàng chờ thủ quỹ
+2,,,,Đã nhận hàng,Shopee,Bảng mạch phát triển ESP32 CP2102 Type C,2,Cái,Mua,Chuyển khoản,104.900 đ,,0 đ,209.800 đ,,,,,,,,,
+3,2,Khoa,FALSE,Đã hoàn đơn,Shopee,Hộp nhựa ABS 115x90x55mm,2,Cái,Mua,Chuyển khoản,15.000 đ,25.300 đ,31.300 đ,24.000 đ,174.336 đ,0 đ,0 đ,174.336 đ,TRUE,C4 PoT,FALSE,[URL],Hoàn đơn do size quá lớn
+4,,,,Đã nhận hàng,Shopee,Tụ Hóa 1000uF 16V 8x20MM,2,cặp 5 cái,Mua,Chuyển khoản,5.000 đ,42.500 đ,44.500 đ,8.000 đ,,,,,,,,,Đã đặt hàng chờ thủ quỹ
+5,,,,Đã nhận hàng,Shopee,con quay hồi chuyển 6 trục MPU 6050,2,Cái,Mua,Chuyển khoản,44.850 đ,23.400 đ,41.340 đ,71.760 đ,,,,,,,,,
+6,,,,Đang vận chuyển,Shopee,TP5100 4.2v 8.4v Quản lý sạc pin lithium,2,cặp 2 cái,Mua,Chuyển khoản,20.790 đ,17.000 đ,25.316 đ,33.264 đ,,,,,,,,,
+7,,,,Đang vận chuyển,Shopee,5 Chiếc Mini 360 DC-DC Buck,1,cặp 5 cái,Mua,Chuyển khoản,46.640 đ,17.000 đ,26.328 đ,37.312 đ,,,,,,,,,
+8,3,Khoa,FALSE,Đang vận chuyển,Shopee,E32-433t20d UART Tầm xa 433 MHz,2,Cái,Mua,Chuyển khoản,189.030 đ,17.000 đ,85.051 đ,310.009 đ,310.009 đ,0 đ,0 đ,310.009 đ,TRUE,C5 PoT,FALSE,[URL],Đã đặt hàng chờ thủ quỹ
+9,4,Khoa,FALSE,Đã nhận hàng,Shopee,Set 40 Dây Cáp Dupont 40pin F-F,1,dải 40pin,Mua,Chuyển khoản,11.400 đ,42.500 đ,47.341 đ,19.359 đ,200.074 đ,0 đ,0 đ,200.074 đ,TRUE,C6 PoT,FALSE,[URL],Đã đặt hàng chờ thủ quỹ
+10,,,,Đã nhận hàng,Shopee,Set 40 Dây Cáp Dupont 40pin M-F,1,dải 40pin,Mua,Chuyển khoản,12.800 đ,,,,,,,,,,,,
+11,,,,Đã nhận hàng,Shopee,Bộ 40 Dây Cắm Test Board 10cm,1,dải 40pin,Mua,Chuyển khoản,12.000 đ,22.200 đ,24.601 đ,9.599 đ,,,,,,,,,
+12,,,,Đã nhận hàng,Shopee,Anten 433Mhz 6dBi 20cm,2,Cái,Mua,Chuyển khoản,42.873 đ,22.200 đ,39.550 đ,68.396 đ,,,,,,,,,
+13,,,,Đang vận chuyển,Shopee,Cáp nối dài SMA Nam sang Nữ 10cm,4,Dây,Mua,Chuyển khoản,29.700 đ,17.000 đ,40.961 đ,94.839 đ,,,,,,,,,
+14,,,,Đang vận chuyển,Shopee,Set 10 Đầu Nối Pin 40Pin 1x40P 2.54mm,1,Bộ 10 cái,Mua,Chuyển khoản,9.847 đ,17.000 đ,18.966 đ,7.881 đ,,,,,,,,,
+15,5,Khoa,FALSE,Mua trực tiếp,Thegioiic,Nút Nhấn 12x12mm Cao 12mm 4 Chân Chống Nước,8,Cái,Mua,Tiền mặt,1.800 đ,0 đ,0 đ,14.400 đ,236.800 đ,0 đ,-200 đ,237.000 đ,TRUE,C7 PoT,FALSE,,Tiền mặt nên làm tròn số tiền. Đã mua chờ thủ quỹ
+16,,,,Mua trực tiếp,Thegioiic,0834 Động Cơ Rung 3VDC 80mA 12000 rpm,2,Cái,Mua,Tiền mặt,8.500 đ,0 đ,0 đ,17.000 đ,,,,,,,,,
+17,,,,Mua trực tiếp,Thegioiic,"9056-TS Buzzer, Còi Chíp Tần Số 9x4.2mm 80dB Xuyên Lỗ",2,Cái,Mua,Tiền mặt,3.600 đ,0 đ,0 đ,7.200 đ,,,,,,,,,
+18,,,,Mua trực tiếp,Thegioiic,Mạch Định Vị GPS NEO-6MV2 Xanh Dương,2,Bộ 10 cái,Mua,Tiền mặt,86.000 đ,0 đ,0 đ,172.000 đ,,,,,,,,,
+19,,,,Mua trực tiếp,Thegioiic,MP2307DN Mini-360 Mạch Giảm Áp 3A,2,Cái,Mua,Tiền mặt,12.000 đ,0 đ,0 đ,24.000 đ,,,,,,,,,
+20,,,,Mua trực tiếp,Thegioiic,SS-22F32 Công Tắc Trượt 6 Chân Gắn Bảng ON-OFF 1P2T 0.5A,2,Cái,Mua,Tiền mặt,1.100 đ,0 đ,0 đ,2.200 đ,,,,,,,,,
+21,6,Khoa,FALSE,Đang vận chuyển,Shopee,Hộp nhựa đựng mạch điện tử 125x80x32 mm đen trắng,2,Cái,Mua,Chuyển khoản,15.000 đ,42.000 đ,48.299 đ,23.701 đ,128.361 đ,0 đ,0 đ,128.361 đ,TRUE,C8 PoT,FALSE,,Đã đặt hàng chờ thủ quỹ
+22,,,,Đang vận chuyển,Shopee,Hộp Đựng Linh Kiện F-240 234x168x62 Tiện Dụng,2,Cái,Mua,Chuyển khoản,34.300 đ,25.300 đ,40.121 đ,53.779 đ,,,,,,,,,
+23,,,,Đang vận chuyển,Shopee,Hộp Đựng Pin 21700 Hộp Pin,2,Cái,Mua,Chuyển khoản,43.300 đ,17.000 đ,52.719 đ,50.881 đ,,,,,,,,,
+24,7,Khoa,FALSE,Đang vận chuyển,Shopee,Samsung 50G 21700 mới,4,Viên,Mua,Chuyển khoản,52.000 đ,37.300 đ,78.900 đ,166.400 đ,166.400 đ,0 đ,0 đ,166.400 đ,TRUE,C9 PoT,FALSE,,Đã đặt hàng chờ thủ quỹ
+25,8,Khoa,FALSE,Đang vận chuyển,Shopee,Tụ hóa SAMWHA 25V 100uf chất lượng,10,Cái,Mua,Chuyển khoản,1.000 đ,22.000 đ,22.000 đ,10.000 đ,10.000 đ,0 đ,0 đ,10.000 đ,TRUE,C10 PoT,FALSE,,Đã đặt hàng chờ thủ quỹ
+26,9,Khoa,FALSE,Mua trực tiếp,Thegioiic,Dây Bẹ Ribbon Màu Xám 14 Sợi 1.27mm 300V,1,Mét,Mua,Tiền mặt,9.200 đ,0 đ,0 đ,9.200 đ,143.300 đ,0 đ,300 đ,143.000 đ,TRUE,C11 PoT,FALSE,,Đã đặt hàng chờ thủ quỹ
+27,,,,Mua trực tiếp,Thegioiic,Vít Nhọn KA M3 x 25mm 304,8,Con,Mua,Tiền mặt,1.000 đ,0 đ,0 đ,8.000 đ,,,,,,,,,
+28,,,,Mua trực tiếp,Thegioiic,Trụ Nhựa HEX-M3 Đực-Cái Dài 5mm,20,Con,Mua,Tiền mặt,420 đ,0 đ,0 đ,8.400 đ,,,,,,,,,
+29,,,,Mua trực tiếp,Thegioiic,Vít Máy KM M3 x 5mm,20,Con,Mua,Tiền mặt,250 đ,0 đ,0 đ,5.000 đ,,,,,,,,,
+30,,,,Mua trực tiếp,Thegioiic,Tụ Gốm Tròn 100nF (0.1uF) 50V,20,Con,Mua,Tiền mặt,100 đ,0 đ,0 đ,2.000 đ,,,,,,,,,
+31,,,,Mua trực tiếp,Thegioiic,Điện Trở 100 Ohm 1/4W 1% 5 Vòng Màu,50,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,2.800 đ,,,,,,,,,
+32,,,,Mua trực tiếp,Thegioiic,Điện Trở 220 Ohm 1/4W 1% 5 Vòng Màu,100,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,5.600 đ,,,,,,,,,
+33,,,,Mua trực tiếp,Thegioiic,Điện Trở 330 Ohm 1/4W 1% 5 Vòng Màu,50,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,2.800 đ,,,,,,,,,
+34,,,,Mua trực tiếp,Thegioiic,Điện Trở 1 KOhm 1/4W 1% 5 Vòng Màu,100,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,5.600 đ,,,,,,,,,
+35,,,,Mua trực tiếp,Thegioiic,Điện Trở 2.2 KOhm 1/4W 1% 5 Vòng Màu,50,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,2.800 đ,,,,,,,,,
+36,,,,Mua trực tiếp,Thegioiic,Điện Trở 4.7 KOhm 1/4W 1% 5 Vòng Màu,100,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,5.600 đ,,,,,,,,,
+37,,,,Mua trực tiếp,Thegioiic,Điện Trở 10 KOhm 1/4W 1% 5 Vòng Màu,100,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,5.600 đ,,,,,,,,,
+38,,,,Mua trực tiếp,Thegioiic,Điện Trở 100 KOhm 1/4W 1% 5 Vòng Màu,100,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,5.600 đ,,,,,,,,,
+39,,,,Mua trực tiếp,Thegioiic,Điện Trở 1 MOhm 1/4W 1% 5 Vòng Màu,50,Con,Mua,Tiền mặt,56 đ,0 đ,0 đ,2.800 đ,,,,,,,,,
+40,,,,Mua trực tiếp,Thegioiic,Đai Ốc Thép M3,20,Con,Mua,Tiền mặt,300 đ,0 đ,0 đ,6.000 đ,,,,,,,,,
+41,,,,Mua trực tiếp,Thegioiic,1N4001 Diode Chỉnh Lưu 1A 50V DO-41,20,Con,Mua,Tiền mặt,200 đ,0 đ,0 đ,4.000 đ,,,,,,,,,
+42,,,,Mua trực tiếp,Thegioiic,IRF9530NPBF MOSFET Kênh P 100V 14A TO-220AB,3,Cái,Mua,Tiền mặt,8.500 đ,0 đ,0 đ,25.500 đ,,,,,,,,,
+43,,,,Mua trực tiếp,Thegioiic,S8050-D Transistor NPN 25V 1.5A 3 Chân TO-92,20,Cái,Mua,Tiền mặt,300 đ,0 đ,0 đ,6.000 đ,,,,,,,,,
+44,,,,Mua trực tiếp,Thegioiic,FR4 PCB Hàn Test Board 4x6cm Phủ Xanh 2 Mặt,2,Tấm,Mua,Tiền mặt,5.000 đ,0 đ,0 đ,10.000 đ,,,,,,,,,
+45,,,,Mua trực tiếp,Thegioiic,SYB-170 Breadboard Cắm Linh Kiện 170 Lỗ,4,Cái,Mua,Tiền mặt,5.000 đ,0 đ,0 đ,20.000 đ,,,,,,,,,
+46,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+47,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+48,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+49,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+50,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+51,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+52,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,
+53,,,FALSE,,,,0,,,,,,,0 đ,,,,0 đ,FALSE,,FALSE,,

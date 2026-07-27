@@ -1,0 +1,297 @@
+#include "configuration.h"
+#if !MESHTASTIC_EXCLUDE_INPUTBROKER
+#include "buzz/BuzzerFeedbackThread.h"
+#include "modules/StatusLEDModule.h"
+#include "modules/SystemCommandsModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_PKI
+#include "KeyVerificationModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_ADMIN
+#include "modules/AdminModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_ATAK
+#include "modules/AtakPluginModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_CANNEDMESSAGES
+#include "modules/CannedMessageModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
+#include "modules/DetectionSensorModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_NEIGHBORINFO
+#include "modules/NeighborInfoModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_NODEINFO
+#include "modules/NodeInfoModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_GPS
+#include "modules/PositionModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_REMOTEHARDWARE
+#include "modules/RemoteHardwareModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_POWERSTRESS
+#include "modules/PowerStressModule.h"
+#endif
+#include "modules/RoutingModule.h"
+#include "modules/TextMessageModule.h"
+#if !MESHTASTIC_EXCLUDE_TRACEROUTE
+#include "modules/TraceRouteModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_WAYPOINT
+#include "modules/WaypointModule.h"
+#endif
+#if ARCH_PORTDUINO
+#include "modules/Telemetry/HostMetrics.h"
+#if !MESHTASTIC_EXCLUDE_STOREFORWARD
+#include "modules/StoreForwardModule.h"
+#endif
+#endif
+#if HAS_TELEMETRY
+#include "modules/Telemetry/DeviceTelemetry.h"
+#endif
+#if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+#include "main.h"
+#include "modules/Telemetry/AirQualityTelemetry.h"
+#include "modules/Telemetry/EnvironmentTelemetry.h"
+#include "modules/Telemetry/HealthTelemetry.h"
+#include "modules/Telemetry/Sensor/TelemetrySensor.h"
+#endif
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY
+#include "modules/Telemetry/PowerTelemetry.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_GENERIC_THREAD_MODULE
+#include "modules/GenericThreadModule.h"
+#endif
+
+#ifdef ARCH_ESP32
+#if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
+#include "modules/esp32/AudioModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_PAXCOUNTER
+#include "modules/esp32/PaxcounterModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_STOREFORWARD
+#include "modules/StoreForwardModule.h"
+#endif
+#endif
+
+#if !MESHTASTIC_EXCLUDE_EXTERNALNOTIFICATION
+#include "modules/ExternalNotificationModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_RANGETEST && !MESHTASTIC_EXCLUDE_GPS
+#include "modules/RangeTestModule.h"
+#endif
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !MESHTASTIC_EXCLUDE_SERIAL
+#include "modules/SerialModule.h"
+#endif
+
+#if !MESHTASTIC_EXCLUDE_DROPZONE
+#include "modules/DropzoneModule.h"
+#endif
+#if !MESHTASTIC_EXCLUDE_STATUS
+#include "modules/StatusMessageModule.h"
+#endif
+
+#ifdef TREKLINK_VARIANT
+#include "modules/TrekLinkVariantValidation.h"
+#include "modules/FallDetectionModule.h"
+#if defined(TREKLINK_V2)
+#include "modules/sensors/ICM20948FallSensor.h"
+#elif defined(TREKLINK_V4)
+#include "modules/sensors/QMI8658FallSensor.h"
+#elif !defined(TREKLINK_V3)
+#include "modules/sensors/MPU6050FallSensor.h"
+#endif
+#ifdef BUTTON_PIN_SOS
+#include "modules/TrekLinkButtonModule.h"
+#else
+#include "modules/TrekLinkSOSGesture.h"
+#endif
+#endif
+
+#if defined(HAS_HARDWARE_WATCHDOG)
+#include "watchdog/watchdogThread.h"
+#endif
+/**
+ * Create module instances here.  If you are adding a new module, you must 'new' it here (or somewhere else)
+ */
+void setupModules()
+{
+#if (HAS_BUTTON || ARCH_PORTDUINO) && !MESHTASTIC_EXCLUDE_INPUTBROKER
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+        inputBroker = new InputBroker();
+        systemCommandsModule = new SystemCommandsModule();
+        buzzerFeedbackThread = new BuzzerFeedbackThread();
+    }
+#endif
+#if defined(LED_CHARGE) || defined(LED_PAIRING)
+    statusLEDModule = new StatusLEDModule();
+#endif
+
+#if !MESHTASTIC_EXCLUDE_ADMIN
+    adminModule = new AdminModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_NODEINFO
+    nodeInfoModule = new NodeInfoModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_GPS
+    positionModule = new PositionModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_WAYPOINT
+    waypointModule = new WaypointModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_TEXTMESSAGE
+    textMessageModule = new TextMessageModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_TRACEROUTE
+    traceRouteModule = new TraceRouteModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_NEIGHBORINFO
+    if (moduleConfig.has_neighbor_info && moduleConfig.neighbor_info.enabled) {
+        neighborInfoModule = new NeighborInfoModule();
+    }
+#endif
+#if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
+    if (moduleConfig.has_detection_sensor && moduleConfig.detection_sensor.enabled) {
+        detectionSensorModule = new DetectionSensorModule();
+    }
+#endif
+#if !MESHTASTIC_EXCLUDE_ATAK
+    if (config.device.role == meshtastic_Config_DeviceConfig_Role_TAK ||
+        config.device.role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) {
+        atakPluginModule = new AtakPluginModule();
+    }
+#endif
+#if !MESHTASTIC_EXCLUDE_PKI
+    keyVerificationModule = new KeyVerificationModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_DROPZONE
+    dropzoneModule = new DropzoneModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_STATUS
+    statusMessageModule = new StatusMessageModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_GENERIC_THREAD_MODULE
+    new GenericThreadModule();
+#endif
+    // Note: if the rest of meshtastic doesn't need to explicitly use your module, you do not need to assign the instance
+    // to a global variable.
+
+#if !MESHTASTIC_EXCLUDE_REMOTEHARDWARE
+    new RemoteHardwareModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_POWERSTRESS
+    new PowerStressModule();
+#endif
+    // Example: Put your module here
+    // new ReplyModule();
+#if HAS_SCREEN && !MESHTASTIC_EXCLUDE_CANNEDMESSAGES
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+        cannedMessageModule = new CannedMessageModule();
+    }
+#endif
+
+#ifdef TREKLINK_VARIANT
+    LOG_INFO("Variant: %s", TREKLINK_VARIANT_NAME);
+    // TrekLink SOS module — variant-dependent
+#ifdef BUTTON_PIN_SOS
+    // v1.0/v2.0: Dedicated SOS button → full button module
+    trekLinkButtonModule = new TrekLinkButtonModule();
+    LOG_INFO("TrekLink Button Module initialized (dedicated SOS button)");
+#else
+    // v3.0/v4.0: Single user button → gesture-based SOS (3s hold)
+    trekLinkSOSGesture = new TrekLinkSOSGesture();
+    LOG_INFO("TrekLink SOS Gesture Module initialized (BUTTON_PIN=%d)", BUTTON_PIN);
+#endif
+    
+#if !defined(TREKLINK_V3)
+    // TrekLink fall detection — inject sensor adapter for current variant
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C
+#if defined(TREKLINK_V2)
+    fallDetectionModule = new FallDetectionModule(new ICM20948FallSensor());
+    LOG_INFO("TrekLink Fall Detection Module initialized (ICM-20948)");
+#elif defined(TREKLINK_V4)
+    fallDetectionModule = new FallDetectionModule(new QMI8658FallSensor());
+    LOG_INFO("TrekLink Fall Detection Module initialized (QMI8658)");
+#else // default v1.0
+    fallDetectionModule = new FallDetectionModule(new MPU6050FallSensor());
+    LOG_INFO("TrekLink Fall Detection Module initialized (MPU6050)");
+#endif
+#endif
+#else
+    LOG_INFO("FallDetection: Disabled (no IMU on v3.0)");
+#endif
+#endif
+#if ARCH_PORTDUINO
+    new HostMetricsModule();
+#endif
+#if HAS_TELEMETRY
+    new DeviceTelemetryModule();
+#endif
+#if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+    if (moduleConfig.has_telemetry &&
+        (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) {
+        new EnvironmentTelemetryModule();
+    }
+#if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
+    if (moduleConfig.has_telemetry &&
+        (moduleConfig.telemetry.air_quality_enabled || moduleConfig.telemetry.air_quality_screen_enabled)) {
+        new AirQualityTelemetryModule();
+    }
+#endif
+#if !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
+    if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
+        nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0) {
+        new HealthTelemetryModule();
+    }
+#endif
+#endif
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+    if (moduleConfig.has_telemetry &&
+        (moduleConfig.telemetry.power_measurement_enabled || moduleConfig.telemetry.power_screen_enabled)) {
+        new PowerTelemetryModule();
+    }
+#endif
+#if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_STM32WL)) &&                             \
+    !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !MESHTASTIC_EXCLUDE_SERIAL
+    if (moduleConfig.has_serial && moduleConfig.serial.enabled &&
+        config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+        new SerialModule();
+    }
+#endif
+#endif
+#ifdef ARCH_ESP32
+    // Only run on an esp32 based device.
+#if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
+    audioModule = new AudioModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_PAXCOUNTER
+    if (moduleConfig.has_paxcounter && moduleConfig.paxcounter.enabled) {
+        paxcounterModule = new PaxcounterModule();
+    }
+#endif
+#endif
+#if defined(ARCH_ESP32) || defined(ARCH_PORTDUINO)
+#if !MESHTASTIC_EXCLUDE_STOREFORWARD
+    if (moduleConfig.has_store_forward && moduleConfig.store_forward.enabled) {
+        storeForwardModule = new StoreForwardModule();
+    }
+#endif
+#endif
+#if !MESHTASTIC_EXCLUDE_EXTERNALNOTIFICATION
+    externalNotificationModule = new ExternalNotificationModule();
+#endif
+#if !MESHTASTIC_EXCLUDE_RANGETEST && !MESHTASTIC_EXCLUDE_GPS
+    if (moduleConfig.has_range_test && moduleConfig.range_test.enabled)
+        new RangeTestModule();
+#endif
+#if defined(HAS_HARDWARE_WATCHDOG)
+    watchdogThread = new WatchdogThread();
+#endif
+    // NOTE! This module must be added LAST because it likes to check for replies from other modules and avoid sending extra
+    // acks
+    routingModule = new RoutingModule();
+}

@@ -1,0 +1,213 @@
+{
+    "version": 1,
+    "author": "TrekLink Team",
+    "editor": "wokwi",
+    "parts": [
+        {
+            "type": "wokwi-esp32-devkit-v1",
+            "id": "esp",
+            "top": 0,
+            "left": 0,
+            "attrs": {}
+        },
+        {
+            "type": "wokwi-ssd1306",
+            "id": "oled1",
+            "top": -120,
+            "left": 100,
+            "attrs": {
+                "i2cAddress": "0x3C"
+            }
+        },
+        {
+            "type": "wokwi-led",
+            "id": "led1",
+            "top": -180,
+            "left": 300,
+            "attrs": {
+                "color": "red",
+                "label": "SOS"
+            }
+        },
+        {
+            "type": "wokwi-pushbutton",
+            "id": "btn_menu",
+            "top": 50,
+            "left": 400,
+            "attrs": {
+                "color": "blue",
+                "label": "MENU"
+            }
+        },
+        {
+            "type": "wokwi-pushbutton",
+            "id": "btn_sos",
+            "top": 120,
+            "left": 400,
+            "attrs": {
+                "color": "red",
+                "label": "SOS"
+            }
+        },
+        {
+            "type": "wokwi-pushbutton",
+            "id": "btn_up",
+            "top": 190,
+            "left": 400,
+            "attrs": {
+                "color": "green",
+                "label": "UP"
+            }
+        },
+        {
+            "type": "wokwi-pushbutton",
+            "id": "btn_down",
+            "top": 260,
+            "left": 400,
+            "attrs": {
+                "color": "green",
+                "label": "DOWN"
+            }
+        },
+        {
+            "type": "wokwi-slide-switch",
+            "id": "switch1",
+            "top": 330,
+            "left": 400,
+            "attrs": {
+                "label": "POWER"
+            }
+        }
+    ],
+    "connections": [
+        [
+            "oled1:GND",
+            "esp:GND.2",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "oled1:VCC",
+            "esp:3V3",
+            "red",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "oled1:SDA",
+            "esp:D21",
+            "blue",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "oled1:SCL",
+            "esp:D22",
+            "yellow",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "led1:A",
+            "esp:D2",
+            "red",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "led1:C",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_menu:1.l",
+            "esp:D25",
+            "green",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_menu:2.r",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_sos:1.l",
+            "esp:D26",
+            "red",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_sos:2.r",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_up:1.l",
+            "esp:D32",
+            "green",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_up:2.r",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_down:1.l",
+            "esp:D33",
+            "green",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "btn_down:2.r",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "switch1:1",
+            "esp:D4",
+            "purple",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "switch1:2",
+            "esp:GND.1",
+            "black",
+            [
+                "v0"
+            ]
+        ]
+    ],
+    "dependencies": {}
+}
