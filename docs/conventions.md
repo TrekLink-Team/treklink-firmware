@@ -18,7 +18,7 @@ treklink-firmware/
 ├── extra_scripts/         # PlatformIO custom python build scripts
 ├── data/                  # SPIFFS / LittleFS file system assets
 ├── test/                  # Unit and integration test suites
-└── ignore/                # Project documentation & developer guidelines
+└── docs/                  # Project documentation & developer guidelines
     ├── AGENT.md           # AI Agent context & project specs
     ├── commit-rules.md    # Git branch & commit rules
     ├── conventions.md     # ← This file

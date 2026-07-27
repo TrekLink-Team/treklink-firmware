@@ -25,12 +25,12 @@ treklink-firmware/
 ├── protobufs/             # Protobuf definitions
 ├── extra_scripts/         # PlatformIO custom build scripts
 ├── data/                  # SPIFFS assets
-└── ignore/                # Project documentation & guidelines
-    ├── AGENT.md           # This file — project context
-    ├── commit-rules.md    # Git branch & commit standards
-    ├── conventions.md     # C++ / Firmware coding conventions
-    ├── development-rules.md # PlatformIO build & CLI commands
-    └── lifecycle.md       # Development lifecycle & workflow
+├── docs/                  # Project documentation & guidelines
+│   ├── AGENT.md           # This file — project context
+│   ├── commit-rules.md    # Git branch & commit standards
+│   ├── conventions.md     # C++ / Firmware coding conventions
+│   ├── development-rules.md # PlatformIO build & CLI commands
+│   └── lifecycle.md       # Development lifecycle & workflow
 ```
 
 ---
