@@ -14,7 +14,7 @@ lint:
     - trufflehog@3.92.5
     - yamllint@1.38.0
     - bandit@1.9.3
-    - trivy@0.68.2
+    - trivy@0.69.2 # 0.68.2 was pinned but never published; its release URL 404s
     - taplo@0.10.0
     - ruff@0.14.13
     - isort@7.0.0
