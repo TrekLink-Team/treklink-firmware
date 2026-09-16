@@ -34,6 +34,15 @@ lint:
     - linters: [ALL]
       paths:
         - bin/**
+    # AGENTS.md and CLAUDE.md are canonical TrekLink files, byte-identical across four
+    # repositories by design (decision D-011). A per-repo formatter must not own them: the
+    # moment prettier reformats the copy in one repo, the four-way identity breaks, and it
+    # breaks again on every future formatter version bump. They are maintained in
+    # treklink-docs and copied verbatim.
+    - linters: [prettier, markdownlint]
+      paths:
+        - AGENTS.md
+        - CLAUDE.md
 runtimes:
   enabled:
     - python@3.10.8
