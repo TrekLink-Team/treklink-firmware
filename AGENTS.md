@@ -147,7 +147,8 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 - **Response envelope, non-negotiable**: every endpoint returns
   `{ "result": ..., "isSuccess": bool, "statusCode": int, "message": string }` (D-002).
 - **ORM**: Prisma (D-001). Schema at `backend/prisma/schema.prisma`.
-- **Frontend**: Feature-Sliced Design, Tailwind, Leaflet.js, TanStack Query.
+- **Frontend**: Feature-Sliced Design, Tailwind, **MapLibre GL JS over Goong Maps** (D-012 — never
+  OpenStreetMap; map provider is configuration, not a literal), TanStack Query.
 - **Auth**: JWT + bcrypt, RBAC via CASL. Every mutating endpoint needs **both** a JWT guard and a
   policy check.
 - **Database**: local Docker Postgres for tests/CI; **Neon** for shared dev and prod (D-010).
