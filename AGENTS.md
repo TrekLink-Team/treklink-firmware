@@ -38,9 +38,15 @@ answer is yes and the question wastes a turn.
 ## 1. Repository Layout & Path Resolution
 
 ```text
-capstone/                      ← OPEN THIS as your workspace root
+capstone/                      ← OPEN THIS as your workspace root — and now a git repo of its own
 ├── AGENTS.md                  ← this file
-├── Documents/                 ← graded academic deliverables (Reports 1–7). Not engineering docs.
+├── scripts/sync.sh            ← auto-commits and pushes this repo (D-022)
+├── Documents/                 ← graded academic deliverables. Not engineering docs.
+│   ├── reports/               ← Reports 1–7 (.md source + .docx) and slide decks; figures in reports/assets/
+│   ├── tracking/              ← Progress Log and tracking workbooks — .xlsx, one editor at a time
+│   ├── course-material/       ← issued by the school/supervisor. READ-ONLY.
+│   ├── templates/             ← blank forms. READ-ONLY — copy out, never fill in place.
+│   └── meetings/              ← supervisor briefs and minutes
 ├── treklink-docs/             ← SSOT: conventions, decisions, backlog, templates
 │   └── _docs/                 ← the canonical documentation root
 ├── treklink-web/              ← the active build
@@ -131,12 +137,27 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 | Branch naming | `feat/TK-45-device-registration` — **Jira key included** |
 | Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
 | Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
-| Direct pushes | **Never. To any branch. By anyone.** |
+| Direct pushes | **Never** — in `treklink-docs`, `treklink-web`, `treklink-firmware`. See the `capstone` exception below. |
 | After any merge to `dev` | Everyone rebases; the merge is announced in Zalo |
 
 > [!IMPORTANT]
 > **Never commit or push unless explicitly asked.** Stage nothing, commit nothing, push nothing on
 > your own initiative. Report what changed and let the developer decide.
+
+### The `capstone` repository is the one exception (D-022)
+
+`capstone/` is itself a private git repo tracking `Documents/` and this file. It **auto-commits and
+auto-pushes to `main`** on a timer, because graded paperwork has to move between the team
+continuously and PR-gating a progress log only teaches people to skip the gate.
+
+- The exception is **scoped to `capstone` alone.** A change to any of the three code repos is still
+  a PR, always.
+- `treklink-docs/` is a *nested* repo excluded by `capstone/.gitignore`, so conventions are
+  readable and linkable from the Obsidian vault while edits to them still go through a PR. That is
+  deliberate, not an oversight.
+- History stays linear there too: `pull.rebase = true`. Merge commits remain prohibited everywhere.
+- **Before a long edit in `capstone`, take the lock** — `echo "reason" > .sync-lock` — so the timer
+  does not publish half-finished work. Delete it when you are done.
 
 ---
 
@@ -290,46 +311,3 @@ Rules for the appendix:
 
 <!-- TREKLINK-CANONICAL-END -->
 
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
-
-This project is indexed by GitNexus as **treklink** (23967 symbols, 35401 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
-
-> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
-
-## Always Do
-
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
-
-## Never Do
-
-- NEVER edit a function, class, or method without first running `impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
-- NEVER commit changes without running `detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/treklink/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/treklink/clusters` | All functional areas |
-| `gitnexus://repo/treklink/processes` | All execution flows |
-| `gitnexus://repo/treklink/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-<!-- gitnexus:end -->
