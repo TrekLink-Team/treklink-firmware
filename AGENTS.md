@@ -1,10 +1,10 @@
-# TrekLink — AI Agent Rules & Steering Directives
+# TrekLink: AI Agent Rules & Steering Directives
 
 > **Canonical file.** This exact content lives in four places: `capstone/`, `treklink-docs/`,
-> `treklink-web/`, and `treklink-firmware/`. They are identical by design — do not let them drift.
+> `treklink-web/`, and `treklink-firmware/`. They are identical by design, do not let them drift.
 > If you edit one, edit all four in the same pass.
 >
-> **Applies to every AI coding assistant** — Claude Code, Cursor, Copilot, Antigravity, Codex,
+> **Applies to every AI coding assistant**, Claude Code, Cursor, Copilot, Antigravity, Codex,
 > Windsurf, Gemini CLI, OpenCode. Conventions v2, 2026-09-13.
 
 ---
@@ -24,9 +24,9 @@ repositories plus the graded academic reports.
    Anything marked `OPEN` may block the task you are about to start. Say so before starting it.
 3. **Check for recent sessions**: glob `docs/sessions/` and `ignore/*/docs/sessions/` for anything
    from the last ~24h touching the same area. **Do not re-derive what a recent session already
-   found** — reading a 20-line session file is orders of magnitude cheaper than repeating the
+   found**, reading a 20-line session file is orders of magnitude cheaper than repeating the
    investigation.
-4. **Locate today** on `_docs/00-project-context/02-roadmap-and-milestones.md` — which sprint,
+4. **Locate today** on `_docs/00-project-context/02-roadmap-and-milestones.md`, which sprint,
    which roadmap week, what is due.
 
 Do this **autonomously, without being asked.** A developer should never have to tell you to follow
@@ -69,7 +69,7 @@ capstone/                      ← OPEN THIS as your workspace root — and now 
 > `treklink-web/docs/conventions/` was deleted (Decision **D-011**) precisely because it drifted
 > and then confidently taught the wrong rules. A missing answer is cheaper than a wrong one.
 
-**Prefer being opened on `capstone/`.** Cross-repo work is the normal case here — a spec in
+**Prefer being opened on `capstone/`.** Cross-repo work is the normal case here, a spec in
 `treklink-docs`, a wire format in `treklink-firmware`, the code in `treklink-web`.
 
 ---
@@ -84,8 +84,8 @@ The gate is real. See `01-conventions/02-spec-driven-development-workflow.md`.
 
 ### 2.2 Ask questions before implementing
 
-Run the clarification interview and **hard stop**. Batch your questions — domain edge cases,
-authorization rules, error conditions, anything ambiguous or about to be assumed — and wait for
+Run the clarification interview and **hard stop**. Batch your questions, domain edge cases,
+authorization rules, error conditions, anything ambiguous or about to be assumed, and wait for
 answers. An agent that starts implementing without asking is guessing at the domain, and those
 guesses surface expensively in review.
 
@@ -99,7 +99,7 @@ approval.** Silence is not approval.
 Code, identifiers, comments, commit messages, branch names, PR text, review comments, specs,
 documentation, Jira cards, diagrams. **All English.**
 
-The developer may prompt you in Vietnamese — that is fine, and English is merely preferred.
+The developer may prompt you in Vietnamese, that is fine, and English is merely preferred.
 **Regardless of prompt language, everything you write into the repository is English.** The only
 exception anywhere in the project is a daily-report entry.
 
@@ -107,22 +107,35 @@ exception anywhere in the project is a daily-report entry.
 
 Never edit a file you have not opened and read in this session.
 
-### 2.6 Document in the same pass — deferred documentation is banned
+### 2.6 Document in the same pass: deferred documentation is banned
 
 The instant you confirm a fact, resolve a risk, find a contradiction, or make a change a document
 governs, **edit that document in the same tool-call sequence.** Not at session end. Not on a
 to-do list.
 
 Per finding, ask which of these it touches, and fix all that apply immediately:
-- `_docs/00-project-context/04-firmware-ground-truth.md` — any verified firmware/wire-format fact
-- `_docs/00-project-context/03-decisions-and-risk-register.md` — any new/resolved risk or decision
+- `_docs/00-project-context/04-firmware-ground-truth.md`, any verified firmware/wire-format fact
+- `_docs/00-project-context/03-decisions-and-risk-register.md`, any new/resolved risk or decision
 - `specs/{module}/{requirements,design,tasks}.md`, `api-design/*.md`
-- Schema or code comments asserting something as fact — fix a wrong one now
-- The backlog (`_docs/03-backlog/`) — leader only, via `build_backlog.py`
+- Schema or code comments asserting something as fact, fix a wrong one now
+- The backlog (`_docs/03-backlog/`), leader only, via `build_backlog.py`
 
 Rationale: Evidence Completeness outranks Resource Efficiency in the decision hierarchy. Long
 sessions compact and paraphrase; a finding written from memory at hour three is measurably less
 precise than one written the moment it was confirmed.
+
+**A standing instruction from the leader is a convention edit, in the same pass.** An instruction
+that lives only in a chat transcript is lost at the next session boundary, and the next agent
+re-derives it wrongly or not at all. Route it by kind: wording to chapter 14, git to 07, Jira to
+10, agent behaviour to 08 or 11, and anything with a rationale and a rejected alternative to the
+decision register as a new `D-xxx`. A one-off scoped to the current task is not a convention; the
+test is whether it would still be true next week for a different member. Full rule:
+`01-conventions/08-ai-agent-steering-and-discipline.md` Stage 2.6.
+
+**Correct before polished.** A document that is factually right, cites its evidence and
+contradicts nothing is done, even if its wording is plain. This never licenses an unverified
+claim; it bounds effort on presentation, not effort on truth. A mechanical sweep is verified by
+sampling the diff plus running the checker, not by reading every line. Stage 2.7.
 
 ### 2.7 Prose conventions are binding, and two skills load at session start
 
@@ -170,7 +183,7 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 | Branch naming | `feat/TK-45-device-registration`. **Jira key only when the work is an Epic or a User Story** (D-024); housekeeping, CI, automation and conventions work carries no key: `fix/daily-report-reported-mentions` |
 | Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
 | Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
-| Direct pushes | **Never** — in `treklink-docs`, `treklink-web`, `treklink-firmware`. See the `capstone` exception below. |
+| Direct pushes | **Never**, in `treklink-docs`, `treklink-web`, `treklink-firmware`. See the `capstone` exception below. |
 | After any merge to `dev` | Everyone rebases; the merge is announced in Zalo |
 
 > [!IMPORTANT]
@@ -189,19 +202,19 @@ continuously and PR-gating a progress log only teaches people to skip the gate.
   readable and linkable from the Obsidian vault while edits to them still go through a PR. That is
   deliberate, not an oversight.
 - History stays linear there too: `pull.rebase = true`. Merge commits remain prohibited everywhere.
-- **Before a long edit in `capstone`, take the lock** — `echo "reason" > .sync-lock` — so the timer
+- **Before a long edit in `capstone`, take the lock**, `echo "reason" > .sync-lock`, so the timer
   does not publish half-finished work. Delete it when you are done.
 
 ---
 
 ## 4. Architecture Contracts (treklink-web)
 
-- **Backend**: NestJS modular monolith, strict module isolation — no cross-module repository or
+- **Backend**: NestJS modular monolith, strict module isolation, no cross-module repository or
   entity access. (`01-conventions/04-architecture-conventions.md`)
 - **Response envelope, non-negotiable**: every endpoint returns
   `{ "result": ..., "isSuccess": bool, "statusCode": int, "message": string }` (D-002).
 - **ORM**: Prisma (D-001). Schema at `backend/prisma/schema.prisma`.
-- **Frontend**: Feature-Sliced Design, Tailwind, **MapLibre GL JS over Goong Maps** (D-012 — never
+- **Frontend**: Feature-Sliced Design, Tailwind, **MapLibre GL JS over Goong Maps** (D-012, never
   OpenStreetMap; map provider is configuration, not a literal), TanStack Query.
 - **Auth**: JWT + bcrypt, RBAC via CASL. Every mutating endpoint needs **both** a JWT guard and a
   policy check.
@@ -213,7 +226,7 @@ continuously and PR-gating a progress log only teaches people to skip the gate.
 Before designing anything that touches a device, read
 `_docs/00-project-context/04-firmware-ground-truth.md`. It records what the firmware **actually
 puts on the wire**, cited to `file:line`. Several charter assumptions have already been disproven
-by it — notably the `eventId` scheme (D-006). Do not design against the charter's description of
+by it, notably the `eventId` scheme (D-006). Do not design against the charter's description of
 the firmware without checking this file first.
 
 ---
@@ -233,7 +246,7 @@ one.
 **Epistemic anchor**: categorize as **KNOWN** (verified this session) / **INFERRED** (state
 confidence) / **UNKNOWN** (flag before proceeding).
 
-**Circuit breakers** — stop and ask, do not keep going:
+**Circuit breakers**, stop and ask, do not keep going:
 - Same command or tool run >2× with no change in result
 - Same file edited >2× without passing tests
 - About to touch files outside the approved scope
@@ -256,7 +269,7 @@ Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
 - **`prose-and-wording` and `caveman` (level `full`) load at session start, always** (§2.7, D-024).
 
 **Context budget: 80% maximum.** Cross it and run `/summarization`, then start a fresh session from
-the handoff prompt. Session size is not quota'd — 20K to 500K are all legitimate — but
+the handoff prompt. Session size is not quota'd, 20K to 500K are all legitimate, but
 proportionality is: heavy architecture work should cost a lot, a chore should cost almost nothing.
 Cheapness never justifies an unverified answer.
 
@@ -285,7 +298,7 @@ Loop back to step 3 whenever something new becomes ambiguous.
 
 **Session files**: `docs/sessions/YYYY-MM-DD-HHMM-topic.md` (tracked) and
 `ignore/{name}/docs/sessions/YYYY-MM-DD-HHMM-topic.md` (personal). One file **per session
-instance** — never a shared rolling file, which is how concurrent sessions lose findings.
+instance**, never a shared rolling file, which is how concurrent sessions lose findings.
 
 ---
 
@@ -300,8 +313,8 @@ instance** — never a shared rolling file, which is how concurrent sessions los
 | Backlog (**read-only to members**) | `_docs/03-backlog/` |
 | Templates | `_docs/02-templates/` |
 | Module specs | `treklink-web/specs/{module}/` |
-| Personal scratch | `ignore/{name}/` — gitignored, safe to write |
-| Generated handbook PDF | `_docs/TrekLink_Developer_Handbook_v1.0.pdf` — **never hand-edit** |
+| Personal scratch | `ignore/{name}/`, gitignored, safe to write |
+| Generated handbook PDF | `_docs/TrekLink_Developer_Handbook_v1.0.pdf`, **never hand-edit** |
 
 > [!WARNING]
 > **`_docs/03-backlog/01-epics.md` and `02-user-stories.md` are generated.** Edit
@@ -316,18 +329,18 @@ instance** — never a shared rolling file, which is how concurrent sessions los
 Prefer structured tools over raw shell where both exist: dedicated read/search/edit tools over
 `cat`/`grep`/`sed`. Reserve raw terminal commands for compilers, test runners, and git.
 
-**Never rename a shared symbol via blind find-and-replace** — use the language server or IDE
+**Never rename a shared symbol via blind find-and-replace**, use the language server or IDE
 refactor. TrekLink's cross-module DI wiring breaks easily under naive text replacement.
 
 **Large files**: grep for what you need and read targeted line ranges. Do not read a 3000-line file
-in full to answer a narrow question — it crowds out reasoning for no benefit.
+in full to answer a narrow question, it crowds out reasoning for no benefit.
 
 ---
 
 ## 10. Per-Repo Appendix
 
 Everything above this line is **canonical and identical in all four copies**. Below the marker,
-a repository may carry tool-generated or repo-specific content — for example the GitNexus code-
+a repository may carry tool-generated or repo-specific content, for example the GitNexus code-
 intelligence block in `treklink-firmware`, which the GitNexus CLI regenerates in place between its
 own HTML-comment markers.
 
