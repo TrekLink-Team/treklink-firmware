@@ -1,8 +1,8 @@
 # TrekLink: AI Agent Rules & Steering Directives
 
-> **Canonical file.** This exact content lives in four places: `capstone/`, `treklink-docs/`,
-> `treklink-web/`, and `treklink-firmware/`. They are identical by design, do not let them drift.
-> If you edit one, edit all four in the same pass.
+> **Canonical file.** This exact content lives in five places: `capstone/`, `treklink-docs/`,
+> `treklink-web/`, `treklink-firmware/`, and `TrekLink-Team.github.io/`. They are identical by
+> design, do not let them drift. If you edit one, edit all five in the same pass.
 >
 > **Applies to every AI coding assistant**, Claude Code, Cursor, Copilot, Antigravity, Codex,
 > Windsurf, Gemini CLI, OpenCode. Conventions v2, 2026-09-13.
@@ -12,7 +12,7 @@
 ## 0. Read This Before Doing Anything
 
 You are working on **TrekLink** (FPT capstone FA26SE159), a LoRa-mesh trekking safety and
-operations platform. The workspace is a `capstone/` parent folder containing three sibling
+operations platform. The workspace is a `capstone/` parent folder containing four sibling
 repositories plus the graded academic reports.
 
 **At the start of every session, before any other action:**
@@ -52,7 +52,9 @@ capstone/                      ← OPEN THIS as your workspace root — and now 
 ├── treklink-web/              ← the active build
 │   ├── gateway/  backend/  frontend/
 │   └── specs/{module}/        ← requirements.md → design.md → tasks.md
-└── treklink-firmware/         ← inherited SU26 LoRa firmware (editable per D-008, surgically)
+├── treklink-firmware/         ← inherited SU26 LoRa firmware (editable per D-008, surgically)
+└── TrekLink-Team.github.io/   ← public landing site, Astro to GitHub Pages. The name is fixed
+                                 by GitHub: a Pages user site must match <owner>.github.io
 ```
 
 **Resolving the docs root**, in order:
@@ -61,7 +63,7 @@ capstone/                      ← OPEN THIS as your workspace root — and now 
 |---|---|
 | `capstone/` (**recommended**) | `treklink-docs/_docs/` |
 | `treklink-docs/` | `_docs/` |
-| `treklink-web/` or `treklink-firmware/` | `../treklink-docs/_docs/` |
+| `treklink-web/`, `treklink-firmware/` or `TrekLink-Team.github.io/` | `../treklink-docs/_docs/` |
 
 > [!IMPORTANT]
 > **If you cannot resolve the docs root, stop and say so.** Do not guess at the conventions, and do
@@ -154,7 +156,7 @@ fabricated precision. Mark a carried-forward claim `(unverified)` and add it to 
 same edit.
 
 **Two skills load at session start, without being asked**, for every AI assistant in any of the
-four repositories:
+five repositories:
 
 | Skill | Governs |
 |---|---|
@@ -183,7 +185,7 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 | Branch naming | `feat/TK-45-device-registration`. **Jira key only when the work is an Epic or a User Story** (D-024); housekeeping, CI, automation and conventions work carries no key: `fix/daily-report-reported-mentions` |
 | Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
 | Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
-| Direct pushes | **Never**, in `treklink-docs`, `treklink-web`, `treklink-firmware`. See the `capstone` exception below. |
+| Direct pushes | **Never**, in `treklink-docs`, `treklink-web`, `treklink-firmware`, `TrekLink-Team.github.io`. See the `capstone` exception below. |
 | After any merge to `dev` | Everyone rebases; the merge is announced in Zalo |
 
 > [!IMPORTANT]
@@ -196,7 +198,7 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 auto-pushes to `main`** on a timer, because graded paperwork has to move between the team
 continuously and PR-gating a progress log only teaches people to skip the gate.
 
-- The exception is **scoped to `capstone` alone.** A change to any of the three code repos is still
+- The exception is **scoped to `capstone` alone.** A change to any of the four code repos is still
   a PR, always.
 - `treklink-docs/` is a *nested* repo excluded by `capstone/.gitignore`, so conventions are
   readable and linkable from the Obsidian vault while edits to them still go through a PR. That is
@@ -339,7 +341,7 @@ in full to answer a narrow question, it crowds out reasoning for no benefit.
 
 ## 10. Per-Repo Appendix
 
-Everything above this line is **canonical and identical in all four copies**. Below the marker,
+Everything above this line is **canonical and identical in all five copies**. Below the marker,
 a repository may carry tool-generated or repo-specific content, for example the GitNexus code-
 intelligence block in `treklink-firmware`, which the GitNexus CLI regenerates in place between its
 own HTML-comment markers.
