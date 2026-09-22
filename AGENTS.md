@@ -124,6 +124,39 @@ Rationale: Evidence Completeness outranks Resource Efficiency in the decision hi
 sessions compact and paraphrase; a finding written from memory at hour three is measurably less
 precise than one written the moment it was confirmed.
 
+### 2.7 Prose conventions are binding, and two skills load at session start
+
+Full rules: `01-conventions/14-prose-and-wording.md`. Recorded as **D-024**.
+
+**No em dash `—` in prose.** Anywhere: chat replies, specs, commit messages, PR bodies, issue text,
+code comments, Jira cards, the graded reports. No en dash as a clause separator. Join with a comma,
+or split into two sentences. A colon works when the second clause explains the first.
+
+Exempt, because they are data rather than prose: a fenced code block, an inline code span, a table
+cell used as a "not applicable" placeholder, and a verbatim quotation of source text or a log line.
+
+Also banned: generic openers (`Let's`, `In order to`, `It's worth noting`), aphorism formulas,
+two-beat antithesis (`not X, but Y` as a rhetorical device), unverified claims stated as fact, and
+fabricated precision. Mark a carried-forward claim `(unverified)` and add it to the register in the
+same edit.
+
+**Two skills load at session start, without being asked**, for every AI assistant in any of the
+four repositories:
+
+| Skill | Governs |
+|---|---|
+| `prose-and-wording` | What any written text may contain. Always on. |
+| `caveman`, level `full` | The register of chat replies only. Compresses. |
+
+Anything persisted to a repository stays normal prose. Chat is compressed. On conflict, clarity
+wins, and caveman never authorises an em dash. An assistant that is not Claude Code carries the
+same rules in its own always-on configuration; a missing skill is not an excuse, because §2.7 is
+enforced by review.
+
+> [!NOTE]
+> Documents written before 2026-09-22 still contain em dashes, this file included. They are
+> corrected when next edited for another reason. No repository-wide rewrite pass is open.
+
 ---
 
 ## 3. Git & Delivery
@@ -134,7 +167,7 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 |---|---|
 | Integration branch | **`dev`** (there is no `develop`) |
 | Branches | `main`, `dev`, `feat/*`, `fix/*`, `hotfix/*`, `docs/*`, `chore/*` |
-| Branch naming | `feat/TK-45-device-registration` — **Jira key included** |
+| Branch naming | `feat/TK-45-device-registration`. **Jira key only when the work is an Epic or a User Story** (D-024); housekeeping, CI, automation and conventions work carries no key: `fix/daily-report-reported-mentions` |
 | Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
 | Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
 | Direct pushes | **Never** — in `treklink-docs`, `treklink-web`, `treklink-firmware`. See the `capstone` exception below. |
@@ -220,6 +253,7 @@ Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
 - **Google Gemini, and any model outside that list** → ingestion, chores, subagents, codebase
   understanding, explanation **only**. Never critical modules. No exceptions.
 - Every PR declares `Model used:`.
+- **`prose-and-wording` and `caveman` (level `full`) load at session start, always** (§2.7, D-024).
 
 **Context budget: 80% maximum.** Cross it and run `/summarization`, then start a fresh session from
 the handoff prompt. Session size is not quota'd — 20K to 500K are all legitimate — but
