@@ -43,6 +43,17 @@ lint:
       paths:
         - AGENTS.md
         - CLAUDE.md
+    # TrekLink module specs follow the project's own documentation conventions, held in
+    # treklink-docs (_docs/01-conventions/02-spec-driven-development-workflow.md and
+    # 14-prose-and-wording.md): prose wrapped at 100 columns, wide comparison tables, and
+    # EARS requirement lines that are single sentences by design. This repository's trunk
+    # config is inherited upstream tooling, and its markdownlint default of MD013 at 80
+    # columns would fail every one of those lines while prettier would reflow the tables.
+    # Same reasoning as the two files above: a per-repo formatter must not own a document
+    # whose format is defined somewhere else.
+    - linters: [prettier, markdownlint]
+      paths:
+        - specs/**
 runtimes:
   enabled:
     - python@3.10.8
