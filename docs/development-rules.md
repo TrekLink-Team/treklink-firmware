@@ -1,4 +1,4 @@
-# Development Commands & Rules — TrekLink Firmware
+# Development Commands & Rules, TrekLink Firmware
 
 This document details the exact commands to build, test, and manage the **TrekLink Firmware** codebase using PlatformIO.
 
