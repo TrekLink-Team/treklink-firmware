@@ -13,8 +13,8 @@
 
 #if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3)
 
-#include "TrekLinkSOSHelper.h"
 #include "BuzzerManager.h"
+#include "TrekLinkSOSHelper.h"
 #include "configuration.h"
 #include "main.h"
 
@@ -24,18 +24,9 @@ FallDetectionModule *fallDetectionModule;
 constexpr bool FallDetectionModule::SOS_LUT[];
 
 FallDetectionModule::FallDetectionModule(FallSensorInterface *sensor)
-    : SinglePortModule("FallDetection", meshtastic_PortNum_PRIVATE_APP),
-      OSThread("FallDetection"),
-      currentState(MONITORING),
-      sensor(sensor),
-      sensorInitialized(false),
-      freefallStartTime(0),
-      inactivityStartTime(0),
-      prealarmStartTime(0),
-      lastAlarmBeepTime(0),
-      isBeepOn(false),
-      sosPatternStartTime(0),
-      sosBuzzerOn(false)
+    : SinglePortModule("FallDetection", meshtastic_PortNum_PRIVATE_APP), OSThread("FallDetection"), currentState(MONITORING),
+      sensor(sensor), sensorInitialized(false), freefallStartTime(0), inactivityStartTime(0), prealarmStartTime(0),
+      lastAlarmBeepTime(0), isBeepOn(false), sosPatternStartTime(0), sosBuzzerOn(false)
 {
     if (sensor) {
         LOG_INFO("FallDetection: Module created with %s sensor, will init in runOnce()", sensor->sensorName());
@@ -51,7 +42,8 @@ FallDetectionModule::~FallDetectionModule()
 
 void FallDetectionModule::transitionToState(FallState newState)
 {
-    if (currentState == newState) return;
+    if (currentState == newState)
+        return;
 
     LOG_DEBUG("FallDetection: State transition %d -> %d", currentState, newState);
     currentState = newState;
@@ -196,25 +188,25 @@ void FallDetectionModule::finalizeCalibration()
     accelStats.mean_x = accelStats.sum_x / n;
     accelStats.mean_y = accelStats.sum_y / n;
     accelStats.mean_z = accelStats.sum_z / n;
-    accelStats.std_x  = sqrt(accelStats.sum_xx / n - accelStats.mean_x * accelStats.mean_x);
-    accelStats.std_y  = sqrt(accelStats.sum_yy / n - accelStats.mean_y * accelStats.mean_y);
-    accelStats.std_z  = sqrt(accelStats.sum_zz / n - accelStats.mean_z * accelStats.mean_z);
+    accelStats.std_x = sqrt(accelStats.sum_xx / n - accelStats.mean_x * accelStats.mean_x);
+    accelStats.std_y = sqrt(accelStats.sum_yy / n - accelStats.mean_y * accelStats.mean_y);
+    accelStats.std_z = sqrt(accelStats.sum_zz / n - accelStats.mean_z * accelStats.mean_z);
 
     gyroStats.mean_x = gyroStats.sum_x / n;
     gyroStats.mean_y = gyroStats.sum_y / n;
     gyroStats.mean_z = gyroStats.sum_z / n;
-    gyroStats.std_x  = sqrt(gyroStats.sum_xx / n - gyroStats.mean_x * gyroStats.mean_x);
-    gyroStats.std_y  = sqrt(gyroStats.sum_yy / n - gyroStats.mean_y * gyroStats.mean_y);
-    gyroStats.std_z  = sqrt(gyroStats.sum_zz / n - gyroStats.mean_z * gyroStats.mean_z);
+    gyroStats.std_x = sqrt(gyroStats.sum_xx / n - gyroStats.mean_x * gyroStats.mean_x);
+    gyroStats.std_y = sqrt(gyroStats.sum_yy / n - gyroStats.mean_y * gyroStats.mean_y);
+    gyroStats.std_z = sqrt(gyroStats.sum_zz / n - gyroStats.mean_z * gyroStats.mean_z);
 
     float accelNoise = (accelStats.std_x + accelStats.std_y + accelStats.std_z) / 3.0f;
-    float gyroNoise  = (gyroStats.std_x + gyroStats.std_y + gyroStats.std_z) / 3.0f;
+    float gyroNoise = (gyroStats.std_x + gyroStats.std_y + gyroStats.std_z) / 3.0f;
 
     calibratedFreefallThreshold = fmin(1.0f, fmax(0.3f, 3.5f * accelNoise));
-    calibratedGyroStillness     = fmin(0.3f, fmax(0.05f, 3.0f * gyroNoise));
+    calibratedGyroStillness = fmin(0.3f, fmax(0.05f, 3.0f * gyroNoise));
 
-    LOG_INFO("FallDetection: Calibration complete — accelNoise=%.4fg, freefall=%.2fg, gyroStill=%.3frad/s",
-             accelNoise, calibratedFreefallThreshold, calibratedGyroStillness);
+    LOG_INFO("FallDetection: Calibration complete — accelNoise=%.4fg, freefall=%.2fg, gyroStill=%.3frad/s", accelNoise,
+             calibratedFreefallThreshold, calibratedGyroStillness);
 }
 
 void FallDetectionModule::saveCalibration()
@@ -232,10 +224,10 @@ void FallDetectionModule::loadCalibration()
     prefs.begin("fallcal", true);
     if (prefs.isKey("ff_thresh")) {
         calibratedFreefallThreshold = prefs.getFloat("ff_thresh", 0.5f);
-        calibratedGyroStillness     = prefs.getFloat("gyro_still", 0.1f);
+        calibratedGyroStillness = prefs.getFloat("gyro_still", 0.1f);
         calPhase = CAL_COMPLETE;
-        LOG_INFO("FallDetection: Loaded stored calibration (ff=%.2f, gyro=%.3f)",
-                 calibratedFreefallThreshold, calibratedGyroStillness);
+        LOG_INFO("FallDetection: Loaded stored calibration (ff=%.2f, gyro=%.3f)", calibratedFreefallThreshold,
+                 calibratedGyroStillness);
     }
     prefs.end();
 }
@@ -350,8 +342,7 @@ int32_t FallDetectionModule::runOnce()
                 // Fall confirmed — bypass impact gate, monitor for inactivity directly
                 inactivityStartTime = now;
                 transitionToState(INACTIVITY_DETECTED);
-                LOG_WARN("FallDetection: Fall detected (freefall %lums), monitoring for inactivity",
-                         freefallDuration);
+                LOG_WARN("FallDetection: Fall detected (freefall %lums), monitoring for inactivity", freefallDuration);
             } else {
                 transitionToState(MONITORING);
                 LOG_DEBUG("FallDetection: Freefall too short (%lums), ignoring", freefallDuration);

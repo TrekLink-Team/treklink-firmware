@@ -31,7 +31,7 @@
 
 // TrekLink message type discriminators (shared across modules)
 #ifndef TREKLINK_MSG_SOS
-#define TREKLINK_MSG_SOS  0x01
+#define TREKLINK_MSG_SOS 0x01
 #endif
 #ifndef TREKLINK_MSG_FALL
 #define TREKLINK_MSG_FALL 0x02

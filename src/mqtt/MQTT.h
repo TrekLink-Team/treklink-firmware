@@ -7,8 +7,8 @@
 #include "mesh/Channels.h"
 #include "mesh/generated/meshtastic/mqtt.pb.h"
 #if !defined(ARCH_NRF52) || NRF52_USE_JSON
-#include "serialization/JSON.h"
 #include "TrekLinkEventQueue.h"
+#include "serialization/JSON.h"
 #endif
 #if HAS_WIFI
 #include <WiFiClient.h>
