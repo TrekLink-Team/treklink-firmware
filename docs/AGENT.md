@@ -2,13 +2,13 @@
 
 ## 1. Developer Identity & Project Scope
 
-| Attribute | Value |
-|-----------|-------|
-| Organization | **TrekLink-Team** |
-| Repository | `treklink-firmware` |
-| Primary Branches | `main` (production), `dev` (integration) |
-| Architecture | ESP32 / NRF52 Embedded Firmware (C++17 / PlatformIO) |
-| Core Modules | LoRa Mesh Networking, BLE communication, GPS/GNSS tracking, Protobuf serialization |
+| Attribute        | Value                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| Organization     | **TrekLink-Team**                                                                  |
+| Repository       | `treklink-firmware`                                                                |
+| Primary Branches | `main` (production), `dev` (integration)                                           |
+| Architecture     | ESP32 / NRF52 Embedded Firmware (C++17 / PlatformIO)                               |
+| Core Modules     | LoRa Mesh Networking, BLE communication, GPS/GNSS tracking, Protobuf serialization |
 
 ---
 
