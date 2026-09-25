@@ -60,3 +60,30 @@ Firmware builds and native tests are blocked by the cloud environment's network 
 - Remedy, leader side: in the cloud environment settings, edit Network access to add those hosts (or `*.platformio.org` and `github.com` archives), or pick a broader access level.
 
 Phase A did not need a build to complete. Phase B does; see Q-A1.
+
+---
+
+### O-001 | orchestrator to cloud | re C-001 | ANSWER
+
+Received and reviewed. The orchestrator re-checked the headline findings against `dev@733dd40` and they hold: `MQTT.cpp:604-636` with `publishQueuedMessages()` at `:699-710` (one entry per call, and the connected branch never drains), `Router.cpp:767-769` (`!isFromUs(p)` feeds peers into `onSend`), `FallDetectionModule.cpp:140-145` (no `tickBeacon()` caller), `PositionModule.cpp:352-355` (no-fix early return), and the env names in `variants/*/platformio.ini`.
+
+### O-002 | orchestrator to cloud | re C-002 | ANSWER
+
+Applied as `treklink-docs` PR #27 (`docs/firmware-ground-truth-phase-a-audit` into `dev`): your `04-firmware-ground-truth.md` and the five appended register rows, byte for byte, prose check clean. Item 3 is being relayed to the `treklink-web` session. Keep your outbound copies as they are; do not re-send them unless a fact changes again.
+
+### O-003 | orchestrator to cloud | re C-003 | ANSWER
+
+Leader decision: every recommendation is accepted. Proceed to Phase B. Additions per item:
+
+- Q-A1: option (c). Build the queue policy as a platform-free core with Unity tests that also compile with host `g++`, and run those here. The orchestrator machine has PlatformIO with `espressif32` cached and is building `treklink`, `treklink-v2`, `treklink-v3-tbeam` and `treklink-v4-supreme` on unmodified `dev` now as the baseline. Results follow in a separate entry. After each Phase B push, post a DELIVERY entry naming the commit, and the orchestrator builds all four envs locally and replies with pass/fail and RAM/flash deltas. The network allowlist change has been passed to the leader. If it lands, build here too.
+- Q-A2: approved. Land S1 to S14 as spec-only commits first, before any code. The missing US-102 backlog row is a leader item in `build_backlog.py`, so it is not yours to fix.
+- Q-A3: option (a), peers use the TrekLink queue. For SOS detection, do not duplicate the `"SOS - "` literal. Today it appears only in `FallDetectionModule.cpp:145` and in `TrekLinkSOSHelper.h` comments, so define one prefix constant in `TrekLinkSOSHelper.h` and use it both where the text is built and in the classifier.
+- Q-A4: option (a), an additive `PRIVATE_APP` case in `MeshPacketSerializer`. Define the health payload JSON schema in `onboard-queue/design.md` and put a copy in `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`. The orchestrator relays it to the web session so REQ-EVT-12/13 match it.
+- Q-A5: accepted, and every value is configuration under D-015, not a literal.
+- Q-A6: accepted. Add to `design.md` the worst-case number of flash writes per SOS episode, derived from the Q-A5 exemption cap, so the wear bound is on record.
+- Q-A7, Q-A8, Q-A9: accepted as recommended.
+- Q-A10: accepted as Phase 9, one commit per fix, after the queue work, so each change stays separately measurable.
+
+### O-004 | orchestrator to cloud | re C-004 | ANSWER
+
+Acknowledged. Firmware env builds run on the orchestrator machine until the allowlist changes (see O-003, Q-A1). GitNexus impact checks are also available locally: name the symbols in a REQUEST entry before you touch a shared one, and the orchestrator returns the blast radius.
