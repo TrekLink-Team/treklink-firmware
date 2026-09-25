@@ -5,7 +5,6 @@
 #include "TrekLinkQueueConfig.h"
 
 #include <algorithm>
-#include <stdio.h>
 #include <string.h>
 
 namespace treklink
@@ -738,27 +737,71 @@ void QueueCore::restore()
     }
 }
 
-std::string QueueCore::healthJson(uint32_t uptimeS) const
+Health QueueCore::health(uint32_t uptimeS) const
 {
-    char buf[400];
-    size_t d[TIER_COUNT];
+    Health h;
+    memset(&h, 0, sizeof(h));
+    h.uptimeS = uptimeS;
+    h.capacity = (uint32_t)capacity();
+    for (uint8_t t = 0; t < TIER_COUNT; t++) {
+        size_t d = depth((Tier)t);
+        h.depth[t] = (uint16_t)std::min<size_t>(d, 0xFFFF);
+        h.enqueued[t] = st.enqueued[t];
+        h.published[t] = st.published[t];
+        h.shed[t] = st.shed[t];
+    }
+    h.p0Refused = st.p0Refused;
+    h.flashWriteFailed = st.flashWriteFailed;
+    h.restoreDiscarded = st.restoreDiscarded;
+    h.flashBytes = (uint32_t)flashBytes();
+    h.flashBudget = cfg.flashBudgetBytes;
+    return h;
+}
+
+void encodeHealth(const Health &h, std::vector<uint8_t> &out)
+{
+    out.assign(HEALTH_MAGIC, HEALTH_MAGIC + 4);
+    out.push_back(HEALTH_VERSION);
+    out.push_back(0); // reserved
+    put32(out, h.uptimeS);
+    put32(out, h.capacity);
     for (uint8_t t = 0; t < TIER_COUNT; t++)
-        d[t] = depth((Tier)t);
-    int n = snprintf(buf, sizeof(buf),
-                     "{\"schema\":\"treklink.queue_health\",\"v\":1,\"uptime_s\":%lu,\"capacity\":%lu,"
-                     "\"depth\":[%lu,%lu,%lu,%lu],\"enqueued\":[%lu,%lu,%lu,%lu],\"published\":[%lu,%lu,%lu,%lu],"
-                     "\"shed\":[%lu,%lu,%lu,%lu],\"p0_refused\":%lu,\"flash_write_failed\":%lu,"
-                     "\"restore_discarded\":%lu,\"flash_bytes\":%lu,\"flash_budget\":%lu}",
-                     (unsigned long)uptimeS, (unsigned long)capacity(), (unsigned long)d[0], (unsigned long)d[1],
-                     (unsigned long)d[2], (unsigned long)d[3], (unsigned long)st.enqueued[0], (unsigned long)st.enqueued[1],
-                     (unsigned long)st.enqueued[2], (unsigned long)st.enqueued[3], (unsigned long)st.published[0],
-                     (unsigned long)st.published[1], (unsigned long)st.published[2], (unsigned long)st.published[3],
-                     (unsigned long)st.shed[0], (unsigned long)st.shed[1], (unsigned long)st.shed[2], (unsigned long)st.shed[3],
-                     (unsigned long)st.p0Refused, (unsigned long)st.flashWriteFailed, (unsigned long)st.restoreDiscarded,
-                     (unsigned long)flashBytes(), (unsigned long)cfg.flashBudgetBytes);
-    if (n < 0 || (size_t)n >= sizeof(buf))
-        return std::string();
-    return std::string(buf, (size_t)n);
+        put16(out, h.depth[t]);
+    for (uint8_t t = 0; t < TIER_COUNT; t++)
+        put32(out, h.enqueued[t]);
+    for (uint8_t t = 0; t < TIER_COUNT; t++)
+        put32(out, h.published[t]);
+    for (uint8_t t = 0; t < TIER_COUNT; t++)
+        put32(out, h.shed[t]);
+    put32(out, h.p0Refused);
+    put32(out, h.flashWriteFailed);
+    put32(out, h.restoreDiscarded);
+    put32(out, h.flashBytes);
+    put32(out, h.flashBudget);
+}
+
+bool decodeHealth(const uint8_t *d, size_t len, Health &h)
+{
+    if (d == NULL || len != HEALTH_BYTES || memcmp(d, HEALTH_MAGIC, 4) != 0 || d[4] != HEALTH_VERSION)
+        return false;
+    const uint8_t *p = d + 6;
+    h.uptimeS = get32(p);
+    h.capacity = get32(p + 4);
+    p += 8;
+    for (uint8_t t = 0; t < TIER_COUNT; t++, p += 2)
+        h.depth[t] = get16(p);
+    for (uint8_t t = 0; t < TIER_COUNT; t++, p += 4)
+        h.enqueued[t] = get32(p);
+    for (uint8_t t = 0; t < TIER_COUNT; t++, p += 4)
+        h.published[t] = get32(p);
+    for (uint8_t t = 0; t < TIER_COUNT; t++, p += 4)
+        h.shed[t] = get32(p);
+    h.p0Refused = get32(p);
+    h.flashWriteFailed = get32(p + 4);
+    h.restoreDiscarded = get32(p + 8);
+    h.flashBytes = get32(p + 12);
+    h.flashBudget = get32(p + 16);
+    return true;
 }
 
 } // namespace oq

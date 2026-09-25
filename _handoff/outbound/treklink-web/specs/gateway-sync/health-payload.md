@@ -8,18 +8,20 @@
 |---|---|
 | PortNum | `PRIVATE_APP` (256) |
 | Radio | never transmitted over LoRa; published by the uplink node straight to MQTT |
-| Protobuf topic | `<root>/2/e/<channelId>/<nodeId>`, a `ServiceEnvelope` whose `packet.decoded.payload` is the JSON text below |
+| Protobuf topic | `<root>/2/e/<channelId>/<nodeId>`, a `ServiceEnvelope` whose `packet.decoded.payload` is the 90-byte binary record below |
 | JSON topic | `<root>/2/json/<channelId>/<nodeId>`, with `"type": "treklink_queue_health"` and the object below as `payload` |
 | `from` | the reporting node's `nodeNum`; `to` is broadcast |
 | Queued while offline | no. A report is sent only while the uplink is up |
 | Cadence | every 300 s while the link is up and something changed; once right after an outage; configuration (D-015) |
-| Other `PRIVATE_APP` payloads | serialised exactly as stock Meshtastic: empty `type`, no `payload`. Ignore them |
+| Other `PRIVATE_APP` payloads | serialised exactly as stock Meshtastic on `/2/json/`: empty `type`, no `payload`. Ignore them |
 
 A health report is **not** a field event. It carries a fresh `MeshPacket.id` like any packet, but it must create no `GatewayEvent` and never reach episode correlation (REQ-EVT-12).
 
-## Payload
+> **Revised 2026-09-25 (firmware C-007).** The first copy said the `/2/e/` payload was JSON text of up to 400 bytes. `Data.payload` holds at most 233 bytes (`mesh.pb.h:761`), so `/2/e/` now carries a fixed binary record. **The JSON topic is unchanged**: same `type`, same object, same fields. A JSON-only consumer needs no change.
 
-UTF-8 JSON, one object, at most 400 bytes. Every field is always present.
+## Payload on `/2/json/`
+
+The object below, as `payload`. Every field is always present.
 
 ```json
 {
@@ -54,6 +56,27 @@ UTF-8 JSON, one object, at most 400 bytes. Every field is always present.
 | `restore_discarded` | integer | bytes of corrupt log tail discarded at boot |
 | `flash_bytes` | integer | current on-device log size, bytes |
 | `flash_budget` | integer | flash budget after clamping, bytes |
+
+## Payload on `/2/e/`
+
+Little-endian, exactly 90 bytes. Anything else on `PRIVATE_APP` is not a health report.
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 4 | magic, ASCII `TKQH` |
+| 4 | 1 | version, `1` |
+| 5 | 1 | reserved, `0` |
+| 6 | 4 | `uptime_s` |
+| 10 | 4 | `capacity` |
+| 14 | 4 × 2 | `depth[0..3]`, u16 |
+| 22 | 4 × 4 | `enqueued[0..3]` |
+| 38 | 4 × 4 | `published[0..3]` |
+| 54 | 4 × 4 | `shed[0..3]` |
+| 70 | 4 | `p0_refused` |
+| 74 | 4 | `flash_write_failed` |
+| 78 | 4 | `restore_discarded` |
+| 82 | 4 | `flash_bytes` |
+| 86 | 4 | `flash_budget` |
 
 ## Semantics for the consumer
 

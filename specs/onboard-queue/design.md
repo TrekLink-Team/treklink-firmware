@@ -170,11 +170,32 @@ If a flash write fails, the entry stays in RAM and `flash_write_failed` is incre
 
 `publish()` returning true at QoS 0 means the bytes reached the socket, not the broker. Waiting for the next successful poll narrows the loss window to "socket written, then link lost before the next poll", and an entry lost there is re-published (REQ-ERR-04).
 
+**Known bypass, stock and out of scope.** `Power.cpp:932-939` publishes heap and Wi-Fi statistics directly through `mqtt->pubSub.publish(...)`, outside `onSend()` and outside every queue. Those messages are never queued, by stock or by this design, and are lost during an outage. This is recorded so nobody expects them in the queue or in the health counters.
+
 **Ordering while a backlog exists (REQ-EVT-02).** A new packet is queued, not fast-pathed, whenever the queue is non-empty, so live P2/P3 traffic cannot overtake a queued P0 during the drain.
 
 **Health payload** (REQ-EVT-12). The adapter builds a `MeshPacket` locally (`from` = this node, `to` = broadcast, `decoded.portnum = PRIVATE_APP`, id from `generatePacketId()`), wraps it in a `ServiceEnvelope` for the primary channel and publishes it directly to both topics. It never calls `sendToMesh()`, so it costs no airtime, and it never enters the queue. It is sent every `TREKLINK_OQ_HEALTH_INTERVAL_S` (300) while the link is up and the queue or any counter changed since the last report, and once on the first drain tick after an outage. Channel 0 must have `uplink_enabled`, as for any other uplink.
 
-Payload: UTF-8 JSON, one object, at most 400 bytes. Every field is always present.
+**On `/2/e/`, the payload is a fixed binary record**, because `meshtastic_Data_payload_t` holds at most 233 bytes (`mesh.pb.h:761`) and a JSON text of this schema can exceed that at large counter values. Correction of 2026-09-25: the first revision of this section specified JSON text of up to 400 bytes, which does not fit. Little-endian, 90 bytes (`treklink::oq::encodeHealth()`):
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 4 | magic `TKQH` |
+| 4 | 1 | version, `1` |
+| 5 | 1 | reserved, `0` |
+| 6 | 4 | `uptime_s` |
+| 10 | 4 | `capacity` |
+| 14 | 4 × 2 | `depth[0..3]`, u16 |
+| 22 | 4 × 4 | `enqueued[0..3]` |
+| 38 | 4 × 4 | `published[0..3]` |
+| 54 | 4 × 4 | `shed[0..3]` |
+| 70 | 4 | `p0_refused` |
+| 74 | 4 | `flash_write_failed` |
+| 78 | 4 | `restore_discarded` |
+| 82 | 4 | `flash_bytes` |
+| 86 | 4 | `flash_budget` |
+
+**On `/2/json/`, the serializer expands the record** into this object; every field is always present:
 
 ```json
 {
@@ -197,7 +218,7 @@ Payload: UTF-8 JSON, one object, at most 400 bytes. Every field is always presen
 | Field | Type | Meaning |
 |---|---|---|
 | `schema` | string | constant `treklink.queue_health` |
-| `v` | integer | schema version, `1` |
+| `v` | integer | record version, `1` |
 | `uptime_s` | integer | seconds since boot at the time of the report |
 | `capacity` | integer | effective total bound now (REQ-STA-05) |
 | `depth` | 4 integers | entries queued per tier, index 0 = P0 |
@@ -205,7 +226,7 @@ Payload: UTF-8 JSON, one object, at most 400 bytes. Every field is always presen
 | `p0_refused`, `flash_write_failed`, `restore_discarded` | integer | monotonic counters; `restore_discarded` is in bytes |
 | `flash_bytes`, `flash_budget` | integer | current log size and the clamped budget, bytes |
 
-**JSON topic.** `MeshPacketSerializer` gains an additive `PRIVATE_APP` case. If the payload parses as a JSON object whose `schema` is `treklink.queue_health`, the message gets `"type": "treklink_queue_health"` and that object as `payload`. Any other `PRIVATE_APP` payload is serialised exactly as stock (empty `type`, no `payload`). No stock PortNum's JSON changes. The consumer copy of this schema is `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`.
+**JSON topic.** `MeshPacketSerializer::JsonSerialize()` gains an additive `PRIVATE_APP` case. If the payload is exactly a valid version-1 `TKQH` record, the message gets `"type": "treklink_queue_health"` and the object above as `payload`. Any other `PRIVATE_APP` payload, including a truncated record, is serialised exactly as stock (empty `type`, no `payload`). No stock PortNum's JSON changes. The case exists only in `MeshPacketSerializer.cpp` (ESP32 and native); `MeshPacketSerializer_nRF52.cpp` is a separate implementation that is left untouched, and no TrekLink variant is nRF52. The consumer copy of this schema is `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`.
 
 ### 2.5 Interfaces
 
@@ -236,7 +257,7 @@ class QueueCore {
     void persistAll();                                     // REQ-EVT-07
     void setEpisodeActive(bool);
     const Stats &stats() const;
-    std::string healthJson(uint32_t uptimeS) const;        // §2.4
+    Health health(uint32_t uptimeS) const;                 // §2.4, encoded by encodeHealth()
 };
 }
 ```
@@ -259,7 +280,7 @@ For a button or gesture SOS raised with the uplink down, lasting `T ≥ 1` minut
 
 **Worst case per episode: `W(T) = 14 + 2(T − 1) + ⌈(14 + 2(T − 1)) / 16⌉` writes.** `W(1) = 15`, `W(30) = 77`, `W(60) = 138`. The peak rate is 14 writes in the first minute; steady state inside an episode is 2 per minute, above the no-SOS target of 1 per minute, which is the price of REQ-EVT-06. The exemption cap does not reduce `W`: exemption decides what may be shed, and every P1 is written when it arrives. The cap bounds the **flash space** an episode can pin to `K + M` records while the queue is full.
 
-A peer SOS adds 1 write per peer SOS text heard (P0); peer positions are P2 and stay in RAM. A fall SOS today costs 2 writes: its text (P0), and its opening position, which is `BACKGROUND` but classified P1 because `isInSOSTriggered()` is already true when it is sent (`FallDetectionModule.cpp:377-378`). It has no beacons until the Phase 9 fall-beacon fix. Compaction adds one streaming rewrite of the live records each time dead bytes reach 50% of a log of at least 16 KiB.
+A peer SOS adds 1 write per peer SOS text heard (P0); peer positions are P2 and stay in RAM. A fall SOS (v1, v2 and v4; v3 has no IMU) today costs 2 writes: its text (P0), and its opening position, which is `BACKGROUND` but classified P1 because `isInSOSTriggered()` is already true when it is sent (`FallDetectionModule.cpp:377-378`). It has no beacons until the Phase 9 fall-beacon fix. Compaction adds one streaming rewrite of the live records each time dead bytes reach 50% of a log of at least 16 KiB.
 
 **Without an SOS**, writes come only from spills: one per `TREKLINK_OQ_SPILL_BATCH` entries beyond the RAM bound (default batch = a quarter of the RAM tier, 8 on v3). The ≤1 write per minute target holds while fewer than 8 entries per minute arrive on v3; faster peer traffic exceeds it and is measured in task 7.7.
 
@@ -324,7 +345,7 @@ The adapter clamps the budget at init to `free LittleFS bytes − TREKLINK_OQ_FS
 
 ## 6. Testing & Measurement Strategy
 
-**Unit** (`test/test_onboard_queue/`, no hardware, runs under PlatformIO `native` and under host `g++`): classification across PortNum × origin × priority × episode × prefix; ordering over a randomised mixed-tier queue; the shed tree of Figure 3 including the all-P0 refusal and the K/M exemption; spill batching; write-through placement; commit, release and in-flight protection; record round-trip; restore from a seeded log, a truncated tail and a mid-log CRC fault; tombstones across a restore; compaction; flash-failure fallback; the counter identity of §2.2; the health JSON.
+**Unit** (`test/test_onboard_queue/`, no hardware, runs under PlatformIO `native` and under host `g++`): classification across PortNum × origin × priority × episode × prefix; ordering over a randomised mixed-tier queue; the shed tree of Figure 3 including the all-P0 refusal and the K/M exemption; spill batching; write-through placement; commit, release and in-flight protection; record round-trip; restore from a seeded log, a truncated tail and a mid-log CRC fault; tombstones across a restore; compaction; flash-failure fallback; the counter identity of §2.2; the health record round-trip. `test/test_meshpacket_serializer/ports/test_private_app.cpp` covers the JSON expansion and the stock behaviour for a foreign `PRIVATE_APP` payload.
 
 **Integration** (on-device): boot restore with a pre-seeded log; power cut after a P0 enqueue; compaction under a publish and enqueue mix; the AC-14 run on v3.
 

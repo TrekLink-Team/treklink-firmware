@@ -8,6 +8,7 @@
 #include "mesh/generated/meshtastic/mqtt.pb.h"
 #if !defined(ARCH_NRF52) || NRF52_USE_JSON
 #include "serialization/JSON.h"
+#include "TrekLinkEventQueue.h"
 #endif
 #if HAS_WIFI
 #include <WiFiClient.h>
@@ -136,6 +137,18 @@ class MQTT : private concurrency::OSThread
 
     /// Return 0 if sleep is okay, veto sleep if we are connected to pubsub server
     // int preflightSleepCb(void *unused = NULL) { return pubSub.connected() ? 1 : 0; }
+
+#if TREKLINK_OQ_ACTIVE
+    // TrekLink durable, priority-ordered outbound queue (specs/onboard-queue). Replaces mqttQueue's policy only;
+    // mqttQueue stays declared and unused so the stock path compiles unchanged with the flag off (D-019).
+    TrekLinkEventQueue trekLinkQueue;
+    /// Drain one entry; pollOk means the MQTT client poll of this tick succeeded (REQ-EVT-10, REQ-EVT-13).
+    void trekLinkDrain(bool pollOk);
+    /// The link is down: keep any in-flight entry queued and report once it returns.
+    void trekLinkLinkDown();
+    /// MQTT-only PRIVATE_APP queue-health report (REQ-EVT-12).
+    void trekLinkPublishHealth();
+#endif
 };
 
 void mqttInit();

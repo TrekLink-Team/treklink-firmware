@@ -19,6 +19,8 @@ void test_telemetry_environment_metrics_complete_coverage();
 void test_telemetry_environment_metrics_unset_fields();
 void test_encrypted_packet_serialization();
 void test_empty_encrypted_packet();
+void test_private_app_queue_health_serialization();
+void test_private_app_foreign_payload_is_stock();
 
 void setup()
 {
@@ -51,6 +53,10 @@ void setup()
     // Encrypted packet test
     RUN_TEST(test_encrypted_packet_serialization);
     RUN_TEST(test_empty_encrypted_packet);
+
+    // TrekLink onboard-queue health report on PRIVATE_APP
+    RUN_TEST(test_private_app_queue_health_serialization);
+    RUN_TEST(test_private_app_foreign_payload_is_stock);
 
     UNITY_END();
 }
