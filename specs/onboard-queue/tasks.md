@@ -39,7 +39,7 @@
 
 ## Phase 2: Classification, pure
 
-- [ ] 2.1 Define the SOS text prefix once in `TrekLinkSOSHelper.h` and build the SOS text from it in `sendSOSTextMessage()` callers, keeping the emitted bytes identical
+- [x] 2.1 Define the SOS text prefix once in `TrekLinkSOSHelper.h` and build the SOS text from it in `sendSOSTextMessage()` callers, keeping the emitted bytes identical
   - Shared symbols: waits for the blast radius (see the note at the top)
   - _Requirements: REQ-EVT-03_
 - [x] 2.2 Implement `classify()` per `design.md` §2.1, prefix passed in

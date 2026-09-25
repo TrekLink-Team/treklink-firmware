@@ -40,7 +40,7 @@ void TrekLinkSOSHelper::triggerSOS(uint8_t buzzerOwner)
     sendPositionPacket();
 
     // 2. Send SOS text message with coordinates
-    sendSOSTextMessage("SOS");
+    sendSOSTextMessage(TREKLINK_SOS_TAG);
 
     // 3. Activate local alarms
     activateAlarms(buzzerOwner);
@@ -143,9 +143,9 @@ void TrekLinkSOSHelper::sendSOSTextMessage(const char *prefix)
     if (node && nodeDB->hasValidPosition(node)) {
         float lat = node->position.latitude_i * 1e-7;
         float lon = node->position.longitude_i * 1e-7;
-        msgLen = snprintf(message, sizeof(message), "%s - [%.6f], [%.6f]", prefix, lat, lon);
+        msgLen = snprintf(message, sizeof(message), "%s" TREKLINK_SOS_SEPARATOR "[%.6f], [%.6f]", prefix, lat, lon);
     } else {
-        msgLen = snprintf(message, sizeof(message), "%s - [No GPS]", prefix);
+        msgLen = snprintf(message, sizeof(message), "%s" TREKLINK_SOS_SEPARATOR "[No GPS]", prefix);
     }
 
     if (msgLen >= sizeof(message)) {
