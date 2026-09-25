@@ -5,6 +5,7 @@
 #include "mesh/generated/meshtastic/mqtt.pb.h"
 #include "mesh/generated/meshtastic/telemetry.pb.h"
 #include "modules/RoutingModule.h"
+#include "mqtt/TrekLinkQueueCore.h"
 #include <DebugConfiguration.h>
 #include <mesh-pb-constants.h>
 #if defined(ARCH_ESP32)
@@ -396,6 +397,36 @@ std::string MeshPacketSerializer::JsonSerialize(const meshtastic_MeshPacket *mp,
                 }
             } else if (shouldLog) {
                 LOG_ERROR(errStr, "RemoteHardware");
+            }
+            break;
+        }
+        case meshtastic_PortNum_PRIVATE_APP: {
+            // TrekLink onboard-queue health report (specs/onboard-queue design.md section 2.4). Any other PRIVATE_APP
+            // payload is left exactly as stock serialises it: empty type, no payload.
+            treklink::oq::Health h;
+            if (treklink::oq::decodeHealth(mp->decoded.payload.bytes, mp->decoded.payload.size, h)) {
+                msgType = "treklink_queue_health";
+                JSONArray depth, enqueued, published, shed;
+                for (uint8_t t = 0; t < treklink::oq::TIER_COUNT; t++) {
+                    depth.push_back(new JSONValue((unsigned int)h.depth[t]));
+                    enqueued.push_back(new JSONValue((unsigned int)h.enqueued[t]));
+                    published.push_back(new JSONValue((unsigned int)h.published[t]));
+                    shed.push_back(new JSONValue((unsigned int)h.shed[t]));
+                }
+                msgPayload["schema"] = new JSONValue("treklink.queue_health");
+                msgPayload["v"] = new JSONValue((unsigned int)treklink::oq::HEALTH_VERSION);
+                msgPayload["uptime_s"] = new JSONValue((unsigned int)h.uptimeS);
+                msgPayload["capacity"] = new JSONValue((unsigned int)h.capacity);
+                msgPayload["depth"] = new JSONValue(depth);
+                msgPayload["enqueued"] = new JSONValue(enqueued);
+                msgPayload["published"] = new JSONValue(published);
+                msgPayload["shed"] = new JSONValue(shed);
+                msgPayload["p0_refused"] = new JSONValue((unsigned int)h.p0Refused);
+                msgPayload["flash_write_failed"] = new JSONValue((unsigned int)h.flashWriteFailed);
+                msgPayload["restore_discarded"] = new JSONValue((unsigned int)h.restoreDiscarded);
+                msgPayload["flash_bytes"] = new JSONValue((unsigned int)h.flashBytes);
+                msgPayload["flash_budget"] = new JSONValue((unsigned int)h.flashBudget);
+                jsonObj["payload"] = new JSONValue(msgPayload);
             }
             break;
         }

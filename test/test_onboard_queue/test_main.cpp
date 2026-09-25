@@ -735,7 +735,7 @@ void test_corrupt_meta_is_ignored(void)
 // Task 4.9: health payload
 // ---------------------------------------------------------------------------
 
-void test_health_json(void)
+void test_health_snapshot_and_round_trip(void)
 {
     MemStorage s;
     Config c = testConfig(8, 8);
@@ -743,26 +743,42 @@ void test_health_json(void)
     q.restore();
     put(q, TIER_P0, 1);
     put(q, TIER_P3, 2);
-    std::string j = q.healthJson(42);
-    char want[512];
-    snprintf(want, sizeof(want),
-             "{\"schema\":\"treklink.queue_health\",\"v\":1,\"uptime_s\":42,\"capacity\":8,\"depth\":[1,0,0,1],"
-             "\"enqueued\":[1,0,0,1],\"published\":[0,0,0,0],\"shed\":[0,0,0,0],\"p0_refused\":0,"
-             "\"flash_write_failed\":0,\"restore_discarded\":0,\"flash_bytes\":%lu,\"flash_budget\":1048576}",
-             (unsigned long)s.log.size());
-    TEST_ASSERT_EQUAL_STRING(want, j.c_str());
+    Health h = q.health(42);
+    TEST_ASSERT_EQUAL_UINT32(42, h.uptimeS);
+    TEST_ASSERT_EQUAL_UINT32(8, h.capacity);
+    TEST_ASSERT_EQUAL_UINT16(1, h.depth[TIER_P0]);
+    TEST_ASSERT_EQUAL_UINT16(1, h.depth[TIER_P3]);
+    TEST_ASSERT_EQUAL_UINT32(1, h.enqueued[TIER_P3]);
+    TEST_ASSERT_EQUAL_UINT32(s.log.size(), h.flashBytes);
+    TEST_ASSERT_EQUAL_UINT32(1u << 20, h.flashBudget);
+
+    std::vector<uint8_t> wire;
+    encodeHealth(h, wire);
+    TEST_ASSERT_EQUAL(HEALTH_BYTES, wire.size());
+    TEST_ASSERT_TRUE(wire.size() <= 233); // meshtastic_Data_payload_t
+    Health back;
+    TEST_ASSERT_TRUE(decodeHealth(&wire[0], wire.size(), back));
+    TEST_ASSERT_EQUAL_MEMORY(&h, &back, sizeof(Health));
 }
 
-void test_health_json_fits_at_maximum_values(void)
+void test_health_decode_rejects_foreign_payloads(void)
 {
-    // Every number at its widest still fits the 400-byte limit of design.md section 2.4.
-    Config c = testConfig(65535, 65535);
-    c.flashBudgetBytes = 0xFFFFFFFFu;
-    QueueCore q(c, NULL);
-    std::string j = q.healthJson(0xFFFFFFFFu);
-    TEST_ASSERT_TRUE(j.size() > 0);
-    size_t widest = j.size() + 14 * 9; // 14 counters that could grow from 1 digit to 10
-    TEST_ASSERT_TRUE(widest < 400);
+    Health h;
+    memset(&h, 0, sizeof(h));
+    h.shed[3] = 0xFFFFFFFFu;
+    std::vector<uint8_t> wire;
+    encodeHealth(h, wire);
+    Health out;
+    TEST_ASSERT_FALSE(decodeHealth(&wire[0], wire.size() - 1, out)); // wrong length
+    std::vector<uint8_t> bad = wire;
+    bad[0] = 'X';
+    TEST_ASSERT_FALSE(decodeHealth(&bad[0], bad.size(), out)); // wrong magic
+    bad = wire;
+    bad[4] = 2;
+    TEST_ASSERT_FALSE(decodeHealth(&bad[0], bad.size(), out)); // unknown version
+    const char *text = "{\"some\":\"other app\"}";
+    TEST_ASSERT_FALSE(decodeHealth((const uint8_t *)text, strlen(text), out));
+    TEST_ASSERT_FALSE(decodeHealth(NULL, 0, out));
 }
 
 // ---------------------------------------------------------------------------
@@ -799,8 +815,8 @@ static int runAll()
     RUN_TEST(test_torn_append_is_cut_before_the_next_write);
     RUN_TEST(test_budget_exhaustion);
     RUN_TEST(test_corrupt_meta_is_ignored);
-    RUN_TEST(test_health_json);
-    RUN_TEST(test_health_json_fits_at_maximum_values);
+    RUN_TEST(test_health_snapshot_and_round_trip);
+    RUN_TEST(test_health_decode_rejects_foreign_payloads);
     return UNITY_END();
 }
 

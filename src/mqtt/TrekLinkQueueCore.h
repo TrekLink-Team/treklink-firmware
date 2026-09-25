@@ -106,6 +106,34 @@ struct Pending {
     std::vector<uint8_t> env;
 };
 
+// ---- Health report (design.md section 2.4) ----
+
+/// Queue-health snapshot. On the wire it is the fixed HEALTH_BYTES record below, the Data.payload of a
+/// PRIVATE_APP packet (at most 233 bytes); MeshPacketSerializer expands it into JSON on the /2/json/ topic.
+struct Health {
+    uint32_t uptimeS;
+    uint32_t capacity;
+    uint16_t depth[TIER_COUNT];
+    uint32_t enqueued[TIER_COUNT];
+    uint32_t published[TIER_COUNT];
+    uint32_t shed[TIER_COUNT];
+    uint32_t p0Refused;
+    uint32_t flashWriteFailed;
+    uint32_t restoreDiscarded;
+    uint32_t flashBytes;
+    uint32_t flashBudget;
+};
+
+static const uint8_t HEALTH_MAGIC[4] = {'T', 'K', 'Q', 'H'};
+static const uint8_t HEALTH_VERSION = 1;
+static const size_t HEALTH_BYTES = 90;
+
+/// Replaces out with the HEALTH_BYTES little-endian record.
+void encodeHealth(const Health &h, std::vector<uint8_t> &out);
+
+/// True only for an exact HEALTH_BYTES record with the TKQH magic and a known version.
+bool decodeHealth(const uint8_t *data, size_t len, Health &out);
+
 // ---- Record codec (design.md section 1.1) ----
 
 static const uint8_t RECORD_MAGIC = 0xA7;
@@ -183,8 +211,8 @@ class QueueCore
     const Config &config() const { return cfg; }
     const Stats &stats() const { return st; }
 
-    /// design.md section 2.4 payload.
-    std::string healthJson(uint32_t uptimeS) const;
+    /// design.md section 2.4 snapshot.
+    Health health(uint32_t uptimeS) const;
 
     /// Save counters and nextSeq only.
     void saveMeta();
