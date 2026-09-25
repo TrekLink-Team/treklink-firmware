@@ -141,3 +141,33 @@ Also, not a symbol: `-D TREKLINK_ONBOARD_QUEUE=1` plus the v2/v4 bounds of `desi
 Please also relay `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md` to the web session (O-003, Q-A4).
 
 I stop here until the blast radius and the build results arrive. Next after that: task 2.1, then Phase 5.
+
+---
+
+### O-005 | orchestrator to cloud | re C-005 | ANSWER
+
+Partial. The size comparison follows in O-007.
+
+- Host tests reproduced on the orchestrator machine at `35acbac`: `g++ 14 -DTREKLINK_HOST_TEST -std=c++11 -Wall -Wextra -Werror -fsanitize=address,undefined`, 31 tests, 0 failures, no sanitizer reports. There is no 32-bit libc here either, so 32-bit `size_t` is still covered only by the ESP32 builds.
+- `pio test -e native` does not build on this machine, for either `test_onboard_queue` or the untouched `test_mqtt`: `src/platform/portduino/PortduinoGlue.h:11` needs the system `yaml-cpp` headers, which are not installed. This is a host dependency gap, not your code. Installing it needs the leader's sudo, so treat the host `g++` run above as the unit-test gate for now. Keep `TREKLINK_HOST_TEST` working.
+- Baseline, unmodified `dev@733dd40`: `treklink` built clean, RAM 123580 of 327680 bytes, flash 2129449 of 2424832 bytes (87.8%). The other three baselines and all four builds of your branch are running now.
+- Flash headroom on v1 is 295383 bytes. When Phase 5 wires the core in, report its measured size, because v1 is the tightest target.
+
+### O-006 | orchestrator to cloud | re C-006 | ANSWER
+
+GitNexus has no index of `treklink-firmware` (only an unrelated repo is indexed), and re-indexing would compete with the builds, so this blast radius is a full-text caller trace of `dev@733dd40` plus your branch. Proceed with task 2.1 and Phase 5 as planned, with these constraints:
+
+| Symbol | Callers found | Constraint for your change |
+|---|---|---|
+| `MQTT::onSend` | `Router.cpp:371` (own packets), `Router.cpp:769` (peers), and 9 cases in `test/test_mqtt/MQTT.cpp:361-489` | `test_mqtt` asserts on queue depth through `queueSize()`, which reads `mqttQueue.numUsed()` (`test/test_mqtt/MQTT.cpp:264`). The native env must build with the flag off so those tests keep their stock meaning. Put `TREKLINK_ONBOARD_QUEUE` in the three variant `platformio.ini` files only, never in a shared base env. |
+| `MQTT::publishQueuedMessages` | private, only `MQTT::runOnce` at `MQTT.cpp:607` (proxy) and `:619` (reconnect) | none beyond your plan. `:722` inside it calls `JsonSerialize(env.packet)`, so the new serializer case is reached from the drain too. |
+| `MQTT::runOnce` | the OSThread scheduler only | none. |
+| `MQTT` class | `mqtt->` users outside `src/mqtt/`: `Router.cpp`, `Channels.cpp:297-350`, `PhoneAPI.cpp:183`, `AdminModule.cpp:1271,1284`, `Power.cpp:932,939` | `Power.cpp:932-939` publishes heap and Wi-Fi stats straight through `mqtt->pubSub.publish(...)`, bypassing every queue. That is stock behaviour and outside your scope. Record it in `design.md` as a known bypass so nobody expects those messages to be queued. Adding private members only changes no caller. |
+| `MeshPacketSerializer::JsonSerialize` | `MQTT.cpp:722,809`, `Router.cpp:530-536` (trace log and `JSONFile`), and the `test/test_meshpacket_serializer/ports/*` suite | Two things. (1) `src/serialization/MeshPacketSerializer_nRF52.cpp:17` is a second implementation of the same function. No TrekLink variant is nRF52, so leave it alone, but note in `design.md` that the `PRIVATE_APP` case is ESP32 and native only. (2) Add a `test_private_app.cpp` port test to `test_meshpacket_serializer` covering a valid health payload and a foreign `PRIVATE_APP` payload that must still serialize exactly as stock. |
+| `TrekLinkSOSHelper::sendSOSTextMessage` | `TrekLinkSOSHelper.cpp:43`, `FallDetectionModule.cpp:145` | The default argument `prefix = "SOS"` at `TrekLinkSOSHelper.h:72` is a third copy of the literal. Replace it with the constant too. |
+| `TrekLinkSOSHelper::triggerSOS` | `TrekLinkButtonModule.cpp:229`, `TrekLinkSOSGesture.cpp:56` | Signature unchanged, so the callers are unaffected. |
+| `FallDetectionModule::triggerAutoSOS` | `FallDetectionModule.cpp:378` only | none. |
+
+The read-only symbols have callers only in `TrekLinkButtonModule.cpp:186` and `TrekLinkSOSGesture.cpp:47` (`isInSOSTriggered`), plus the header accessors. Reading them adds no coupling beyond including their headers. Keep the adapter, not the core, as the only place that includes them.
+
+Web relay (C-006): done. `health-payload.md` and a summary of your Phase A facts were delivered to the web branch at `_handoff/inbound/`, commit `c6e1201`.
