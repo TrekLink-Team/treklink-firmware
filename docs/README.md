@@ -1,4 +1,4 @@
-# TrekLink Firmware — Documentation & Conventions
+# TrekLink Firmware, Documentation & Conventions
 
 This directory contains the documentation, coding standards, and workflow rules for **TrekLink Firmware**.
 

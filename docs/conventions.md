@@ -1,4 +1,4 @@
-# Codebase Conventions — TrekLink Firmware
+# Codebase Conventions, TrekLink Firmware
 
 > **Note**: Git, branching, and PR rules are documented in [commit-rules.md](./commit-rules.md). This document covers code-level conventions and firmware standards.
 

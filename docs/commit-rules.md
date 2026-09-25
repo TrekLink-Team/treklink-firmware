@@ -1,4 +1,4 @@
-# Commit & Branch Rules — TrekLink Firmware
+# Commit & Branch Rules, TrekLink Firmware
 
 ## ⚠️ CRITICAL: BRANCH NAMING & PR WORKFLOW
 
@@ -98,7 +98,7 @@ If conflicts occur during `git rebase origin/dev`:
 
 ## ⛔ NEVER DO
 - ❌ Never push directly to `main` or `dev` on origin.
-- ❌ Never merge locally into `dev` or `main` — all merges occur via GitHub Pull Requests.
+- ❌ Never merge locally into `dev` or `main`, all merges occur via GitHub Pull Requests.
 - ❌ Never commit binary compilation artifacts (`.pio/`, build outputs, binaries) to git.
 
 ---

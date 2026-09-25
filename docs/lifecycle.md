@@ -1,4 +1,4 @@
-# Development Lifecycle — TrekLink Firmware
+# Development Lifecycle, TrekLink Firmware
 
 ## 1. Project Workflow & Development Lifecycle
 

@@ -1,4 +1,4 @@
-# AGENT.md — TrekLink Firmware Context
+# AGENT.md, TrekLink Firmware Context
 
 ## 1. Developer Identity & Project Scope
 
