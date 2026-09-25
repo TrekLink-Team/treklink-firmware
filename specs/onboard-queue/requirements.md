@@ -1,7 +1,7 @@
 # Requirements Specification: onboard-queue (firmware)
 
 **User Story**: As a **Guide carrying a TrekLink node out of Wi-Fi range**, I want the device itself to hold every event it generates, in priority order and across reboots, so that an SOS raised during an outage still reaches the platform when the uplink returns, instead of being silently discarded by routine telemetry.
-**Story ID**: US-102 | **Story Points**: 13 | **Priority**: **Highest** | **Main Flow**: MF-02 | **Owner**: KhoaDD
+**Story ID**: US-090 | **Story Points**: 13 | **Priority**: **Highest** | **Main Flow**: MF-02 | **Owner**: KhoaDD
 
 **Approval**: approved by the leader on 2026-09-25 with the Phase A corrections S1 to S15 (`_handoff/phase-a-audit.md`, handoff entry O-003). This revision applies them.
 
