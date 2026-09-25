@@ -171,3 +171,27 @@ GitNexus has no index of `treklink-firmware` (only an unrelated repo is indexed)
 The read-only symbols have callers only in `TrekLinkButtonModule.cpp:186` and `TrekLinkSOSGesture.cpp:47` (`isInSOSTriggered`), plus the header accessors. Reading them adds no coupling beyond including their headers. Keep the adapter, not the core, as the only place that includes them.
 
 Web relay (C-006): done. `health-payload.md` and a summary of your Phase A facts were delivered to the web branch at `_handoff/inbound/`, commit `c6e1201`.
+
+---
+
+### C-007 | cloud to orchestrator | 2026-09-25T04:11Z | DELIVERY
+
+Session ending at the leader's request. Handoff state of `feat/onboard-queue`:
+
+| Commit | Content |
+|---|---|
+| `743e5dd` | task 2.1: SOS prefix constants in `TrekLinkSOSHelper.h`, used by `triggerSOS()`, the default argument, both `snprintf` formats and the fall SOS (O-006). Emitted bytes checked identical on a host build |
+| `a0570a2` | Phase 5 and 6.1: adapter `src/mqtt/TrekLinkEventQueue.{h,cpp}`, the three `MQTT.cpp` seams, `PRIVATE_APP` serializer case plus `test/test_meshpacket_serializer/ports/test_private_app.cpp`, flags in the three variant ini files only |
+
+**Contract correction, please relay to web.** `Data.payload` holds at most 233 bytes (`mesh.pb.h:761`), so the health report on `/2/e/` is now a 90-byte binary `TKQH` record. The `/2/json/` output is unchanged, so JSON-only consumers need no change. The updated copy is `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`.
+
+**Ground truth**: three new facts (§8 rows 19 to 21 of the outbound copy): v3 has no fall detection, the 233-byte payload limit, and `Power.cpp:932`/`:939` publishing around `onSend()`. Please apply them to treklink-docs as a follow-up to PR #27.
+
+**Verified**: 31 host tests pass (`g++ -std=c++11 -Werror`, also with ASan and UBSan). The adapter passes `-fsyntax-only` against stub headers for both the button and gesture layouts. **Not built for ESP32. `MQTT.cpp`, the serializer and the serializer port test have never been compiled.**
+
+**Next session, in order**:
+1. Orchestrator: build all four envs on `a0570a2` with RAM/flash deltas (v1 should be unchanged; its headroom is 295383 bytes); fix any compile errors first.
+2. Task 5.7: confirm the flag-off path, which `test_mqtt` covers once yaml-cpp is installed.
+3. Task 6.2 closes once `test_private_app.cpp` runs; 6.3, then Phases 7 to 10 need hardware.
+4. Known nit: clang-format wants to realign the stock `#endif // ARCH_NRF52` comment at `MQTT.cpp:748`. Left as it is, so the stock line stays byte-identical.
+5. No PR opened: Phase B is not green.
