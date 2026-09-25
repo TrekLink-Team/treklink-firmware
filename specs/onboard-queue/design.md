@@ -147,7 +147,7 @@ flowchart TB
 
 1. **Newest-first within a tier.** The oldest telemetry is the only record of the device's state when the link dropped; the newest is the most redundant.
 2. **A queued P0 is never shed to admit a newer P0.** The enqueue is refused and counted.
-3. **The bounded exemption** keeps the start of an episode's trail and its current position, and lets the middle go. An indefinitely beaconing node therefore cannot pin the queue full of its own positions (open question Q4).
+3. **The bounded exemption** keeps the start of an episode's trail and its current position, and lets the middle go. An indefinitely beaconing node therefore cannot pin the queue full of its own positions (open question Q4). The core clamps `K + M` below the RAM bound at construction, so even at the smallest effective bound at least one episode entry stays sheddable and a new SOS can always get in.
 
 **Counter identity**, used by tests and by RQ1: `Σ enqueued = Σ published + Σ shed + p0_refused + depth`, where `enqueued` counts every entry offered to the queue, accepted or refused. It holds exactly until an unclean power loss drops unspilled RAM entries, which is the one loss the design accepts (requirements §1).
 
@@ -158,7 +158,7 @@ flowchart TB
 | P0, P1 | appended to flash before `enqueue()` returns | not applicable | already on flash |
 | P2, P3 | held in RAM | lowest-priority, oldest `TREKLINK_OQ_SPILL_BATCH` entries appended in **one** write | all appended in one write |
 
-If a flash write fails, the entry stays in RAM and `flash_write_failed` is incremented (REQ-ERR-02). The next write-through or spill retries flash.
+If a flash write fails, the entry stays in RAM and `flash_write_failed` is incremented (REQ-ERR-02). The next write-through or spill retries flash, and once flash accepts a write again every P0 and P1 entry still held in RAM is written first, in one append. A failed append that left bytes behind marks the log for a rewrite, which runs before the next append, so a torn record can never hide later ones at restore.
 
 ### 2.4 Drain, commit and health (REQ-EVT-09, REQ-EVT-10, REQ-EVT-12, REQ-EVT-13)
 

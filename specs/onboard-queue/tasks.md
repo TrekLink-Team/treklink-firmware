@@ -26,13 +26,13 @@
 
 - [ ] 1.1 Add the `TREKLINK_ONBOARD_QUEUE` build flag, on for v2/v3/v4 in their `platformio.ini`, absent for v1, and compile the adapter out when `MESHTASTIC_EXCLUDE_MQTT` is set
   - _Requirements: REQ-ERR-05_
-- [ ] 1.2 Create `src/mqtt/TrekLinkQueueCore.h` with `Tier`, `ClassifyInput`, `Config`, `Stats`, `LogStorage`, `QueueCore`, per `design.md` §2.5
+- [x] 1.2 Create `src/mqtt/TrekLinkQueueCore.h` with `Tier`, `ClassifyInput`, `Config`, `Stats`, `LogStorage`, `QueueCore`, per `design.md` §2.5
   - _Requirements: REQ-UBI-01_
-- [ ] 1.3 Implement the DATA and TOMBSTONE record codec with a CRC-32 trailer (`design.md` §1.1)
+- [x] 1.3 Implement the DATA and TOMBSTONE record codec with a CRC-32 trailer (`design.md` §1.1)
   - _Requirements: REQ-UBI-01, REQ-ERR-03_
-- [ ] 1.4 Add every bound and interval to `src/mqtt/TrekLinkQueueConfig.h` as a `build_flags`-overridable constant with a documented default
+- [x] 1.4 Add every bound and interval to `src/mqtt/TrekLinkQueueConfig.h` as a `build_flags`-overridable constant with a documented default
   - _Requirements: REQ-UBI-05_
-- [ ] 1.5 Unit test the record round-trip, a maximum-size envelope, an oversize length, and a truncated tail
+- [x] 1.5 Unit test the record round-trip, a maximum-size envelope, an oversize length, and a truncated tail
   - _Requirements: REQ-UBI-01, REQ-ERR-03_
 
 ---
@@ -42,9 +42,9 @@
 - [ ] 2.1 Define the SOS text prefix once in `TrekLinkSOSHelper.h` and build the SOS text from it in `sendSOSTextMessage()` callers, keeping the emitted bytes identical
   - Shared symbols: waits for the blast radius (see the note at the top)
   - _Requirements: REQ-EVT-03_
-- [ ] 2.2 Implement `classify()` per `design.md` §2.1, prefix passed in
+- [x] 2.2 Implement `classify()` per `design.md` §2.1, prefix passed in
   - _Requirements: REQ-EVT-03, REQ-EVT-04_
-- [ ] 2.3 Unit test classification across PortNum × origin × priority × episode state × prefix
+- [x] 2.3 Unit test classification across PortNum × origin × priority × episode state × prefix
   - Must cover: undecoded → P3; own `MAX` text without prefix → P0; peer `HIGH` text with prefix → P0; peer text without prefix → P3; own position with episode → P1; own `MAX` position without episode → P1; peer position → P2; telemetry → P3
   - _Requirements: REQ-EVT-03, REQ-EVT-04, AC-12, AC-13_
 
@@ -52,46 +52,46 @@
 
 ## Phase 3: Index, Ordering & Shedding
 
-- [ ] 3.1 Implement the RAM index, `{seq, packetId, offset, len, tier, flags, location}`
+- [x] 3.1 Implement the RAM index, `{seq, packetId, offset, len, tier, flags, location}`
   - _Requirements: REQ-UBI-01_
-- [ ] 3.2 Implement `enqueue()` with monotonic `seq`
+- [x] 3.2 Implement `enqueue()` with monotonic `seq`
   - _Requirements: REQ-EVT-02_
-- [ ] 3.3 Implement `peek()`: minimum tier, then minimum `seq`
+- [x] 3.3 Implement `peek()`: minimum tier, then minimum `seq`
   - _Requirements: REQ-EVT-09_
-- [ ] 3.4 Implement `markInFlight()`, `commit()` and `release()`; an in-flight entry is never shed
+- [x] 3.4 Implement `markInFlight()`, `commit()` and `release()`; an in-flight entry is never shed
   - _Requirements: REQ-EVT-10_
-- [ ] 3.5 Implement shedding per `design.md` §2.2, incoming entry as a candidate
+- [x] 3.5 Implement shedding per `design.md` §2.2, incoming entry as a candidate
   - _Requirements: REQ-STA-02, REQ-ERR-01_
-- [ ] 3.6 Implement the bounded K/M episode exemption
+- [x] 3.6 Implement the bounded K/M episode exemption
   - _Requirements: REQ-STA-04_
-- [ ] 3.7 Implement `Stats`: enqueued, published and shed by tier, `p0_refused`, `flash_write_failed`, `restore_discarded`
+- [x] 3.7 Implement `Stats`: enqueued, published and shed by tier, `p0_refused`, `flash_write_failed`, `restore_discarded`
   - _Requirements: REQ-UBI-06_
-- [ ] 3.8 Unit test flush ordering over a randomised mixed-tier queue
+- [x] 3.8 Unit test flush ordering over a randomised mixed-tier queue
   - _Requirements: REQ-EVT-09_
-- [ ] 3.9 Unit test the shed tree: P3 before P0; all-P0 refusal sheds nothing; incoming refused when it is the newest in the lowest tier; K/M exemption; in-flight protection; the counter identity
+- [x] 3.9 Unit test the shed tree: P3 before P0; all-P0 refusal sheds nothing; incoming refused when it is the newest in the lowest tier; K/M exemption; in-flight protection; the counter identity
   - _Requirements: REQ-STA-02, REQ-STA-04, REQ-ERR-01, AC-05, AC-06_
 
 ---
 
 ## Phase 4: Flash Tier & Durability (core, against `LogStorage`)
 
-- [ ] 4.1 Write-through append for P0 and P1
+- [x] 4.1 Write-through append for P0 and P1
   - _Requirements: REQ-EVT-06_
-- [ ] 4.2 Batched spill of the lowest-priority, oldest RAM entries when the RAM bound is exceeded
+- [x] 4.2 Batched spill of the lowest-priority, oldest RAM entries when the RAM bound is exceeded
   - _Requirements: REQ-EVT-05_
-- [ ] 4.3 Batched tombstones: flushed at the batch size, piggybacked on data appends, and at `persistAll()`
+- [x] 4.3 Batched tombstones: flushed at the batch size, piggybacked on data appends, and at `persistAll()`
   - _Requirements: REQ-EVT-10, REQ-ERR-04_
-- [ ] 4.4 `persistAll()`: spill every RAM entry, flush tombstones, save counters and `nextSeq`
+- [x] 4.4 `persistAll()`: spill every RAM entry, flush tombstones, save counters and `nextSeq`
   - _Requirements: REQ-EVT-07, REQ-UBI-06_
-- [ ] 4.5 `restore()`: one sequential scan, tombstones applied, valid prefix kept, corrupt tail counted and cut by a rewrite
+- [x] 4.5 `restore()`: one sequential scan, tombstones applied, valid prefix kept, corrupt tail counted and cut by a rewrite
   - _Requirements: REQ-EVT-08, REQ-ERR-03_
-- [ ] 4.6 Compaction on the dead-share threshold and before a write that would exceed the budget
+- [x] 4.6 Compaction on the dead-share threshold and before a write that would exceed the budget
   - _Requirements: REQ-EVT-05_
-- [ ] 4.7 Flash-failure fallback: entry kept in RAM, counted, effective bound drops to the RAM bound
+- [x] 4.7 Flash-failure fallback: entry kept in RAM, counted, effective bound drops to the RAM bound
   - _Requirements: REQ-ERR-02, REQ-STA-05_
-- [ ] 4.8 Unit test restore from a seeded log, a truncated log, a mid-log CRC fault, and tombstones across a restart; compaction; budget exhaustion; flash failure
+- [x] 4.8 Unit test restore from a seeded log, a truncated log, a mid-log CRC fault, and tombstones across a restart; compaction; budget exhaustion; flash failure
   - _Requirements: REQ-EVT-08, REQ-ERR-02, REQ-ERR-03, AC-03, AC-04, AC-07_
-- [ ] 4.9 Health JSON builder per `design.md` §2.4, unit tested against the schema
+- [x] 4.9 Health JSON builder per `design.md` §2.4, unit tested against the schema
   - _Requirements: REQ-EVT-12_
 
 ---
