@@ -15,6 +15,16 @@
 
 #include "configuration.h"
 
+// SOS text wire format, defined once. The emitted text is
+//   TREKLINK_SOS_TAG " - [lat], [lon]"            e.g. "SOS - [11.123456], [107.654321]"
+//   TREKLINK_SOS_FALL_TAG " - [lat], [lon]"       e.g. "SOS - FALL DETECTED - [No GPS]"
+// Every SOS text therefore begins with TREKLINK_SOS_TEXT_PREFIX, which the onboard queue classifier
+// matches (specs/onboard-queue REQ-EVT-03) and gateway-sync parses. Changing any of these changes the wire format.
+#define TREKLINK_SOS_TAG "SOS"
+#define TREKLINK_SOS_SEPARATOR " - "
+#define TREKLINK_SOS_TEXT_PREFIX TREKLINK_SOS_TAG TREKLINK_SOS_SEPARATOR
+#define TREKLINK_SOS_FALL_TAG TREKLINK_SOS_TEXT_PREFIX "FALL DETECTED"
+
 #ifdef TREKLINK_VARIANT
 
 #include <cstdint>
@@ -69,7 +79,7 @@ class TrekLinkSOSHelper
      * Format: "SOS - [lat], [lon]" or "SOS - FALL DETECTED - [lat], [lon]"
      * @param prefix  Text prefix (e.g., "SOS" or "SOS - FALL DETECTED")
      */
-    void sendSOSTextMessage(const char *prefix = "SOS");
+    void sendSOSTextMessage(const char *prefix = TREKLINK_SOS_TAG);
 
     /**
      * Tick function for SOS beacon retransmission.
