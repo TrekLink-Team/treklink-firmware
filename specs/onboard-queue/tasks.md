@@ -24,7 +24,7 @@
 
 ## Phase 1: Foundation & Record Format
 
-- [ ] 1.1 Add the `TREKLINK_ONBOARD_QUEUE` build flag, on for v2/v3/v4 in their `platformio.ini`, absent for v1, and compile the adapter out when `MESHTASTIC_EXCLUDE_MQTT` is set
+- [x] 1.1 Add the `TREKLINK_ONBOARD_QUEUE` build flag, on for v2/v3/v4 in their `platformio.ini`, absent for v1, and compile the adapter out when `MESHTASTIC_EXCLUDE_MQTT` is set
   - _Requirements: REQ-ERR-05_
 - [x] 1.2 Create `src/mqtt/TrekLinkQueueCore.h` with `Tier`, `ClassifyInput`, `Config`, `Stats`, `LogStorage`, `QueueCore`, per `design.md` §2.5
   - _Requirements: REQ-UBI-01_
@@ -98,17 +98,17 @@
 
 ## Phase 5: Firmware Adapter & Stock Seams, non-destructive
 
-- [ ] 5.1 Implement `FsLogStorage` over `FSCom` (append) and `SafeFile(path, true)` (rewrite, meta), and clamp the budget against LittleFS free space at init
+- [x] 5.1 Implement `FsLogStorage` over `FSCom` (append) and `SafeFile(path, true)` (rewrite, meta), and clamp the budget against LittleFS free space at init
   - _Requirements: REQ-ERR-02, REQ-ERR-06_
-- [ ] 5.2 Implement `TrekLinkEventQueue`: classification input from `mp_decoded`, episode state from the three SOS modules, lazy restore, `notifyReboot` and `notifyDeepSleep` observers
+- [x] 5.2 Implement `TrekLinkEventQueue`: classification input from `mp_decoded`, episode state from the three SOS modules, lazy restore, `notifyReboot` and `notifyDeepSleep` observers
   - _Requirements: REQ-EVT-04, REQ-EVT-07, REQ-EVT-08_
-- [ ] 5.3 `onSend()`: queue when disconnected **or** when the queue is non-empty; stock branch verbatim under `#else`
+- [x] 5.3 `onSend()`: queue when disconnected **or** when the queue is non-empty; stock branch verbatim under `#else`
   - _Requirements: REQ-EVT-01, REQ-EVT-02, REQ-UBI-02_
-- [ ] 5.4 `publishQueuedMessages()` delegates to the drain tick; stock body verbatim under `#else`
+- [x] 5.4 `publishQueuedMessages()` delegates to the drain tick; stock body verbatim under `#else`
   - _Requirements: REQ-EVT-09, REQ-UBI-02_
-- [ ] 5.5 Connected branch of `runOnce()` calls the drain tick at the configured interval
+- [x] 5.5 Connected branch of `runOnce()` calls the drain tick at the configured interval
   - _Requirements: REQ-EVT-13, REQ-STA-03_
-- [ ] 5.6 Commit after the next successful client poll; release on link loss; commit at once in proxy mode
+- [x] 5.6 Commit after the next successful client poll; release on link loss; commit at once in proxy mode
   - _Requirements: REQ-EVT-10_
 - [ ] 5.7 Build all four envs with the flag on and off; the flag-off build passes `test/test_mqtt` unchanged
   - _Requirements: REQ-UBI-02, AC-08_
@@ -117,9 +117,10 @@
 
 ## Phase 6: Health Reporting
 
-- [ ] 6.1 Publish the health payload MQTT-only on `PRIVATE_APP` at the configured interval and after an outage
+- [x] 6.1 Publish the health record MQTT-only on `PRIVATE_APP` at the configured interval and after an outage
   - _Requirements: REQ-EVT-12_
 - [ ] 6.2 Additive `PRIVATE_APP` case in `MeshPacketSerializer`, schema-gated, with a unit test that a non-matching payload serialises as stock
+  - Implemented with `test/test_meshpacket_serializer/ports/test_private_app.cpp`; open until that test runs (`pio test -e native` is blocked on both machines, O-005)
   - _Requirements: REQ-EVT-12, REQ-UBI-03_
 - [ ] 6.3 Confirm a stock Meshtastic client ignores the packet without error
   - _Requirements: REQ-UBI-04, AC-10_

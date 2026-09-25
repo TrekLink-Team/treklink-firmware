@@ -58,6 +58,8 @@ Parsers must test the fall prefix **first**, since `"SOS - FALL DETECTED - …"`
 
 > ⚠️ **(2026-09-25) With no GPS fix, beacons transmit nothing.** `sendOurPosition()` returns before allocating a packet when `config.position.fixed_position` is false and the node has had no local position since boot (`PositionModule.cpp:352-355`). An SOS raised before the first fix produces the `"SOS - [No GPS]"` text and the trigger-time position (built independently by `sendPositionPacket()`), and then **no beacon traffic at all**, even though `tickBeacon()` keeps logging "Beacon retransmit".
 
+**v3 has no fall detection (2026-09-25, second pass).** `FallDetectionModule.h:7` compiles the real module only when `!defined(TREKLINK_V3)`; on v3 the header provides a stub whose `isInSOSTriggered()` always returns `false` (`:124-131`), and `Modules.cpp:209-225` creates the module only under `#if !defined(TREKLINK_V3)`, logging "Disabled (no IMU on v3.0)" otherwise. A v3 unit raises SOS only by the 3-second gesture. The IMU per variant: v2 ICM-20948, v4 QMI8658, v1 MPU6050 (`Modules.cpp:212-220`).
+
 **Episode state lives in the callers, not in the helper (2026-09-25).** `TrekLinkSOSHelper` is stateless: `tickBeacon()` takes `sosStartTime` and `lastTxTime` as arguments (`TrekLinkSOSHelper.h:81`). The "is an SOS active" flag is held in three places:
 
 | Holder | Field / accessor | Evidence |
@@ -114,6 +116,10 @@ Default `<root>` is `msh`. `ServiceEnvelope` carries `{ packet, channel_id, gate
 **The uplink carries peer traffic, not only the node's own (2026-09-25).** `MQTT::onSend()` has two callers: `Router::send()` for packets this node originates (`Router.cpp:369-372`, guarded by `isFromUs(p)`), and the receive path for packets **heard from other nodes** (`Router.cpp:767-769`, guarded by `!isFromUs(p)`). Peer packets are filtered only by the `OK_TO_MQTT` bitfield check, which applies when the channel uses a default key and the broker is not on a private address (`MQTT.cpp:754-763`). Under D-021's custom PSK that filter does not apply, so a TrekLink uplink node forwards, and while disconnected **queues**, every decodable packet it hears on an uplink-enabled channel.
 
 **Received packets carry no sender priority.** `MeshPacket.priority` is local transmit-queue state and is not part of the LoRa frame. `fixPriority()` (`MeshPacketQueue.cpp:41-65`) assigns a default to any packet whose priority is `UNSET`: `HIGH` for text and admin (`:53-55`), `ACK` for routing, `RELIABLE` or `DEFAULT` otherwise. So a peer's SOS text is indistinguishable by priority from ordinary chat; only its `"SOS - "` prefix identifies it. A locally sent SOS text keeps `MAX` because `fixPriority()` only fills an unset value (`:45`).
+
+**Payload size limit (2026-09-25, second pass).** `meshtastic_Data_payload_t` is `PB_BYTES_ARRAY_T(233)` (`mesh.pb.h:761`). Any application payload, including a `PRIVATE_APP` report, holds at most 233 bytes.
+
+**A stock MQTT publish that bypasses `onSend()` (2026-09-25, second pass).** `Power.cpp:932` and `:939` publish heap and Wi-Fi statistics straight through `mqtt->pubSub.publish(...)`. They never pass through `MQTT::onSend()`, so they are never queued, by stock firmware or by the TrekLink queue, and are simply lost while the link is down.
 
 **Config surface** (`module_config.pb.h:126-160`): `enabled`, `address[64]`, `username[64]`, `password[32]`, `encryption_enabled`, `json_enabled`, `root`, `proxy_to_client_enabled`, `map_reporting_enabled`.
 
@@ -254,3 +260,6 @@ Update this file whenever firmware behaviour relevant to the platform changes, e
 | 16 | §5 | v1 env is `treklink`, not `treklink-v1` | corrected |
 | 17 | §5 | LittleFS partition sizes per variant | new |
 | 18 | §5 | v3 build enables PSRAM; v2 build does not | new, contradicts a Session 7 risk row |
+| 19 | §2 | v3 builds only a stub fall-detection module | new, second pass |
+| 20 | §4 | `Data.payload` is limited to 233 bytes | new, second pass |
+| 21 | §4 | `Power.cpp:932`, `:939` publish around `onSend()` and every queue | new, second pass |

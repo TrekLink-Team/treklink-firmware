@@ -609,6 +609,9 @@ int32_t MQTT::runOnce()
     }
 #if HAS_NETWORKING
     else if (!pubSub.loop()) {
+#if TREKLINK_OQ_ACTIVE
+        trekLinkLinkDown();
+#endif
         if (!wantConnection)
             return 5000; // If we don't want connection now, check again in 5 secs
         else {
@@ -629,6 +632,10 @@ int32_t MQTT::runOnce()
         }
 
         powerFSM.trigger(EVENT_CONTACT_FROM_PHONE); // Suppress entering light sleep (because that would turn off bluetooth)
+#if TREKLINK_OQ_ACTIVE
+        // specs/onboard-queue REQ-EVT-13: stock never drains on this branch, so a backlog would wait for the next outage.
+        trekLinkDrain(true);
+#endif
         return 20;
     }
 #else
@@ -698,6 +705,10 @@ void MQTT::publishNodeInfo()
 }
 void MQTT::publishQueuedMessages()
 {
+#if TREKLINK_OQ_ACTIVE
+    // specs/onboard-queue: called on the proxy tick and on the tick that re-established the link.
+    trekLinkDrain(false);
+#else
     if (mqttQueue.isEmpty())
         return;
 
@@ -735,6 +746,8 @@ void MQTT::publishQueuedMessages()
     LOG_INFO("JSON publish message to %s, %u bytes: %s", topicJson.c_str(), jsonString.length(), jsonString.c_str());
     publish(topicJson.c_str(), jsonString.c_str(), false);
 #endif // ARCH_NRF52 NRF52_USE_JSON
+
+#endif // TREKLINK_OQ_ACTIVE
 }
 
 void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_MeshPacket &mp_decoded, ChannelIndex chIndex)
@@ -797,7 +810,13 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
     size_t numBytes = pb_encode_to_bytes(bytes, sizeof(bytes), &meshtastic_ServiceEnvelope_msg, &env);
     std::string topic = cryptTopic + channelId + "/" + nodeId;
 
-    if (moduleConfig.mqtt.proxy_to_client_enabled || this->isConnectedDirectly()) {
+#if TREKLINK_OQ_ACTIVE
+    // specs/onboard-queue REQ-EVT-01/02: the fast path only while no backlog exists, so live traffic cannot overtake it.
+    const bool publishNow = (moduleConfig.mqtt.proxy_to_client_enabled || this->isConnectedDirectly()) && trekLinkQueue.empty();
+#else
+    const bool publishNow = moduleConfig.mqtt.proxy_to_client_enabled || this->isConnectedDirectly();
+#endif
+    if (publishNow) {
         LOG_DEBUG("MQTT Publish %s, %u bytes", topic.c_str(), numBytes);
         publish(topic.c_str(), bytes, numBytes, false);
 
@@ -816,6 +835,10 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         publish(topicJson.c_str(), jsonString.c_str(), false);
 #endif // ARCH_NRF52 NRF52_USE_JSON
     } else {
+#if TREKLINK_OQ_ACTIVE
+        // specs/onboard-queue: classify, then queue with priority-aware shedding and flash durability.
+        trekLinkQueue.enqueue(mp_decoded, topic, bytes, numBytes);
+#else
         LOG_INFO("MQTT not connected, queue packet");
         QueueEntry *entry;
         if (mqttQueue.numFree() == 0) {
@@ -830,8 +853,119 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
             LOG_CRIT("Failed to add a message to mqttQueue!");
             abort();
         }
+#endif
     }
 }
+
+#if TREKLINK_OQ_ACTIVE
+void MQTT::trekLinkLinkDown()
+{
+    treklink::oq::QueueCore &q = trekLinkQueue.core();
+    if (q.hasInFlight())
+        q.release(q.inFlight()); // not confirmed by a successful poll: publish it again (REQ-EVT-10)
+    trekLinkQueue.linkLost();
+}
+
+void MQTT::trekLinkDrain(bool pollOk)
+{
+    const bool proxy = moduleConfig.mqtt.proxy_to_client_enabled;
+    if (!proxy && !isConnected)
+        return;
+    treklink::oq::QueueCore &q = trekLinkQueue.core();
+
+    if (q.hasInFlight()) {
+        if (!pollOk && !proxy)
+            return; // wait for a successful poll before deleting (REQ-EVT-10)
+        q.commit(q.inFlight());
+    }
+
+    trekLinkPublishHealth();
+    if (q.empty())
+        return;
+
+    const uint32_t now = millis();
+    if (trekLinkQueue.lastDrainMs != 0 && now - trekLinkQueue.lastDrainMs < TREKLINK_OQ_DRAIN_INTERVAL_MS)
+        return; // REQ-STA-03
+
+    treklink::oq::Pending p;
+    if (!q.peek(p))
+        return;
+    LOG_INFO("TrekLinkQueue: publish P%u id=0x%08x, %u bytes to %s, %u left", (unsigned)p.tier, (unsigned)p.packetId,
+             (unsigned)p.env.size(), p.topic.c_str(), (unsigned)(q.depth() - 1));
+    if (!publish(p.topic.c_str(), p.env.data(), p.env.size(), false))
+        return;
+    trekLinkQueue.lastDrainMs = now ? now : 1;
+    q.markInFlight(p.seq);
+    if (proxy)
+        q.commit(p.seq); // handed to the phone, as stock treats it
+
+#if !defined(ARCH_NRF52) || defined(NRF52_USE_JSON)
+    // JSON companion, exactly as stock publishQueuedMessages() builds it. Its failure never blocks deletion.
+    if (!moduleConfig.mqtt.json_enabled)
+        return;
+    const DecodedServiceEnvelope env(p.env.data(), p.env.size());
+    if (!env.validDecode || env.packet == NULL || env.channel_id == NULL)
+        return;
+    auto jsonString = MeshPacketSerializer::JsonSerialize(env.packet);
+    if (jsonString.length() == 0)
+        return;
+    std::string nodeId = nodeDB->getNodeId();
+    std::string topicJson;
+    if (env.packet->pki_encrypted) {
+        topicJson = jsonTopic + "PKI/" + nodeId;
+    } else {
+        topicJson = jsonTopic + env.channel_id + "/" + nodeId;
+    }
+    publish(topicJson.c_str(), jsonString.c_str(), false);
+#endif
+}
+
+void MQTT::trekLinkPublishHealth()
+{
+    const uint32_t now = millis();
+    if (!trekLinkQueue.healthDue(now))
+        return;
+    const auto &ch = channels.getByIndex(0);
+    if (!ch.settings.uplink_enabled)
+        return;
+
+    // Built locally and published straight to MQTT: never sent over LoRa and never queued (REQ-EVT-12).
+    meshtastic_MeshPacket pkt = meshtastic_MeshPacket_init_zero;
+    pkt.from = nodeDB->getNodeNum();
+    pkt.to = NODENUM_BROADCAST;
+    pkt.id = generatePacketId();
+    pkt.channel = 0;
+    pkt.rx_time = getValidTime(RTCQualityFromNet);
+    pkt.which_payload_variant = meshtastic_MeshPacket_decoded_tag;
+    pkt.decoded.portnum = meshtastic_PortNum_PRIVATE_APP;
+    std::vector<uint8_t> payload;
+    trekLinkQueue.healthPayload(now / 1000, payload);
+    if (payload.size() > sizeof(pkt.decoded.payload.bytes))
+        return;
+    memcpy(pkt.decoded.payload.bytes, payload.data(), payload.size());
+    pkt.decoded.payload.size = payload.size();
+
+    const char *channelId = channels.getGlobalId(0);
+    std::string nodeId = nodeDB->getNodeId();
+    const meshtastic_ServiceEnvelope env = {
+        .packet = &pkt, .channel_id = const_cast<char *>(channelId), .gateway_id = const_cast<char *>(nodeId.c_str())};
+    size_t numBytes = pb_encode_to_bytes(bytes, sizeof(bytes), &meshtastic_ServiceEnvelope_msg, &env);
+    std::string topic = cryptTopic + channelId + "/" + nodeId;
+    if (!publish(topic.c_str(), bytes, numBytes, false))
+        return;
+    LOG_INFO("TrekLinkQueue: health report published to %s", topic.c_str());
+#if !defined(ARCH_NRF52) || defined(NRF52_USE_JSON)
+    if (moduleConfig.mqtt.json_enabled) {
+        auto jsonString = MeshPacketSerializer::JsonSerialize(&pkt);
+        if (jsonString.length() != 0) {
+            std::string topicJson = jsonTopic + channelId + "/" + nodeId;
+            publish(topicJson.c_str(), jsonString.c_str(), false);
+        }
+    }
+#endif
+    trekLinkQueue.healthSent(now);
+}
+#endif // TREKLINK_OQ_ACTIVE
 
 void MQTT::perhapsReportToMap()
 {
