@@ -103,8 +103,7 @@ void TrekLinkSOSHelper::sendPositionPacket()
 {
     // Build position from current node data
     meshtastic_Position pos = meshtastic_Position_init_default;
-    meshtastic_NodeInfoLite *node =
-        nodeDB->getNodeNum() ? nodeDB->getMeshNode(nodeDB->getNodeNum()) : nullptr;
+    meshtastic_NodeInfoLite *node = nodeDB->getNodeNum() ? nodeDB->getMeshNode(nodeDB->getNodeNum()) : nullptr;
 
     if (node && nodeDB->hasValidPosition(node)) {
         pos.latitude_i = node->position.latitude_i;
@@ -120,11 +119,8 @@ void TrekLinkSOSHelper::sendPositionPacket()
     packet->want_ack = false;
     packet->decoded.portnum = meshtastic_PortNum_POSITION_APP;
 
-    packet->decoded.payload.size = pb_encode_to_bytes(
-        packet->decoded.payload.bytes,
-        sizeof(packet->decoded.payload.bytes),
-        &meshtastic_Position_msg,
-        &pos);
+    packet->decoded.payload.size =
+        pb_encode_to_bytes(packet->decoded.payload.bytes, sizeof(packet->decoded.payload.bytes), &meshtastic_Position_msg, &pos);
 
     if (service) {
         service->sendToMesh(packet);
@@ -134,8 +130,7 @@ void TrekLinkSOSHelper::sendPositionPacket()
 void TrekLinkSOSHelper::sendSOSTextMessage(const char *prefix)
 {
     // Extract GPS coordinates
-    meshtastic_NodeInfoLite *node =
-        nodeDB->getNodeNum() ? nodeDB->getMeshNode(nodeDB->getNodeNum()) : nullptr;
+    meshtastic_NodeInfoLite *node = nodeDB->getNodeNum() ? nodeDB->getMeshNode(nodeDB->getNodeNum()) : nullptr;
 
     char message[100];
     size_t msgLen;

@@ -745,7 +745,7 @@ void MQTT::publishQueuedMessages()
     }
     LOG_INFO("JSON publish message to %s, %u bytes: %s", topicJson.c_str(), jsonString.length(), jsonString.c_str());
     publish(topicJson.c_str(), jsonString.c_str(), false);
-#endif // ARCH_NRF52 NRF52_USE_JSON
+#endif                      // ARCH_NRF52 NRF52_USE_JSON
 
 #endif // TREKLINK_OQ_ACTIVE
 }
