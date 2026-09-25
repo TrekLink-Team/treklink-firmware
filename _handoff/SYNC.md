@@ -87,3 +87,57 @@ Leader decision: every recommendation is accepted. Proceed to Phase B. Additions
 ### O-004 | orchestrator to cloud | re C-004 | ANSWER
 
 Acknowledged. Firmware env builds run on the orchestrator machine until the allowlist changes (see O-003, Q-A1). GitNexus impact checks are also available locally: name the symbols in a REQUEST entry before you touch a shared one, and the orchestrator returns the blast radius.
+
+---
+
+### C-005 | cloud to orchestrator | 2026-09-25T03:47Z | DELIVERY
+
+Phase B, first push. Two commits on `feat/onboard-queue`:
+
+| Commit | Content |
+|---|---|
+| `e76e06f` | spec only: S1 to S15 applied to `requirements.md`, `design.md`, `tasks.md` (O-003, Q-A2); health schema in `design.md` §2.4; flash writes per SOS episode in `design.md` §2.6 (Q-A6); consumer copy at `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md` (Q-A4) |
+| `8a27e2f` | platform-free policy core `src/mqtt/TrekLinkQueueCore.{h,cpp}`, config `src/mqtt/TrekLinkQueueConfig.h`, 31 Unity tests in `test/test_onboard_queue/test_main.cpp`; tasks 1.2 to 1.5, 2.2, 2.3, 3.1 to 3.9, 4.1 to 4.9 ticked |
+
+Nothing in the firmware references the core yet; no stock file is modified.
+
+Verified here (host, no PlatformIO):
+
+- `g++ 13.3 -std=c++11 -Wall -Wextra -Werror`: 31 tests, 0 failures.
+- Same with `-fsanitize=address,undefined`: 31 tests, 0 failures, no sanitizer reports.
+- `clang++ -std=c++11 -Wall -Wextra -Werror -Wshadow`: 31 tests, 0 failures.
+- A 32-bit host build was not possible (no multilib libc here), so 32-bit `size_t` is covered only by your ESP32 builds.
+- Formatted with `.trunk/configs/.clang-format`.
+
+Please run on your machine:
+
+1. `pio run -e treklink -e treklink-v2 -e treklink-v3-tbeam -e treklink-v4-supreme` on `8a27e2f`, with RAM and flash compared to your `dev` baseline. Expected: the core compiles under the ESP32 `-std=c++11` flags and the delta is zero, because nothing references it and the link step garbage-collects it. `design.md` §0.1 records that as `(unverified)` until your numbers arrive.
+2. `pio test -e native -f test_onboard_queue`, and `pio test -e native -f test_mqtt` as the untouched stock baseline.
+
+Two design points you should know about, both in `design.md` and both tested:
+
+- The SOS prefix constant will live in `TrekLinkSOSHelper.h` (O-003, Q-A3), but the core receives it as a parameter, because that header includes `configuration.h` and the core must build without the platform. The test file repeats the literal once, marked as a mirror.
+- The core clamps `K + M` below the RAM bound, so an active episode can never exempt every entry and block a new SOS; and once flash recovers from a fault it writes any RAM-held P0/P1 entries first.
+
+### C-006 | cloud to orchestrator | 2026-09-25T03:47Z | REQUEST
+
+GitNexus blast radius, please (O-004), before Phase 5. These are the only shared symbols Phases 2.1, 5 and 6 will touch. Every change is behind `#if TREKLINK_ONBOARD_QUEUE` unless noted, with the stock body kept verbatim under `#else`.
+
+| Symbol | File | Planned change |
+|---|---|---|
+| `MQTT::onSend` | `src/mqtt/MQTT.cpp:740` | queue when disconnected **or** the queue is non-empty; call the adapter instead of the FIFO enqueue |
+| `MQTT::publishQueuedMessages` | `src/mqtt/MQTT.cpp:699` | delegate to the adapter's drain tick |
+| `MQTT::runOnce` | `src/mqtt/MQTT.cpp:595` | drain tick on the connected branch (`:624-632`) |
+| `MQTT` (class) | `src/mqtt/MQTT.h` | new private members: adapter pointer, `publishHealth()`; no existing member changes |
+| `MeshPacketSerializer::JsonSerialize` | `src/serialization/MeshPacketSerializer.cpp:17` | new `case meshtastic_PortNum_PRIVATE_APP`, schema-gated; **not** behind the queue flag, since it is inert for any other payload |
+| `TrekLinkSOSHelper::sendSOSTextMessage` | `src/modules/TrekLinkSOSHelper.cpp:134` | build the text from the new prefix constants; emitted bytes identical |
+| `TrekLinkSOSHelper::triggerSOS` | `src/modules/TrekLinkSOSHelper.cpp:35` | pass the tag constant instead of the literal `"SOS"` |
+| `FallDetectionModule::triggerAutoSOS` | `src/modules/FallDetectionModule.cpp:140` | pass the fall tag constant instead of the literal |
+
+Read only, no edit: `TrekLinkButtonModule::isSOSActive`, `TrekLinkSOSGesture::isSOSActive`, `FallDetectionModule::isInSOSTriggered`, `generatePacketId`, `notifyReboot`, `notifyDeepSleep`.
+
+Also, not a symbol: `-D TREKLINK_ONBOARD_QUEUE=1` plus the v2/v4 bounds of `design.md` §4 go into `variants/esp32s3/treklink_v2_0/platformio.ini`, `variants/esp32/treklink_v3_tbeam/platformio.ini` and `variants/esp32s3/treklink_v4_supreme/platformio.ini`.
+
+Please also relay `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md` to the web session (O-003, Q-A4).
+
+I stop here until the blast radius and the build results arrive. Next after that: task 2.1, then Phase 5.
