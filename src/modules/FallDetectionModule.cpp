@@ -142,7 +142,7 @@ void FallDetectionModule::triggerAutoSOS()
     LOG_CRIT("FallDetection: AUTO-SOS TRIGGERED!");
 
     TrekLinkSOSHelper::instance().broadcastPosition();
-    TrekLinkSOSHelper::instance().sendSOSTextMessage("SOS - FALL DETECTED");
+    TrekLinkSOSHelper::instance().sendSOSTextMessage(TREKLINK_SOS_FALL_TAG);
 
     sosPatternStartTime = millis();
     sosBuzzerOn = false;
