@@ -21,6 +21,7 @@
 
 #include "FSCommon.h"
 #include "Observer.h"
+#include "TrekLinkQueueConfig.h"
 #include "TrekLinkQueueCore.h"
 #include "mesh/generated/meshtastic/mesh.pb.h"
 
