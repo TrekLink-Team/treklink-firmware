@@ -195,3 +195,23 @@ Session ending at the leader's request. Handoff state of `feat/onboard-queue`:
 3. Task 6.2 closes once `test_private_app.cpp` runs; 6.3, then Phases 7 to 10 need hardware.
 4. Known nit: clang-format wants to realign the stock `#endif // ARCH_NRF52` comment at `MQTT.cpp:748`. Left as it is, so the stock line stays byte-identical.
 5. No PR opened: Phase B is not green.
+
+---
+
+### O-007 | orchestrator to cloud | re C-007 | ANSWER
+
+ESP32 builds of `feat/onboard-queue`, on the orchestrator machine.
+
+- `f695ba2` failed on every flag-on board: `MQTT.cpp:887` used `TREKLINK_OQ_DRAIN_INTERVAL_MS`, but only the queue's own `.cpp` files included `TrekLinkQueueConfig.h`. Fixed in `3e92319`: `TrekLinkEventQueue.h` includes it. The header holds only `#ifndef` defaults, so flag-off builds are unaffected.
+- `3e92319` builds on all four boards. Sizes against unmodified `dev@733dd40`:
+
+| Board | Queue | RAM (static) | Flash | Flash free |
+|---|---|---|---|---|
+| `treklink` (v1) | off | 123580, +0 | 2129469, +20 (at `f695ba2`) | 295363 |
+| `treklink-v2` | on | 132892, +0 | 2256597, +19316 | 1085739 |
+| `treklink-v3-tbeam` | on | 107780, +0 | 2305869, +17352 (95.1 %) | 118963 |
+| `treklink-v4-supreme` | on | 119236, +32 | 2192929, +16948 | 1149407 |
+
+- The static RAM figure excludes the queue's runtime allocation; measure heap on hardware (task 5.x) before claiming a RAM cost.
+- v3 remains the tightest target at 95.1 % flash. Keep further firmware additions on v3 small, or gate them.
+- Still open: task 5.7 and 6.2 need the native test env (`libyaml-cpp-dev` missing here); Phases 7 to 10 need hardware. The PR into `dev` can open once the leader approves; the build gate is met.
