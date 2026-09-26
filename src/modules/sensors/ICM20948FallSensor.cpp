@@ -5,11 +5,11 @@
 
 #include "ICM20948FallSensor.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && __has_include(<ICM_20948.h>)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && __has_include(<ICM_20948.h>)
 
+#include "../../motion/ICM20948Sensor.h"
 #include "configuration.h"
 #include "main.h"
-#include "../../motion/ICM20948Sensor.h"
 
 bool ICM20948FallSensor::init()
 {
@@ -64,8 +64,8 @@ bool ICM20948FallSensor::init()
         return false;
     }
 
-    if (fallbackIcm.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr),
-                                   ICM_20948_Sample_Mode_Continuous) != ICM_20948_Stat_Ok) {
+    if (fallbackIcm.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous) !=
+        ICM_20948_Stat_Ok) {
         LOG_WARN("ICM20948FallSensor: Continuous mode set failed");
         return false;
     }

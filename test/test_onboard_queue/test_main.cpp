@@ -829,6 +829,8 @@ int main()
     return runAll();
 }
 #else
+#include <Arduino.h> // declares setup() and loop() with the linkage portduino's main expects
+
 void setup()
 {
     exit(runAll());
