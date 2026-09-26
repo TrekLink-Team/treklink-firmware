@@ -10,7 +10,7 @@
 
 #include "configuration.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && __has_include(<Adafruit_MPU6050.h>)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && __has_include(<Adafruit_MPU6050.h>)
 
 #include "../FallSensorInterface.h"
 #include <Adafruit_MPU6050.h>
