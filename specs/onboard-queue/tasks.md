@@ -110,7 +110,8 @@
   - _Requirements: REQ-EVT-13, REQ-STA-03_
 - [x] 5.6 Commit after the next successful client poll; release on link loss; commit at once in proxy mode
   - _Requirements: REQ-EVT-10_
-- [ ] 5.7 Build all four envs with the flag on and off; the flag-off build passes `test/test_mqtt` unchanged
+- [x] 5.7 Build all four envs with the flag on and off; the flag-off build passes `test/test_mqtt` unchanged
+  - All four ESP32 envs build (O-007). The native env builds with the flag off and passes `test_mqtt`; its only edit is a GCC 14 narrowing fix to two literals, not a behaviour change
   - _Requirements: REQ-UBI-02, AC-08_
 
 ---
@@ -119,8 +120,8 @@
 
 - [x] 6.1 Publish the health record MQTT-only on `PRIVATE_APP` at the configured interval and after an outage
   - _Requirements: REQ-EVT-12_
-- [ ] 6.2 Additive `PRIVATE_APP` case in `MeshPacketSerializer`, schema-gated, with a unit test that a non-matching payload serialises as stock
-  - Implemented with `test/test_meshpacket_serializer/ports/test_private_app.cpp`; open until that test runs (`pio test -e native` is blocked on both machines, O-005)
+- [x] 6.2 Additive `PRIVATE_APP` case in `MeshPacketSerializer`, schema-gated, with a unit test that a non-matching payload serialises as stock
+  - Implemented with `test/test_meshpacket_serializer/ports/test_private_app.cpp`, which passes under `pio test -e native` (90 of 90 native cases, 2026-09-26)
   - _Requirements: REQ-EVT-12, REQ-UBI-03_
 - [ ] 6.3 Confirm a stock Meshtastic client ignores the packet without error
   - _Requirements: REQ-UBI-04, AC-10_
