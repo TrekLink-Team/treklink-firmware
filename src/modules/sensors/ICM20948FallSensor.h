@@ -13,7 +13,7 @@
 
 #include "configuration.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && __has_include(<ICM_20948.h>)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && __has_include(<ICM_20948.h>)
 
 #include "../FallSensorInterface.h"
 #include <ICM_20948.h>

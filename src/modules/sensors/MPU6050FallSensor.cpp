@@ -5,7 +5,7 @@
 
 #include "MPU6050FallSensor.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && __has_include(<Adafruit_MPU6050.h>)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && __has_include(<Adafruit_MPU6050.h>)
 
 #include "configuration.h"
 #include "main.h"
@@ -20,9 +20,9 @@ bool MPU6050FallSensor::init()
     }
 
     // Configure for fall detection (matches original FallDetectionModule settings)
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);   // ±8g for impact detection
-    mpu.setGyroRange(MPU6050_RANGE_500_DEG);         // ±500°/s for rotation
-    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);      // Low-pass noise filter
+    mpu.setAccelerometerRange(MPU6050_RANGE_8_G); // ±8g for impact detection
+    mpu.setGyroRange(MPU6050_RANGE_500_DEG);      // ±500°/s for rotation
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);   // Low-pass noise filter
 
     LOG_INFO("MPU6050FallSensor: Initialized (±8g, ±500°/s, 21Hz LP)");
     return true;
