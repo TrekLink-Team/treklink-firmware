@@ -139,9 +139,9 @@ contradicts nothing is done, even if its wording is plain. This never licenses a
 claim; it bounds effort on presentation, not effort on truth. A mechanical sweep is verified by
 sampling the diff plus running the checker, not by reading every line. Stage 2.7.
 
-### 2.7 Prose conventions are binding, and two skills load at session start
+### 2.7 Prose conventions are binding, and three skills load at session start
 
-Full rules: `01-conventions/14-prose-and-wording.md`. Recorded as **D-024**.
+Full rules: `01-conventions/14-prose-and-wording.md`. Recorded as **D-024**, skills amended by **D-043**.
 
 **No em dash `—` in prose.** Anywhere: chat replies, specs, commit messages, PR bodies, issue text,
 code comments, Jira cards, the graded reports. No en dash as a clause separator. Join with a comma,
@@ -155,16 +155,17 @@ two-beat antithesis (`not X, but Y` as a rhetorical device), unverified claims s
 fabricated precision. Mark a carried-forward claim `(unverified)` and add it to the register in the
 same edit.
 
-**Two skills load at session start, without being asked**, for every AI assistant in any of the
+**Three skills load at session start, without being asked**, for every AI assistant in any of the
 five repositories:
 
 | Skill | Governs |
 |---|---|
 | `prose-and-wording` | What any written text may contain. Always on. |
-| `caveman`, level `full` | The register of chat replies only. Compresses. |
+| `communication-tone` | Chat replies: four-part status (asked, done, state, next), settle scope then execute, plain technical register. |
+| `human` | The pass every submitted or supervisor-bound document goes through (chapter 15 §4). |
 
-Anything persisted to a repository stays normal prose. Chat is compressed. On conflict, clarity
-wins, and caveman never authorises an em dash. An assistant that is not Claude Code carries the
+The `caveman` skill is retired (D-043). No reply is written in a compressed register. On conflict,
+clarity wins, and no skill authorises an em dash. An assistant that is not Claude Code carries the
 same rules in its own always-on configuration; a missing skill is not an excuse, because §2.7 is
 enforced by review.
 
@@ -269,7 +270,7 @@ Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
 - **Google Gemini, and any model outside that list** → ingestion, chores, subagents, codebase
   understanding, explanation **only**. Never critical modules. No exceptions.
 - Every PR declares `Model used:`.
-- **`prose-and-wording` and `caveman` (level `full`) load at session start, always** (§2.7, D-024).
+- **`prose-and-wording`, `communication-tone` and `human` load at session start, always** (§2.7, D-024, D-043).
 
 **Context budget: 80% maximum.** Cross it and run `/summarization`, then start a fresh session from
 the handoff prompt. Session size is not quota'd, 20K to 500K are all legitimate, but
