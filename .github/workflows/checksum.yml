@@ -1,0 +1,25 @@
+name: Commit Checksum
+
+# Checks the Checksum trailer on each commit of a pull request (D-054).
+# Convention: treklink-docs _docs/01-conventions/07 §3.6. Advisory like all CI
+# here (chapter 07 §7): a red check means merge with caution.
+#
+# pull_request_target runs this file from the base branch, so a pull request
+# cannot rewrite the check or read the keys. Nothing from the pull request is
+# checked out.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [dev, main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  checksum:
+    uses: TrekLink-Team/treklink-docs/.github/workflows/checksum-verify.yml@dev
+    secrets:
+      TK_CHECKSUM_KEYS: ${{ secrets.TK_CHECKSUM_KEYS }}
