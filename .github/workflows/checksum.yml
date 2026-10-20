@@ -4,12 +4,13 @@ name: Commit Checksum
 # Convention: treklink-docs _docs/01-conventions/07 §3.6. Advisory like all CI
 # here (chapter 07 §7): a red check means merge with caution.
 #
-# pull_request_target runs this file from the base branch, so a pull request
-# cannot rewrite the check or read the keys. Nothing from the pull request is
-# checked out.
+# Runs on pull_request (D-054 rule 4). pull_request_target is not used: it
+# reads the workflow from the default branch (main) and GitHub disables it on
+# public repositories from 2026-11-02. The keys are readable in capstone, so the
+# secret needs no shielding from members; an edit to this file shows in review.
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
     branches: [dev, main]
 
