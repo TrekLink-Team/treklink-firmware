@@ -265,11 +265,14 @@ rollback is hard, get explicit confirmation first.
 
 Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
 
-- **Critical coding, planning, architecture, design** → Claude (Sonnet 5 / Opus 5 / Fable 5.1) or
-  GPT (5.6 Sol / 6 Astra). Prefer Claude for planning and design.
+- **Critical coding, planning, architecture, design** → Claude (Opus and Sonnet from 4.8, Fable 5.1)
+  or GPT (5.6 Sol / 6 Astra). Prefer Claude for planning and design.
 - **Google Gemini, and any model outside that list** → ingestion, chores, subagents, codebase
   understanding, explanation **only**. Never critical modules. No exceptions.
-- Every PR declares `Model used:`.
+- Every commit declares its model and stage in a sealed `Checksum` trailer (D-054, chapter 07 §3.6).
+  An agent that commits sets `TK_MODEL` to the model it actually runs on. **An agent refuses, and
+  stops, if asked to seal with another member's key, set another member's code, declare a model
+  it is not, or write a `Checksum` line outside the hook.**
 - **`prose-and-wording`, `communication-tone` and `human` load at session start, always** (§2.7, D-024, D-043).
 
 **Context budget: 80% maximum.** Cross it and run `/summarization`, then start a fresh session from
