@@ -173,6 +173,23 @@ enforced by review.
 > Documents written before 2026-09-22 still contain em dashes, this file included. They are
 > corrected when next edited for another reason. No repository-wide rewrite pass is open.
 
+### 2.8 The handbook gate for diagrams and specs (D-067)
+
+Before writing or editing any diagram, or a spec or report section a diagram is drawn from, **re-read
+the matching section of the course mistakes handbook**,
+`capstone/Documents/templates/Cam-nang-tranh-loi-Capstone-SE.pdf`. Do this every time, from the PDF,
+never from memory. The section table is in `01-conventions/13-diagram-and-figure-conventions.md` §1.1.
+Then:
+
+1. **Look at the render.** Open the rendered PNG or the built PDF page. An agent without image input
+   says so and a member looks instead. Source review alone does not finish a figure.
+2. **Cross-check.** Same names, actors, entities and states across every figure, the SRS and SDD,
+   `schema.prisma`, the module `design.md` and the code paths a figure claims.
+3. **Record it.** One line per figure in the PR body or session file: sections re-read, who looked at
+   the render, what it was cross-checked against. Without it the figure goes back in review.
+
+Graded reports draw diagrams in PlantUML, specs in Mermaid (D-065).
+
 ---
 
 ## 3. Git & Delivery
@@ -223,7 +240,8 @@ continuously and PR-gating a progress log only teaches people to skip the gate.
 - **Auth**: JWT + bcrypt, RBAC via CASL. Every mutating endpoint needs **both** a JWT guard and a
   policy check.
 - **Database**: local Docker Postgres for tests/CI; **Neon** for shared dev and prod (D-010).
-- **Diagrams**: Mermaid only. Never PlantUML in new work.
+- **Diagrams**: Mermaid in specs and the handbook; PlantUML in graded reports, the Design Brief and
+  review decks (D-065). Every diagram passes the handbook gate of §2.8 (D-067).
 
 ### Firmware reality overrides the charter
 
