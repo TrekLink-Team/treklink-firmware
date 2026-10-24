@@ -188,9 +188,11 @@ Then:
 3. **Record it.** One line per figure in the PR body or session file: sections re-read, who looked at
    the render, what it was cross-checked against. Without it the figure goes back in review.
 
-Graded reports draw diagrams in PlantUML, specs in Mermaid (D-065). What a PlantUML diagram may
-contain and where each element goes is `01-conventions/16-uml-modeling-rules.md` (D-069); start every
-figure from its skeleton in `_docs/02-templates/puml/`.
+Graded reports draw diagrams in PlantUML, except activity (swimlane) and state machine diagrams, which
+are Mermaid first: activity may also be PlantUML, state falls back to PlantUML only when Mermaid cannot
+draw it. Specs are Mermaid (D-065). What each diagram may contain and where each element goes is
+`01-conventions/16-uml-modeling-rules.md` (D-069); start every figure from its skeleton in
+`_docs/02-templates/puml/`.
 
 ---
 
@@ -242,8 +244,9 @@ continuously and PR-gating a progress log only teaches people to skip the gate.
 - **Auth**: JWT + bcrypt, RBAC via CASL. Every mutating endpoint needs **both** a JWT guard and a
   policy check.
 - **Database**: local Docker Postgres for tests/CI; **Neon** for shared dev and prod (D-010).
-- **Diagrams**: Mermaid in specs and the handbook; PlantUML in graded reports, the Design Brief and
-  review decks (D-065). Every diagram passes the handbook gate of §2.8 (D-067).
+- **Diagrams**: Mermaid in specs and the handbook. In graded reports, the Design Brief and review decks,
+  PlantUML, except activity (swimlane) and state machine diagrams, which are Mermaid first (D-065).
+  Every diagram passes the handbook gate of §2.8 (D-067).
 
 ### Firmware reality overrides the charter
 
