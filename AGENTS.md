@@ -188,7 +188,9 @@ Then:
 3. **Record it.** One line per figure in the PR body or session file: sections re-read, who looked at
    the render, what it was cross-checked against. Without it the figure goes back in review.
 
-Graded reports draw diagrams in PlantUML, specs in Mermaid (D-065).
+Graded reports draw diagrams in PlantUML, specs in Mermaid (D-065). What a PlantUML diagram may
+contain and where each element goes is `01-conventions/16-uml-modeling-rules.md` (D-069); start every
+figure from its skeleton in `_docs/02-templates/puml/`.
 
 ---
 
