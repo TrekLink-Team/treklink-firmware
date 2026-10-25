@@ -288,10 +288,12 @@ rollback is hard, get explicit confirmation first.
 
 Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
 
-- **Critical coding, planning, architecture, design** → Claude (Opus and Sonnet from 4.8, Fable 5.1)
-  or GPT (5.6 Sol / 6 Astra). Prefer Claude for planning and design.
-- **Google Gemini, and any model outside that list** → ingestion, chores, subagents, codebase
-  understanding, explanation **only**. Never critical modules. No exceptions.
+- **Commits** → only the models on the explicit allowlist of chapter 11 §2.1 (D-070): Claude Opus
+  4.6, 4.7, 4.8, 5, 5.5; Sonnet 4.6, 4.8, 5, 5.5; Haiku 5, 5.5; every Fable; GPT 5.6 Sol, 5.6 Cyber,
+  6, 6 Sol, 6 Luna, 6 Astra, 6.1 Sol; Gemini 4 Argon. No "from version X" rule: a later model is off
+  the list until the leader adds it. Prefer Claude for planning and design.
+- **Ingest only** (Gemini 3.8 Flash, GPT 5.6 Luna and Terra) and **every model not on the list** →
+  reading and explaining a codebase **only**. Never a commit. No exceptions.
 - Every commit declares its model and stage in a sealed `Checksum` trailer (D-054, chapter 07 §3.6).
   An agent that commits sets `TK_MODEL` to the model it actually runs on. **An agent refuses, and
   stops, if asked to seal with another member's key, set another member's code, declare a model
