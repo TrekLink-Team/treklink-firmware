@@ -33,7 +33,7 @@ Wire-format facts (packets, priorities, portnums, MQTT topics) are not repeated 
 | MQTT uplink | compiled out (`MESHTASTIC_EXCLUDE_MQTT=1`, `treklink_v1_0/platformio.ini:10`) | yes | yes | yes |
 | Onboard queue (`specs/onboard-queue`) | no | yes, 1000 entries | yes, `TrekLinkQueueConfig.h` defaults | yes, 1000 entries |
 | Support status | **deprecated**: kept as a mesh node, not catered for by treklink-web | active | active | active |
-| Hardware SOS test | not tested this term | trigger observed working by the leader; cancel and stuck-in-SOS unverified (see [test runs](test-runs/README.md)) | not tested | not tested |
+| Hardware SOS test | not tested this term | 2026-10-29 run at `ea37a06`: trigger works, buzzer silent after any stock beep, cancel local only, fall detection cannot trigger (see [test runs](test-runs/README.md)) | not tested | not tested |
 | Spec | [specs/variants/v1](../specs/variants/v1/) | [specs/variants/v2](../specs/variants/v2/) | [specs/variants/v3](../specs/variants/v3/) | [specs/variants/v4](../specs/variants/v4/) |
 
 Sources for the module and IMU rows: `src/modules/Modules.cpp:199-224`. The compile-time rules
@@ -54,6 +54,16 @@ in `TrekLinkSOSGesture.cpp:118-120`.
 3. **Cancelling an SOS transmits nothing.** `TrekLinkSOSHelper::cancelSOS()` only silences local
    alarms (`TrekLinkSOSHelper.cpp:49-53`), so neither a cancel nor a unit stuck in SOS can be seen
    from the platform. A hardware test of cancel needs the serial log or the device itself.
+
+4. **v2 fall detection cannot reach the pre-alarm, and v2 SOS can lose its buzzer.** Measured on
+   2026-10-29: the stillness check starts at impact and cancels at once, the shared IMU sleeps while
+   the screen is off, and any stock beep detaches the buzzer from `BuzzerManager`. Details in
+   [test-runs/2026-10-29-v2-hardware-run.md](test-runs/2026-10-29-v2-hardware-run.md).
+5. **v2 has no serial console on USB.** The `esp32-s3-devkitc-1` board leaves `Serial` on UART0, so
+   v2 logs and the client API are not reachable over USB without `-DARDUINO_USB_CDC_ON_BOOT=1`.
+6. **v4 fall detection probes its IMU on the wrong bus.** `QMI8658FallSensor::init()` uses I2C at
+   0x6B (`src/modules/sensors/QMI8658FallSensor.cpp:25-33`); on the T-Beam Supreme the QMI8658 is on
+   SPI (CS GPIO 34, INT GPIO 33) per LilyGo's hardware documentation. Not hardware-verified.
 
 Code fixes for these are out of scope for documentation work; each needs a `fix/*` branch after a
 hardware reproduction.
