@@ -1,40 +1,51 @@
-# TrekLink Firmware, Documentation & Conventions
-
-This directory contains the documentation, coding standards, and workflow rules for **TrekLink Firmware**.
-
+---
+id: docs
+type: section
+status: approved
+owner: KhoaDD
+summary: Index of the treklink-firmware documentation: where each kind of fact lives.
 ---
 
-## 1. Documentation Index
+# treklink-firmware documentation
 
-- [AGENT.md](./AGENT.md): Overview of developer identity, repository context, and core architecture.
-- [commit-rules.md](./commit-rules.md): Git branching strategy, conventional commit standards, and PR rebase workflow.
-- [conventions.md](./conventions.md): C++17 embedded firmware coding standards, memory safety, and naming conventions.
-- [development-rules.md](./development-rules.md): PlatformIO build, flash, test, and CLI commands.
-- [lifecycle.md](./lifecycle.md): Development lifecycle and build verification steps.
+Layout set on 2026-10-29 (option A, firmware layout rules in
+`treklink-docs/_docs/01-conventions/09-doc-driven-scaffold-and-ssot-conventions.md` §1.1). Every
+file that used to live in `.kiro/`, `.agents/`, `_handoff/` or the repository root was moved with
+`git mv`; nothing was deleted.
 
----
+## Where things live
 
-## 2. Quick Start
+| I need | Path |
+|---|---|
+| What v1 to v4 are, per pin and per feature | [variants.md](variants.md) |
+| Build, flash, monitor, test | [build-and-flash.md](build-and-flash.md) |
+| C++ coding conventions for this firmware | [coding-conventions.md](coding-conventions.md) |
+| Hardware design records, BOMs, budget | [hardware/](hardware/README.md) |
+| Product and variant roadmap | [roadmap/](roadmap/) |
+| Dated hardware test runs | [test-runs/](test-runs/README.md) |
+| Closed work records (handoff logs, audits) | [work/](work/README.md) |
+| Session logs, one file per session | [sessions/](sessions/) |
+| Superseded or wrong documents, with reasons | [.deprecated/](.deprecated/README.md) |
+| Specs per variant and per module | [../specs/](../specs/README.md) |
+| What the firmware puts on the wire | `treklink-docs/_docs/00-project-context/04-firmware-ground-truth.md` |
+| Decisions and risks | `treklink-docs/_docs/00-project-context/03-decisions-and-risk-register.md` |
+| Git, commits, agent rules, wording | `AGENTS.md` and `treklink-docs/_docs/01-conventions/` |
 
-```bash
-# Build default firmware target
-pio run
+## Roadmap folder
 
-# Build specific hardware target
-pio run -e <environment>
+| File | Contents |
+|---|---|
+| `roadmap/proposed-development-roadmap.md` | One-page summary of v1 to v5; v3 and v4 are the LilyGo boards |
+| `roadmap/roadmap-analysis.md` | Why the project pivoted from the v2 custom PCB to the LilyGo boards |
+| `roadmap/proposed-prebuilt-modules-analysis.md` | Comparison of prebuilt LoRa devices considered for v3 |
+| `roadmap/firmware-development-roadmap.md` | Per-variant firmware plan (June 2026); its `ruskicoder/treklink` repository name is historical |
 
-# Flash connected hardware
-pio run -t upload
+## Rules for this folder
 
-# Run test suite
-pio test
-```
-
----
-
-## 3. Git Workflow Summary
-
-1. Create branch from `dev`: `git checkout -b feat/my-feature`
-2. Commit with Conventional Commits: `git commit -m "feat(mesh): description"`
-3. Rebase against `origin/dev`: `git fetch origin dev && git rebase origin/dev`
-4. Push and open PR targeting `dev` branch: `git push origin feat/my-feature --force-with-lease`
+- One fact, one home. Link, do not copy. Wire-format facts stay in treklink-docs.
+- Live documents start with frontmatter: `id`, `type`, `status`, `owner`, `summary`, and
+  `verified` (commit, date, scope) where the document makes claims about the code. Field values
+  are listed in [../specs/README.md](../specs/README.md#frontmatter-fields).
+- A substantive change to a spec first copies the old version into `.deprecated/YYYY-MM-DD-<slug>/`
+  with a row in its README. Typos and link repairs do not.
+- `work/`, `test-runs/` entries that are closed, and `.deprecated/` are never edited.

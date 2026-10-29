@@ -54,12 +54,15 @@ lint:
     - linters: [prettier, markdownlint]
       paths:
         - specs/**
-    # _handoff/ is the cross-session coordination log: SYNC.md is append-only, so a formatter
-    # may not rewrite an earlier entry, and outbound/ holds verbatim copies of files owned by
-    # treklink-docs and treklink-web, which must stay byte-identical to their source.
-    - linters: [prettier, markdownlint]
+    # docs/ follows the same project documentation conventions as specs/. It also holds records
+    # that a formatter must not rewrite: docs/work/ (the append-only cross-session handoff log
+    # SYNC.md, and outbound/ copies that must stay byte-identical to their treklink-docs and
+    # treklink-web source), docs/test-runs/ (closed runs) and docs/.deprecated/ (read-only).
+    # Image optimizers are excluded too: hardware drawings and schematics are records and keep
+    # their original bytes.
+    - linters: [prettier, markdownlint, oxipng, svgo]
       paths:
-        - _handoff/**
+        - docs/**
 runtimes:
   enabled:
     - python@3.10.8
