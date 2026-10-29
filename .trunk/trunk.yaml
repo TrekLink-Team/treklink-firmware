@@ -63,6 +63,11 @@ lint:
     - linters: [prettier, markdownlint, oxipng, svgo]
       paths:
         - docs/**
+    # A deprecated methodology file shows a fake key ("sk_live_abc123xyz") as a bad example.
+    # The file is a read-only record, so gitleaks skips it instead of the text being edited.
+    - linters: [gitleaks]
+      paths:
+        - docs/.deprecated/2026-10-29-kiro-methodology/10-security-safety.md
 runtimes:
   enabled:
     - python@3.10.8
