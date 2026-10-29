@@ -226,7 +226,7 @@ If a flash write fails, the entry stays in RAM and `flash_write_failed` is incre
 | `p0_refused`, `flash_write_failed`, `restore_discarded` | integer | monotonic counters; `restore_discarded` is in bytes |
 | `flash_bytes`, `flash_budget` | integer | current log size and the clamped budget, bytes |
 
-**JSON topic.** `MeshPacketSerializer::JsonSerialize()` gains an additive `PRIVATE_APP` case. If the payload is exactly a valid version-1 `TKQH` record, the message gets `"type": "treklink_queue_health"` and the object above as `payload`. Any other `PRIVATE_APP` payload, including a truncated record, is serialised exactly as stock (empty `type`, no `payload`). No stock PortNum's JSON changes. The case exists only in `MeshPacketSerializer.cpp` (ESP32 and native); `MeshPacketSerializer_nRF52.cpp` is a separate implementation that is left untouched, and no TrekLink variant is nRF52. The consumer copy of this schema is `_handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`.
+**JSON topic.** `MeshPacketSerializer::JsonSerialize()` gains an additive `PRIVATE_APP` case. If the payload is exactly a valid version-1 `TKQH` record, the message gets `"type": "treklink_queue_health"` and the object above as `payload`. Any other `PRIVATE_APP` payload, including a truncated record, is serialised exactly as stock (empty `type`, no `payload`). No stock PortNum's JSON changes. The case exists only in `MeshPacketSerializer.cpp` (ESP32 and native); `MeshPacketSerializer_nRF52.cpp` is a separate implementation that is left untouched, and no TrekLink variant is nRF52. The consumer copy of this schema is `docs/work/2026-09-25-onboard-queue-handoff/outbound/treklink-web/specs/gateway-sync/health-payload.md`.
 
 ### 2.5 Interfaces
 

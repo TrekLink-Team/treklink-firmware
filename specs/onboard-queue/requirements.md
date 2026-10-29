@@ -3,7 +3,7 @@
 **User Story**: As a **Guide carrying a TrekLink node out of Wi-Fi range**, I want the device itself to hold every event it generates, in priority order and across reboots, so that an SOS raised during an outage still reaches the platform when the uplink returns, instead of being silently discarded by routine telemetry.
 **Story ID**: US-090 | **Story Points**: 13 | **Priority**: **Highest** | **Main Flow**: MF-02 | **Owner**: KhoaDD
 
-**Approval**: approved by the leader on 2026-09-25 with the Phase A corrections S1 to S15 (`_handoff/phase-a-audit.md`, handoff entry O-003). This revision applies them.
+**Approval**: approved by the leader on 2026-09-25 with the Phase A corrections S1 to S15 (`docs/work/2026-09-25-onboard-queue-handoff/phase-a-audit.md`, handoff entry O-003). This revision applies them.
 
 > **Authority**: **D-018** (three-tier buffering; this is Stage B), **D-019** (additive, non-destructive firmware changes), **D-021** (encryption split), **D-008** (firmware is editable and earns credit), **D-015** (business parameters are configuration). Firmware facts are cited to `04-firmware-ground-truth.md` §2 and §4 to §5 as re-audited on 2026-09-25, never assumed.
 
