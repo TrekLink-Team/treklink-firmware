@@ -1,0 +1,17 @@
+DEBUG | ??:??:?? 483 [Power] Battery: usbPower=0, isCharging=0, batMv=3405, batPct=18
+G | ??:??:?? 543 [Power] Battery: usbPower=0, isCharging=0, batMv=3405, batPct=18
+DEBUG | ??:??:?? 603 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 663 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 723 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 783 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 843 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 903 [Power] Battery: usbPower=0, isCharging=0, batMv=3407, batPct=18
+DEBUG | ??:??:?? 946 [Accelerometer] sleeping IMU
+DEBUG | ??:??:?? 963 [Power] Battery: usbPower=0, isCharging=0, batMv=3408, batPct=19
+DEBUG | ??:??:?? 1023 [Power] Battery: usbPower=0, isCharging=0, batMv=3412, batPct=19
+DEBUG | ??:??:?? 1083 [Power] Battery: usbPower=0, isCharging=0, batMv=3411, batPct=19
+DEBUG | ??:??:?? 1143 [Power] Battery: usbPower=0, isCharging=0, batMv=3411, batPct=19
+DEBUG | ??:??:?? 1203 [Power] Battery: usbPower=0, isCharging=0, batMv=3414, batPct=19
+DEBUG | ??:??:?? 1263 [Power] Battery: usbPower=0, isCharging=0, batMv=3417, batPct=19
+DEBUG | ??:??:?? 1323 [Power] Battery: usbPower=0, isCharging=0, batMv=3417, batPct=19
+DEBUG | ??:??:?? 1383 [Power] Battery: usbPower=0, isCharging=0, batMv=3418, batPct=19

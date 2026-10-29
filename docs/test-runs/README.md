@@ -25,3 +25,4 @@ Each file records:
 | Date | Variant | Topic | Result |
 |---|---|---|---|
 | 2026-10-29 | v2 | [SOS field observation](2026-10-29-v2-sos-observation.md) | trigger observed; rest not tested |
+| 2026-10-29 | v2 | [Hardware run: SOS, fall, compass](2026-10-29-v2-hardware-run.md) | SOS trigger partial, buzzer fails after a beep, fall detection fails, compass fails uncalibrated |
