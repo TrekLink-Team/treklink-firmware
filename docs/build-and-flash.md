@@ -153,7 +153,9 @@ Because the T-Beam v1.2 lacks a physical `BOOT` button connected to GPIO 0, manu
   regression env for v3 or v4 changes.
 - `pio test -e native` passes when `src/mqtt/` or `src/serialization/` changes.
 - No build artifacts (`.pio/`), credentials or debug prints are staged.
-- Hardware-affecting changes get a dated entry in [test-runs/](test-runs/README.md).
+- Hardware-affecting changes get a dated entry in [test-runs/](test-runs/README.md). For a
+  safety-path (class S) change the run is a merge gate: chapter 17 §3 of the conventions
+  (`treklink-docs/_docs/01-conventions/17-firmware-development.md`, D-077) lists what it must show.
 
 `(unverified)` whether the upstream GitHub Actions workflows in `.github/workflows/` build the
 TrekLink envs. The repository's own check is `checksum.yml`, which verifies the commit `Checksum`

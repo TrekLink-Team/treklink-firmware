@@ -3,623 +3,202 @@ id: coding-conventions
 type: guide
 status: approved
 owner: KhoaDD
-summary: Embedded C++ practices for TrekLink firmware: non-blocking timing, power, memory, naming.
+summary: Embedded C/C++ practice for TrekLink code in this Meshtastic fork, each safety rule tied to the defect that motivated it.
+verified: {commit: cd5329c, date: 2026-10-30, scope: "every source citation in this file"}
 ---
 
-# TrekLink Coding Conventions
-
-**Project:** TrekLink MVP - ESP32 LoRa Mesh Device  
-**Purpose:** Establish low-power, responsive, and maintainable embedded C++ practices  
-**Version:** 1.0  
-**Last Updated:** February 4, 2026
-
----
-
-## Table of Contents
-
-1. [Core Principles](#core-principles)
-2. [Timing & Non-Blocking Code](#timing--non-blocking-code)
-3. [Power Management](#power-management)
-4. [Memory Management](#memory-management)
-5. [Error Handling](#error-handling)
-6. [FreeRTOS Usage](#freertos-usage)
-7. [State Machines](#state-machines)
-8. [Interrupt Safety](#interrupt-safety)
-9. [Serial Debug System](#serial-debug-system)
-10. [Flash & NVS Management](#flash--nvs-management)
-11. [Code Organization](#code-organization)
-
----
-
-## Core Principles
-
-### The Three Commandments
-
-1. **NEVER use `delay()`** - All timing must use `millis()` or FreeRTOS primitives
-2. **Loop responsiveness** - `loop()` must complete in <10ms (optimal: 1ms)
-3. **Freeze the heap** - No `malloc()`/`new` after `setup()` completes
-
----
-
-## Timing & Non-Blocking Code
-
-### ❌ BANNED: Blocking Functions
-
-```cpp
-// NEVER DO THIS
-delay(1000);           // Halts entire chip
-while(!ready);         // Polling loop without timeout
-```
-
-### ✅ REQUIRED: Non-Blocking Patterns
-
-```cpp
-// Use millis() for timing
-unsigned long lastCheck = 0;
-const unsigned long CHECK_INTERVAL = 1000;  // 1 second
-
-void loop() {
-    unsigned long now = millis();
-    
-    if (now - lastCheck >= CHECK_INTERVAL) {
-        lastCheck = now;
-        doPeriodicTask();
-    }
-}
-```
-
-### Loop Performance Targets
-
-| Metric | Target | Maximum |
-|--------|--------|---------|
-| Loop execution time | 1ms | 10ms |
-| Blocking operation | 0ms | 100ms |
-| ISR duration | <10μs | 50μs |
-
----
-
-## Power Management
-
-### Wake Sources
-
-**Allowed wake triggers:**
-- Button press (GPIO interrupt)
-- Incoming LoRa packet (AUX pin)
-- Timer (periodic GPS check)
-
-### Sleep Strategy
-
-**Use Light Sleep** (not Deep Sleep) to preserve:
-- ✅ RAM contents (mesh routing table)
-- ✅ FreeRTOS task states
-- ✅ Network connections
-
-```cpp
-// Light sleep example
-esp_sleep_enable_gpio_wakeup();
-esp_sleep_enable_timer_wakeup(60 * 1000000);  // 60 seconds
-esp_light_sleep_start();
-```
-
-### GPIO Hold During Sleep
-
-```cpp
-// Keep critical pins HIGH during sleep
-gpio_hold_en(LORA_EN_PIN);
-esp_light_sleep_start();
-gpio_hold_dis(LORA_EN_PIN);
-```
-
-### Peripheral Power Gating
-
-- ✅ GPS: Power off during sleep, V_BCKP always connected
-- ✅ OLED: Power off in Silent Mode
-- ⚠️ LoRa: Use low-power mode, DO NOT power gate (wake latency)
-
----
-
-## Memory Management
-
-### String Handling
-
-**❌ BANNED: Arduino `String` class**
-
-```cpp
-// NEVER DO THIS - heap fragmentation
-String msg = "Hello " + deviceID + "!";
-```
-
-**✅ REQUIRED: C-style strings with `snprintf`**
-
-```cpp
-char msg[64];
-snprintf(msg, sizeof(msg), "Hello %s!", deviceID);
-```
-
-### Radio Payload Buffers
-
-**Use `uint8_t[]` for raw bytes**
-
-```cpp
-uint8_t txBuffer[256];  // Fixed-size, stack or global
-uint8_t rxBuffer[256];
-
-// NOT: char payload[256];  // Confuses binary vs text
-```
-
-### Heap Allocation Rules
-
-**✅ Acceptable in `setup()` only:**
-
-```cpp
-void setup() {
-    // One-time allocation - OK
-    displayBuffer = (uint8_t*)malloc(1024);
-    packetQueue = new PacketQueue(32);
-    
-    // After this, heap is FROZEN
-}
-```
-
-**❌ BANNED in `loop()` or tasks:**
-
-```cpp
-void loop() {
-    char* temp = new char[128];  // ❌ HEAP FRAGMENTATION
-    // ...
-    delete[] temp;
-}
-```
-
-### Global vs Local Variables
-
-**✅ Use globals for singletons:**
-
-```cpp
-// Physical resources that exist once
-LoRaDriver radio;
-Adafruit_SSD1306 display;
-GPSService gps;
-MeshConfig config;
-```
-
-**✅ Pass buffers by reference:**
-
-```cpp
-// Efficient - no copy
-void processPacket(uint8_t* buffer, size_t len);
-void updateDisplay(MeshNode& node);
-```
-
----
-
-## Error Handling
-
-### Return Type Pattern
-
-**✅ Use `enum class` for results:**
-
-```cpp
-enum class Result {
-    OK,
-    ERROR_TIMEOUT,
-    ERROR_I2C_FAIL,
-    ERROR_INVALID_PARAM,
-    ERROR_BUFFER_FULL
-};
-
-Result sendPacket(uint8_t* data, size_t len) {
-    if (len == 0) return Result::ERROR_INVALID_PARAM;
-    if (len > 256) return Result::ERROR_BUFFER_FULL;
-    
-    // ... transmission logic ...
-    
-    return Result::OK;
-}
-```
-
-### Logging Philosophy
-
-**Functions return errors silently. Logging happens at the top level.**
-
-```cpp
-// ❌ BAD: Low-level driver prints
-Result LoRa::transmit(uint8_t* data, size_t len) {
-    Serial.println("Transmitting...");  // ❌ Pollutes driver
-    // ...
-}
-
-// ✅ GOOD: Caller decides what to log
-void loop() {
-    Result res = radio.transmit(packet, len);
-    
-    if (res != Result::OK) {
-        DEBUG_LOG("TX failed: %d", static_cast<int>(res));
-    }
-}
-```
-
----
-
-## FreeRTOS Usage
-
-### Task Architecture
-
-**Migrate from Arduino loop to FreeRTOS tasks**
-
-```cpp
-void setup() {
-    // Create tasks pinned to specific cores
-    xTaskCreatePinnedToCore(
-        loraRxTask,      // Task function
-        "LoRaRX",        // Name
-        4096,            // Stack size
-        NULL,            // Parameters
-        2,               // Priority (0-24, higher = more priority)
-        NULL,            // Task handle
-        0                // Core 0 (PRO_CPU)
-    );
-    
-    xTaskCreatePinnedToCore(
-        uiTask,
-        "UI",
-        2048,
-        NULL,
-        1,               // Lower priority
-        NULL,
-        1                // Core 1 (APP_CPU)
-    );
-}
-```
-
-### Core Assignment
-
-| Core | Responsibilities | Rationale |
-|------|------------------|-----------|
-| **Core 0** (PRO_CPU) | LoRa RX/TX, Mesh routing, Crypto | Time-critical networking |
-| **Core 1** (APP_CPU) | UI, GPS parsing, Button handling | User-facing, less latency-sensitive |
-
-### Task Synchronization
-
-```cpp
-// Use FreeRTOS primitives
-SemaphoreHandle_t radioMutex;
-QueueHandle_t packetQueue;
-
-void loraRxTask(void* param) {
-    while (1) {
-        if (xSemaphoreTake(radioMutex, pdMS_TO_TICKS(100))) {
-            // Critical section
-            radio.receive();
-            xSemaphoreGive(radioMutex);
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(10));  // Yield to other tasks
-    }
-}
-```
-
----
-
-## State Machines
-
-### ✅ Explicit State Machine Pattern
-
-```cpp
-enum class NodeState {
-    INITIALIZING,
-    IDLE,
-    GPS_ACQUIRING,
-    TRANSMITTING,
-    RECEIVING,
-    SLEEPING
-};
-
-NodeState currentState = NodeState::INITIALIZING;
-
-void stateMachine() {
-    switch (currentState) {
-        case NodeState::INITIALIZING:
-            if (initComplete) {
-                currentState = NodeState::IDLE;
-            }
-            break;
-            
-        case NodeState::IDLE:
-            if (needGPS) {
-                currentState = NodeState::GPS_ACQUIRING;
-            } else if (packetPending) {
-                currentState = NodeState::TRANSMITTING;
-            }
-            break;
-            
-        case NodeState::GPS_ACQUIRING:
-            if (gps.hasFix()) {
-                currentState = NodeState::IDLE;
-            } else if (timeout()) {
-                currentState = NodeState::IDLE;  // Fallback
-            }
-            break;
-            
-        // ... more states
-    }
-}
-```
-
-### ❌ Avoid Flag-Based Logic
-
-```cpp
-// BAD: Can create illegal states
-bool isTx = false;
-bool isRx = false;
-bool isSleeping = false;
-
-// What if isTx && isRx both true? Undefined behavior!
-```
-
----
-
-## Interrupt Safety
-
-### ISR Rules
-
-**✅ Minimal ISRs with `IRAM_ATTR`:**
-
-```cpp
-volatile bool packetReceived = false;
-
-void IRAM_ATTR loraISR() {
-    packetReceived = true;  // Set flag only
-    // NO Serial.print, NO delay, NO malloc
-}
-
-void setup() {
-    attachInterrupt(LORA_DIO0_PIN, loraISR, RISING);
-}
-
-void loop() {
-    if (packetReceived) {
-        packetReceived = false;
-        handlePacket();  // Process outside ISR
-    }
-}
-```
-
-### FreeRTOS ISR Notifications
-
-```cpp
-TaskHandle_t rxTaskHandle;
-
-void IRAM_ATTR loraISR() {
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(rxTaskHandle, &higherPriorityTaskWoken);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken);
-}
-
-void loraRxTask(void* param) {
-    while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Block until ISR
-        radio.processPacket();
-    }
-}
-```
-
----
-
-## Serial Debug System
-
-### Toggle-able Debug Output
-
-**Press `\` to enable debug mode, `i` to show/hide instructions**
-
-```cpp
-bool debugEnabled = false;
-bool showInstructions = false;
-
-void setup() {
-    Serial.begin(115200);
-}
-
-void loop() {
-    if (Serial.available()) {
-        char cmd = Serial.read();
-        
-        if (cmd == '\\') {
-            debugEnabled = !debugEnabled;
-            Serial.printf("\n[DEBUG] Mode: %s\n", debugEnabled ? "ON" : "OFF");
-            if (debugEnabled) printInstructions();
-        }
-        else if (cmd == 'i') {
-            showInstructions = !showInstructions;
-            if (showInstructions) printInstructions();
-        }
-    }
-    
-    // Persistent instructions at top
-    if (showInstructions && debugEnabled) {
-        // Print instructions every N lines
-    }
-}
-
-void printInstructions() {
-    Serial.println("\n=== TrekLink Debug Console ===");
-    Serial.println("Commands:");
-    Serial.println("  \\ - Toggle debug output");
-    Serial.println("  i - Show/hide instructions");
-    Serial.println("  s - System status");
-    Serial.println("  m - Mesh routing table");
-    Serial.println("  g - GPS data");
-    Serial.println("==============================\n");
-}
-```
-
-### Debug Macro System
-
-```cpp
-#define DEBUG_LOG(fmt, ...) \
-    do { if (debugEnabled) Serial.printf("[DEBUG] " fmt "\n", ##__VA_ARGS__); } while(0)
-
-#define DEBUG_WARN(fmt, ...) \
-    do { if (debugEnabled) Serial.printf("[WARN] " fmt "\n", ##__VA_ARGS__); } while(0)
-
-#define DEBUG_ERROR(fmt, ...) \
-    Serial.printf("[ERROR] " fmt "\n", ##__VA_ARGS__)  // Always print errors
-
-// Usage
-DEBUG_LOG("Packet RX: RSSI=%d, SNR=%d", rssi, snr);
-DEBUG_ERROR("I2C timeout on address 0x%02X", addr);
-```
-
----
-
-## Flash & NVS Management
-
-### Minimize NVS Writes
-
-**Use "Dirty Bit" pattern:**
-
-```cpp
-struct Config {
-    uint8_t channelID;
-    uint16_t deviceID;
-    bool locationBroadcast;
-    // ...
-};
-
-Config config;
-bool configDirty = false;
-
-void setChannelID(uint8_t newID) {
-    if (config.channelID != newID) {
-        config.channelID = newID;
-        configDirty = true;  // Mark for save
-    }
-}
-
-void loop() {
-    static unsigned long lastSave = 0;
-    
-    // Save only if dirty and 30 seconds elapsed
-    if (configDirty && (millis() - lastSave > 30000)) {
-        nvs.write("config", &config, sizeof(config));
-        configDirty = false;
-        lastSave = millis();
-    }
-}
-```
-
-### Write Frequency Limits
-
-| Data Type | Max Write Frequency | Rationale |
-|-----------|---------------------|-----------|
-| Settings | Once per menu exit | User-triggered |
-| Telemetry | Once per 30 minutes | Minimize wear |
-| Logs | On critical events only | SOS, panic |
-
----
-
-## Watchdog Timer
-
-### Hardware Watchdog Configuration
-
-```cpp
-void setup() {
-    // Enable HW watchdog (5 seconds)
-    esp_task_wdt_init(5, true);
-    esp_task_wdt_add(NULL);  // Add current task
-}
-
-void loop() {
-    // Pet watchdog every iteration
-    esp_task_wdt_reset();
-    
-    // ... main loop logic ...
-}
-```
-
-### Task Watchdog for Critical Tasks
-
-```cpp
-void loraRxTask(void* param) {
-    esp_task_wdt_add(NULL);  // Subscribe task to WDT
-    
-    while (1) {
-        radio.receive();
-        esp_task_wdt_reset();  // Pet watchdog
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-}
-```
-
----
-
-## Code Organization
-
-### File Structure
-
-```
-treklink/
-├── src/
-│   ├── main.cpp                  // FreeRTOS task creation
-│   ├── hal/                      // Hardware drivers
-│   │   ├── power_gate.cpp
-│   │   ├── button_handler.cpp
-│   │   └── lora_driver.cpp
-│   ├── services/                 // Business logic
-│   │   ├── mesh_router.cpp
-│   │   ├── gps_service.cpp
-│   │   └── crypto_service.cpp
-│   └── ui/                       // User interface
-│       ├── display.cpp
-│       └── menu.cpp
-├── include/
-│   ├── hardware_config.h         // GPIO pin definitions
-│   ├── hal/
-│   ├── services/
-│   └── ui/
-└── CODING_CONVENTIONS.md         // This file
-```
-
-### Naming Conventions
-
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Classes | PascalCase | `LoRaDriver`, `MeshRouter` |
-| Functions | camelCase | `sendPacket()`, `updateDisplay()` |
-| Variables | camelCase | `packetBuffer`, `currentState` |
-| Constants | UPPER_SNAKE_CASE | `MAX_PACKET_SIZE`, `GPS_TIMEOUT_MS` |
-| Enums | PascalCase enum + UPPER_CASE values | `enum class State { IDLE, SLEEPING }` |
-
----
-
-## Quick Reference Checklist
-
-Before committing code, verify:
-
-- [ ] No `delay()` calls anywhere
-- [ ] `loop()` completes in <10ms
-- [ ] No heap allocations in `loop()` or tasks
-- [ ] All strings use `snprintf()`, not `String`
-- [ ] Radio buffers use `uint8_t[]`
-- [ ] Error returns use `enum class Result`
-- [ ] ISRs have `IRAM_ATTR` and are minimal
-- [ ] State machine uses `enum class` + `switch`
-- [ ] Debug output guarded by `debugEnabled` flag
-- [ ] NVS writes use dirty-bit pattern
-- [ ] Watchdog is petted in all tasks
-
----
-
-## Enforcement
-
-Code reviews MUST reject:
-- ❌ Any use of `delay()`
-- ❌ Arduino `String` class
-- ❌ Heap allocation in `loop()`
-- ❌ Serial.print in low-level drivers
-- ❌ Missing `IRAM_ATTR` on ISRs
-
----
-
-**Last Reviewed:** 2026-02-04  
-**Maintainer:** TrekLink Development Team
+# TrekLink coding conventions
+
+How TrekLink code is written in this repository. Replaces the 2026-02-04 version, which described a
+greenfield firmware (FreeRTOS tasks per core, a `hal/ services/ ui/` tree, a `debugEnabled`
+console) rather than the Meshtastic fork this is; it is kept in
+[`.deprecated/2026-10-30-coding-conventions-v1/`](.deprecated/2026-10-30-coding-conventions-v1/).
+
+The process around a change (change classes, the fix loop, the hardware-run gate, the upstream
+policy) is chapter 17 of the conventions,
+`treklink-docs/_docs/01-conventions/17-firmware-development.md`. Git, commit and wording rules are
+`AGENTS.md` and chapters 07 and 14. Citations are to `src/` at `cd5329c` unless stated. Findings
+`F1` to `F13` are in [test-runs/2026-10-29-v2-hardware-run.md](test-runs/2026-10-29-v2-hardware-run.md).
+
+## 1. Upstream style comes first
+
+TrekLink code follows the Meshtastic style described in `.github/copilot-instructions.md`
+("Coding Conventions"):
+
+- Format with `trunk fmt` before committing.
+- `PascalCase` classes, `camelCase` functions, methods and members, `UPPER_SNAKE_CASE` constants
+  and defines.
+- Log with `LOG_DEBUG`, `LOG_INFO`, `LOG_WARN` and `LOG_ERROR`.
+- Read configuration through `config.*`, `moduleConfig.*` and `channels.*`, and defaults through
+  the helpers in `src/mesh/Default.h`.
+- Use `concurrency::Lock` for mutual exclusion and `OSThread` for periodic work.
+
+The rest of this file adds what TrekLink needs on top.
+
+## 2. Where code goes
+
+| Code | Location |
+|---|---|
+| TrekLink modules | `src/modules/TrekLink*`, `src/modules/FallDetectionModule*`, `src/modules/BuzzerManager.h` |
+| IMU adapters behind `FallSensorInterface` | `src/modules/sensors/` |
+| Onboard MQTT queue | `src/mqtt/TrekLink*` |
+| TrekLink inputs | `src/input/TrekLink*` |
+| Pins and capabilities per variant | `variants/*/treklink_*/variant.h`; see [variants.md](variants.md) |
+| Platform-free logic cores and their tests | beside the module, tested from `test/test_<module>/` (§9) |
+
+Variant code is selected with the variant flags, `TREKLINK_VARIANT` and `TREKLINK_V1` to
+`TREKLINK_V4` (for example `src/modules/Modules.cpp:97-100`), never with board names. Pins come from
+`variant.h` macros only. An edit to a stock file is guarded by one of these flags, as at
+`src/main.cpp:240` and `src/mesh/NodeDB.cpp:1098`, so stock envs build unchanged and the upstream
+sync can find it (chapter 17 §6).
+
+## 3. Execution model
+
+Meshtastic runs modules cooperatively on the Arduino loop. A module derives from
+`concurrency::OSThread`; `runOnce()` returns the delay in milliseconds until its next run,
+`RUN_SAME` keeps the period, and `disable()` stops it (`src/concurrency/OSThread.h:16`, `:56`,
+`:67-69`).
+
+1. **`runOnce()` returns quickly.** Every thread on the loop waits while one runs. TrekLink code
+   adds no `delay()` and no wait without a timeout in `runOnce()` or in code it calls. One exists
+   today, `delay(100)` after an IMU reset in the fall sensor's self-init
+   (`src/modules/sensors/ICM20948FallSensor.cpp:55`); it runs once at boot and is not copied.
+2. **Long sequences are state machines across runs.** A timed pattern returns the delay to its next
+   step instead of sleeping through it.
+3. **Time is a `uint32_t` difference.** Write `millis() - startMs >= periodMs`, never
+   `millis() >= deadlineMs`; the difference stays correct across the 49-day wrap. Upstream fixed
+   wrap bugs in stock code in #11291, after the fork base.
+4. **A window measured in samples is stated in both units.** When a detector polls every 100 ms,
+   a 500 ms window is 5 samples and a measured duration is quantised to 100 ms steps (F6; the
+   2026-10-29 run logged free falls of 421 and 523 ms). Name the poll period as a constant and
+   derive the window from it.
+
+## 4. Shared hardware resources
+
+Every resource below has more than one user, and three of the 2026-10-29 defects (F2, F5, F7) came
+from a TrekLink user and a stock user of the same resource. A change that adds, removes or changes a
+user adds or edits a row here in the same pull request.
+
+| Resource | Owner | Other users | Known conflict |
+|---|---|---|---|
+| LEDC channel 0 on v1 and v2 (`BUZZER_LEDC_CHANNEL`, `variants/esp32s3/treklink_v2_0/variant.h:48`) | `BuzzerManager` (`src/modules/BuzzerManager.h:20-45`) | Arduino-ESP32 2.0.17 `tone()`, which uses channel 0 and detaches the pin when a note ends (`cores/esp32/Tone.cpp:9`, `:33-47`), called by stock input beeps and melodies | F2: one stock beep silences the SOS buzzer until reboot |
+| Buzzer pin, `PIN_BUZZER` (GPIO 11 on v2) | `BuzzerManager` | stock `buzz/buzz.cpp`, `BuzzerFeedbackThread`, ExternalNotification ringtones (`src/mesh/NodeDB.cpp:812-818`) | F2 |
+| Vibrator pin, `PIN_VIBRATOR` (GPIO 12 on v2) | `TrekLinkSOSHelper` alarms | the trigger confirmation pulses (`src/modules/TrekLinkButtonModule.cpp:268`); ExternalNotification through the `PIN_VIBRATION` alias (`src/mesh/NodeDB.cpp:820-822`) | F3: the confirmation pulse turns the SOS vibration off |
+| Notification LED, `LED_PIN` (active low on v2 and v3, `LED_STATE_ON 0`) | stock heartbeat (`src/main.cpp:249-262`) | SOS strobe, fall LED (`src/modules/FallDetectionModule.cpp:311`) | the heartbeat rewrites the LED about every second; `deactivateAlarms()` writes a literal `LOW` (`src/modules/TrekLinkSOSHelper.cpp:93-95`), which lights an active-low LED |
+| ICM-20948 on v2 | stock `ICM20948Singleton` and `ICM20948Sensor` | fall adapter, which joins the singleton (`src/modules/sensors/ICM20948FallSensor.cpp:18-34`) | F5: stock puts the chip to sleep while the screen is off (`src/motion/ICM20948Sensor.cpp:50-56`); F7: the stock bus scan misreads it after a warm reset |
+| QMI8658 on v4 | fall adapter (`src/modules/sensors/QMI8658FallSensor.cpp`) | none in stock | probed on I2C, wired on SPI per LilyGo (ground truth §5; not hardware-verified) |
+| NVS namespace `fallcal` | `FallDetectionModule` (`src/modules/FallDetectionModule.cpp:214-224`) | none | no recalibration path once written |
+| Screen banners and input routing | stock `Screen` | SOS banners (`src/modules/TrekLinkButtonModule.cpp:204`, `src/modules/TrekLinkSOSGesture.cpp:61`) | a banner owns all input while shown, and SELECT dismisses an SOS banner |
+
+Rules:
+
+1. **Before using a resource, find its other users.** Search for the pin macro, the channel, the
+   I2C address and the driver class across `src/`, and read the stock call sites.
+2. **One writer at a time.** An output shared by an alarm has one owner, and only the owner writes
+   or releases it. Check ownership in code, not in a comment: `BuzzerManager::write()` is documented
+   as owner-only (`src/modules/BuzzerManager.h:100`) but checks only that some owner exists
+   (`:102-112`).
+3. **Logic levels come from the variant.** Write `LED_STATE_ON` and `!LED_STATE_ON`, never a
+   literal `HIGH` or `LOW`, for any pin whose polarity differs between variants.
+
+## 5. Talking to hardware
+
+1. **Check every driver status.** A call that returns a status is checked, and a failure is logged
+   and returned. The fall adapter ignores the status of `getAGMT()` and always reports success
+   (`src/modules/sensors/ICM20948FallSensor.cpp:87-112`), so a bus fault becomes frozen data rather
+   than an error.
+2. **A sensor read reports failure.** Adapters return `false` on a failed or stale read; callers
+   treat repeated failures as a fault with a log line, not as a still device.
+3. **Probe the bus the board uses.** The bus and address come from the variant and its schematic
+   or vendor document (chapter 17 §4 rule 6).
+4. **Never assume the sensor is awake.** If stock code can sleep or reconfigure a shared device
+   (F5), the TrekLink user either owns that decision or detects it.
+
+## 6. Units and numeric types
+
+1. **Names carry units.** Use suffixes such as `Ms`, `G`, `Mps2`, `RadS`, `Mv`
+   (`impactThresholdG`, `pollPeriodMs`).
+2. **Convert once, at the boundary.** `FallSensorInterface` returns m/s² and rad/s
+   (`src/modules/FallSensorInterface.h:12-13`); the detector works in one unit, converted with one
+   named constant. Self-calibration multiplies noise in m/s² by 3.5 and stores it as a threshold in
+   g (`src/modules/FallDetectionModule.cpp:202-206`), which is the error this rule prevents (F6).
+3. **A clamp is logged.** A computed value forced to a floor or ceiling logs both the computed and
+   the clamped value; the field unit's thresholds sat on their floors unnoticed (F6).
+4. **Pick widths for the full range.** A countdown computed from an unsigned difference is signed
+   or checked before it is narrowed: `uint8_t timeRemaining = (end - millis()) / 1000` wraps to 255
+   after zero (`src/motion/MotionSensor.cpp:46`, F9).
+
+## 7. Safety-path invariants
+
+These hold for every class S change (chapter 17 §1). Each names the defect that broke it.
+
+1. **An active alarm keeps all its outputs until it is cancelled.** No other code path may stop the
+   buzzer, vibration or LED pattern of an active SOS (F2, F3).
+2. **A detector settles before it judges.** A transition caused by a transient (impact, bounce,
+   button release) is followed by a settling window before a stillness or quiet check starts (F4).
+3. **Detection never depends on display state.** Fall detection runs with the screen on or off (F5).
+4. **A destructive action needs a deliberate gesture.** Shutdown is not reachable from a short hold
+   and gives feedback before it acts (F10).
+5. **SOS stays visible.** While SOS is active the device shows it, and dismissing a banner does not
+   hide that state.
+6. **Every alarm and detector transition is logged** with its module tag and the alarm owner, so a
+   test run can prove it (§10).
+
+## 8. State machines
+
+- `enum class` states and one `switch` in one function that alone writes the state.
+- Every state has an exit, and every waiting state has a timeout.
+- Entry actions run once, on the transition, not on every pass.
+- The module's design spec carries the same machine as a Mermaid `stateDiagram-v2`, with the same
+  state names.
+
+## 9. Testable logic cores
+
+Logic that does not need hardware lives in a platform-free core so `pio test -e native` can run it.
+The pattern is the onboard queue:
+
+- The core includes only standard headers and sits in its own namespace
+  (`src/mqtt/TrekLinkQueueCore.h:15-22`, `namespace treklink::oq`).
+- The adapter maps device types onto the core and `static_assert`s the wire values the core
+  relies on (`src/mqtt/TrekLinkEventQueue.cpp:21-23`).
+- Tests live in `test/test_<module>/` (`test/test_onboard_queue/test_main.cpp`).
+
+Candidates for the same treatment are the fall state machine and its thresholds, the SOS gesture
+timing and the alarm ownership rules. A fix to a core starts with a test that reproduces the
+defect.
+
+## 10. Logging
+
+- Prefix TrekLink lines with the module tag and a colon, as the code does today:
+  `TrekLinkSOS:`, `FallDetection:`, `BuzzerManager:` (`src/modules/TrekLinkSOSHelper.cpp:37`,
+  `src/modules/FallDetectionModule.cpp:32`, `src/modules/BuzzerManager.h:44`).
+- Log values with their units, and log every state transition and every alarm on and off.
+- Test-run evidence quotes these lines, so a tag or message is renamed only together with the
+  specs and runs that cite it.
+- No logging inside an interrupt handler.
+
+## 11. Interrupts, memory and persistence
+
+- **Interrupt handlers** are `IRAM_ATTR`, set a flag or notify a thread, and return. No I2C, SPI,
+  logging or allocation inside them.
+- **Memory.** No heap allocation on a periodic path; use fixed buffers and `snprintf`, never
+  `sprintf` into a fixed buffer.
+- **Persistence.** Small TrekLink values go to NVS through `Preferences` in a namespace of at most
+  15 characters, one namespace per module. Each record carries a version; a value read back is
+  range-checked and replaced by the default with a log line if invalid; a write happens only when
+  the value changes. A persisted calibration needs a way to redo it, which `fallcal` lacks today.
+  Stock configuration in LittleFS is changed only through the stock APIs.
+
+## 12. Comments
+
+Comments are English and explain why. A comment that states what the code guarantees must be true
+of the code; a reviewer treats a wrong comment as a defect (chapter 17 §4 rule 4).
+
+## 13. Before a pull request
+
+- The class is stated and chapter 17 §2 is followed.
+- `trunk fmt` is clean.
+- Every resource touched is in the §4 table with its other users.
+- No new `delay()` or unbounded wait on the loop (§3).
+- Units are in the names, and conversions happen at one boundary (§6).
+- Class S: every §7 invariant still holds, and the test-run file shows it.

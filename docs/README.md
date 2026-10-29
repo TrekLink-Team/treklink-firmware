@@ -19,7 +19,8 @@ file that used to live in `.kiro/`, `.agents/`, `_handoff/` or the repository ro
 |---|---|
 | What v1 to v4 are, per pin and per feature | [variants.md](variants.md) |
 | Build, flash, monitor, test | [build-and-flash.md](build-and-flash.md) |
-| C++ coding conventions for this firmware | [coding-conventions.md](coding-conventions.md) |
+| C/C++ coding conventions for this firmware | [coding-conventions.md](coding-conventions.md) |
+| How a change is made, hardware-gated and merged; upstream policy | `treklink-docs/_docs/01-conventions/17-firmware-development.md` (D-077) |
 | Hardware design records, BOMs, budget | [hardware/](hardware/README.md) |
 | Product and variant roadmap | [roadmap/](roadmap/) |
 | Dated hardware test runs | [test-runs/](test-runs/README.md) |
