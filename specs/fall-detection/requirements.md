@@ -104,10 +104,11 @@ confirms it; the capture and the chosen values are recorded in a test-run file a
 
 ## REQ-FALL-LOG-01: IMU datalog build (diagnostic only)
 
-1. The firmware SHALL offer a v2 diagnostic env that streams every sample the fall detector acts on
-   (timestamp, three accelerometer axes, three gyroscope axes, the two magnitudes, the detector
-   state) as CSV lines over the USB console, plus a marker line at every state change.
-2. The datalog env SHALL never be the release image: its name ends in `-datalog` and it is not in
-   the release workflow.
-3. Host tools in `treklink/tools/imu/` SHALL capture the stream to a file, summarise it per
-   recording, plot it, and replay a capture through the same detector logic the firmware runs.
+1. The firmware SHALL offer a datalog image, a diagnostic image that also streams every sample the
+   fall detector acts on (timestamp, three accelerometer axes, three gyroscope axes, the two
+   magnitudes, the detector state) as CSV lines over the USB console, plus an event line at every
+   state change and calibration result.
+2. The datalog image SHALL never be a release image: only `tk.py build --datalog` builds it, and its
+   images are kept apart from release and diagnostic images.
+3. `tk.py imu` SHALL record the stream to CSV files, and host tools in `treklink/tools/imu/` SHALL
+   summarise a recording and replay it through the same detector code the firmware runs.

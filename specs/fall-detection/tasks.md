@@ -21,9 +21,9 @@ the common SOS pattern; the release candidate is the top of the stack.
 
 ## Branch 2: `feat/fall-imu-datalog`
 
-- [ ] 2.1 `FallDatalog.h` macros and the `treklink-v2-datalog` env (design §7)
-- [ ] 2.2 `treklink/tools/imu/` capture, summary and plot tools, with a README
-- [ ] 2.3 Build treklink-v2-datalog; capture on the v2: resting on the bench (screen on, then off),
+- [ ] 2.1 `FallDatalog.{h,cpp}` macros and the `tk.py build --datalog` image kind (design §7)
+- [ ] 2.2 `tk.py imu` capture and `treklink/tools/imu/summary.py`, with a README
+- [ ] 2.3 Build the v2 datalog image; capture on the v2: resting on the bench (screen on, then off),
   handled, dropped from a stated height onto a mattress, a simulated trip
   - _Requirements: REQ-FALL-LOG-01, and the evidence for F5 and F15_
 
@@ -45,7 +45,7 @@ the common SOS pattern; the release candidate is the top of the stack.
   rejected tilted mean, threshold clamp, bias removal
   - _Requirements: REQ-FALL-CAL-01_
 - [ ] 4.2 Module: boot calibration, stored version 2 values, erase of the old keys, 60 s retry
-- [ ] 4.3 Build matrix at the top of the stack: treklink-v2, treklink-v2-datalog, treklink-v3,
+- [ ] 4.3 Build matrix at the top of the stack: treklink-v2 (release, diagnostic, datalog), treklink-v3,
   treklink-v4, tbeam, tbeam-s3-core; `pio test -e native -f treklink_fall`
 
 ## Hardware run (top of the stack, new run file)

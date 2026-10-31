@@ -19,7 +19,7 @@ Reads with [requirements.md](requirements.md) and the overlay architecture
 | Calibration core: statistics, acceptance, threshold | `treklink/src/fall/FallCalibration.h` (new, header only) | none |
 | Module: thread, sensor reads, NVS, pre-alarm, auto-SOS | `treklink/src/fall/FallDetectionModule.{h,cpp}` | firmware |
 | Adapters: units, range, wake | `treklink/src/fall/sensors/*FallSensor.cpp` | firmware |
-| Datalog tap | `treklink/src/fall/FallDatalog.h` (new) | firmware, compiled out unless `TREKLINK_IMU_STREAM` |
+| Datalog tap | `treklink/src/fall/FallDatalog.{h,cpp}` (new) | firmware, compiled out unless `TREKLINK_IMU_STREAM` |
 | Host tools | `treklink/tools/imu/` | host |
 
 The cores take one sample at a time, `{t_ms, accel_g[3], gyro_rads[3]}`, and hold no pointers to
@@ -114,20 +114,24 @@ Provisional values; the datalog capture replaces them, and the run file records 
   (`SensorQMI8658.hpp:53-61`). Stock 2.7.26 has no QMI8658 motion driver, so nothing else configures
   the chip (`specs/variants/v4/components.md`).
 
-## 7. Datalog build, REQ-FALL-LOG-01
+## 7. Datalog image, REQ-FALL-LOG-01
 
-- `FallDatalog.h` defines `TREKLINK_IMU_SAMPLE(...)` and `TREKLINK_IMU_MARKER(...)`; without
-  `TREKLINK_IMU_STREAM` both expand to nothing. With it, each sample prints
-  `IMU,<t_ms>,<ax>,<ay>,<az>,<gx>,<gy>,<gz>,<a>,<w>,<state>` and each event
-  `IMU_EV,<t_ms>,<name>,<detail>` through `Serial` directly, not the log system, so the lines stay
-  parseable.
-- Env `treklink-v2-datalog` in `variants/esp32s3/treklink_v2/platformio.ini` extends
-  `treklink-v2` and adds `-DTREKLINK_IMU_STREAM=1 -DARDUINO_USB_CDC_ON_BOOT=1`.
-- Tools, Python 3 standard library plus optional matplotlib for plots:
-  `capture.py` (port, duration, label, writes CSV), `summary.py` (per file: sample period, a and w
-  percentiles, dips and peaks), `plot.py`; and `replay.cpp`, a host program built from the two
-  cores that prints every event for a capture, so a threshold change is tested against recorded
-  falls before it is flashed.
+- `FallDatalog.h` defines `TREKLINK_IMU_BEGIN`, `TREKLINK_IMU_SAMPLE` and `TREKLINK_IMU_EVENT`;
+  without `TREKLINK_IMU_STREAM` all three expand to nothing. With it, `FallDatalog.cpp` prints
+  `#IMUHDR,...` once, `#IMU,<seq>,<t_ms>,<ax>,<ay>,<az>,<gx>,<gy>,<gz>,<a>,<w>,<state>` per sample
+  (m/s2 and rad/s; state 255 while calibrating) and `#EVT,<seq>,<t_ms>,<name>,<detail>` per event,
+  through `consolePrintf` so the lines share the USB console with the log and stay parseable by
+  their prefix.
+- The datalog image is an image kind of `tk.py`, like the diagnostic image: `tk.py build --datalog`
+  sets `PLATFORMIO_BUILD_FLAGS` to the diagnostic flags plus `-DTREKLINK_IMU_STREAM=1` and keeps the
+  result in `.pio/treklink-images/<env>-datalog/`. No PlatformIO env is added, and v4 gets a
+  datalog image the same way.
+- `tk.py imu --label <what> --seconds <n>` records `-samples.csv`, `-events.csv` and the remaining
+  console lines; `treklink/tools/imu/summary.py` (standard library) prints the real sample period,
+  the spread of `a` and `w`, the per-axis gyro mean and the free-fall runs and impacts against the
+  §3 thresholds; `replay.cpp` (branch 3) is a host program built from the two cores that prints
+  every detector event for a capture, so a threshold change is tested on recorded falls before it is
+  flashed. Procedure: `treklink/tools/imu/README.md`.
 
 ## 8. Not in scope
 
