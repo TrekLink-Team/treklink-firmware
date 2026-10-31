@@ -96,6 +96,31 @@ static void test_sosPosition_isCoarsenedByStockChannel0Default()
     TEST_ASSERT_INT32_WITHIN(1 << 18, SOS_LON_I, decoded.longitude_i);
 }
 
+// Pins the encoding rule behind the TrekLinkSOSHelper::sendPositionPacket fix: a Position whose coordinates are
+// assigned without their has_ flags goes on the wire with no coordinates at all, only the time.
+static void test_sosPosition_withoutPresenceFlagsCarriesNoCoordinates()
+{
+    meshtastic_Position pos = meshtastic_Position_init_default;
+    pos.latitude_i = SOS_LAT_I;
+    pos.longitude_i = SOS_LON_I;
+    pos.altitude = 1143;
+    pos.time = 1793500000;
+
+    meshtastic_MeshPacket packet = meshtastic_MeshPacket_init_default;
+    packet.which_payload_variant = meshtastic_MeshPacket_decoded_tag;
+    packet.decoded.portnum = meshtastic_PortNum_POSITION_APP;
+    packet.decoded.payload.size =
+        pb_encode_to_bytes(packet.decoded.payload.bytes, sizeof(packet.decoded.payload.bytes), &meshtastic_Position_msg, &pos);
+
+    meshtastic_Position decoded = decodePosition(packet);
+    TEST_ASSERT_FALSE(decoded.has_latitude_i);
+    TEST_ASSERT_FALSE(decoded.has_longitude_i);
+    TEST_ASSERT_FALSE(decoded.has_altitude);
+    TEST_ASSERT_EQUAL_INT32(0, decoded.latitude_i);
+    TEST_ASSERT_EQUAL_INT32(0, decoded.longitude_i);
+    TEST_ASSERT_EQUAL_UINT32(1793500000, decoded.time);
+}
+
 void setUp(void) {}
 
 void tearDown(void) {}
@@ -107,6 +132,7 @@ void setup()
     UNITY_BEGIN();
     RUN_TEST(test_sosPosition_keepsFullPrecisionOnTrekLinkChannel0);
     RUN_TEST(test_sosPosition_isCoarsenedByStockChannel0Default);
+    RUN_TEST(test_sosPosition_withoutPresenceFlagsCarriesNoCoordinates);
     exit(UNITY_END());
 }
 
