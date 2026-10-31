@@ -19,7 +19,8 @@
 #include "concurrency/OSThread.h"
 
 // Timing constants
-#define SOS_GESTURE_HOLD_MS 3000   // 3 seconds to trigger/cancel SOS
+#define SOS_GESTURE_HOLD_MS 5000   // specs/sos REQ-SOS-TRG-01: SOS on a 5 s hold
+#define SOS_GESTURE_WARN_MS 3000   // banner from 3 s: keep holding for SOS
 #define SOS_GESTURE_POLL_MS 20     // 20ms poll interval
 
 class TrekLinkSOSGesture : public SinglePortModule, private concurrency::OSThread
@@ -47,6 +48,7 @@ class TrekLinkSOSGesture : public SinglePortModule, private concurrency::OSThrea
 
     // SOS state
     bool sosActive;
+    bool warned = false; // the 3 s "keep holding" banner was shown for this press
     uint32_t sosStartTime;
     uint32_t lastSOSTxTime;
 

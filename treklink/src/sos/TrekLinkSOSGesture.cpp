@@ -2,12 +2,12 @@
  * TrekLink SOS Gesture Module Implementation
  * Polls BUTTON_PIN for 3-second hold to trigger/cancel SOS.
  *
- * Coexistence with Meshtastic's OneButton:
- *   - This module monitors the same GPIO via raw digitalRead()
- *   - OneButton processes short press, double press, and its own long-press events
- *   - We only act at the 3-second mark; OneButton's long-press fires at ~1s
- *   - OneButton's long-press-release triggers shutdown after 5s — our 3s threshold
- *     fires first, so the user gets SOS at 3s and must release before 5s to avoid shutdown
+ * Coexistence with the stock user button (specs/sos REQ-SOS-TRG-01):
+ *   - This module reads the same GPIO with digitalRead(); stock keeps click = next screen and the
+ *     0.5 s hold = select, which fires first and tells a person who meant "select" to let go.
+ *   - From 3 s a banner says that SOS fires if the hold continues; at 5 s SOS triggers (or cancels).
+ *   - The stock shutdown on a long hold is removed for this button (UserButtonOverride.cpp), so the
+ *     release after an SOS hold cannot power the unit off.
  */
 
 #include "sos/TrekLinkSOSGesture.h"
@@ -80,6 +80,7 @@ int32_t TrekLinkSOSGesture::runOnce()
     case GESTURE_IDLE:
         if (buttonPressed) {
             pressStartTime = now;
+            warned = false;
             gestureState = GESTURE_PRESSING;
         }
         break;
@@ -89,9 +90,13 @@ int32_t TrekLinkSOSGesture::runOnce()
             // Released before 3s threshold — let OneButton handle it
             gestureState = GESTURE_IDLE;
         } else if ((now - pressStartTime) >= SOS_GESTURE_HOLD_MS) {
-            // 3s threshold reached
             onHoldThreshold();
             gestureState = GESTURE_HOLD_FIRED;
+        } else if (!warned && (now - pressStartTime) >= SOS_GESTURE_WARN_MS) {
+            warned = true;
+            LOG_INFO("SOSGesture: hold past %u ms, %s at %u ms", (unsigned)SOS_GESTURE_WARN_MS, sosActive ? "cancel" : "SOS",
+                     (unsigned)SOS_GESTURE_HOLD_MS);
+            TrekLinkSOSHelper::instance().showBanner(sosActive ? "Keep holding\nto cancel SOS" : "Keep holding\nfor SOS", 2500);
         }
         break;
 
