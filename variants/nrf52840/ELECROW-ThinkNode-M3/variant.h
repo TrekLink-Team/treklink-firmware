@@ -37,7 +37,8 @@ extern "C" {
 
 // Power Pin
 #define NRF_APM
-#define GPS_POWER 14
+#define PIN_GPS_EN 14
+#define GPS_EN_ACTIVE HIGH
 #define PIN_POWER_USB 31
 #define EXT_PWR_DETECT PIN_POWER_USB
 #define PIN_POWER_DONE 24
@@ -52,7 +53,6 @@ extern "C" {
 // LED
 #define LED_RED 33
 #define LED_POWER LED_RED
-#define LED_CHARGE LED_POWER // Signals the Status LED Module to handle this LED
 #define LED_GREEN 35
 #define LED_NOTIFICATION LED_GREEN
 #define LED_BLUE 37
@@ -116,7 +116,6 @@ extern "C" {
 
 // PCF8563 RTC Module
 #define PCF8563_RTC 0x51
-#define HAS_RTC 1
 
 #ifdef __cplusplus
 }

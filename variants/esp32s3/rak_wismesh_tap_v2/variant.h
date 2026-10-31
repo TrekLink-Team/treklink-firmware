@@ -32,7 +32,7 @@
 #define PIN_LED1 LED_GREEN
 #define LED_NOTIFICATION LED_BLUE
 
-#define LED_PIN LED_GREEN
+#define LED_POWER LED_GREEN
 #define ledOff(pin) pinMode(pin, INPUT)
 
 #define LED_STATE_ON 1 // State when LED is litted
@@ -53,6 +53,7 @@
 #define BATTERY_PIN 1
 #define ADC_CHANNEL ADC1_GPIO1_CHANNEL
 #define ADC_MULTIPLIER 1.667
+#define OCV_ARRAY 4160, 4020, 3940, 3870, 3810, 3760, 3740, 3720, 3680, 3620, 2990
 
 #define PIN_BUZZER 38
 

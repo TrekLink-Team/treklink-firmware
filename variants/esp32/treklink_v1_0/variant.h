@@ -48,6 +48,7 @@
 #define PIN_VIBRATOR 4       // Vibration motor (via NPN transistor, avoid strapping pin 15)
 #define PIN_VIBRATION PIN_VIBRATOR // Meshtastic convention alias (auto-configures ExternalNotificationModule)
 #define LED_PIN 2            // Built-in LED (Meshtastic default)
+#define LED_POWER LED_PIN    // TrekLink: Meshtastic 2.7.26 drives the heartbeat LED as LED_POWER
 
 // Power Management (REMOVED - Using Meshtastic Firmware Sleep Modes Instead)
 // #define PIN_GPS_PWR_EN 13    // GPS P-MOSFET gate (via NPN driver) - REMOVED

@@ -7,13 +7,14 @@
 #include "NodeDB.h"
 #include "PowerFSM.h"
 #include "PowerMon.h"
+#include "RadioLibInterface.h"
 #include "ReliableRouter.h"
+#include "TransmitHistory.h"
 #include "airtime.h"
 #include "buzz.h"
 #include "power/PowerHAL.h"
 
 #include "FSCommon.h"
-#include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
 #include "Throttle.h"
@@ -29,7 +30,6 @@
 #include <Wire.h>
 #endif
 #include "detect/einkScan.h"
-#include "graphics/RAKled.h"
 #include "graphics/Screen.h"
 #include "main.h"
 #include "mesh/generated/meshtastic/config.pb.h"
@@ -59,12 +59,12 @@ NimbleBluetooth *nimbleBluetooth = nullptr;
 NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #endif
 
-#if HAS_WIFI || defined(USE_WS5500)
+#if HAS_WIFI || defined(USE_WS5500) || defined(USE_CH390D)
 #include "mesh/api/WiFiServerAPI.h"
 #include "mesh/wifi/WiFiAPClient.h"
 #endif
 
-#if HAS_ETHERNET && !defined(USE_WS5500)
+#if HAS_ETHERNET && !defined(USE_WS5500) && !defined(USE_CH390D)
 #include "mesh/api/ethServerAPI.h"
 #include "mesh/eth/ethClient.h"
 #endif
@@ -123,9 +123,13 @@ void printPartitionTable()
 #include "AmbientLightingThread.h"
 #include "PowerFSMThread.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && !MESHTASTIC_EXCLUDE_ACCELEROMETER
 #include "motion/AccelerometerThread.h"
 AccelerometerThread *accelerometerThread = nullptr;
+#endif
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && !MESHTASTIC_EXCLUDE_MAGNETOMETER
+#include "motion/MagnetometerThread.h"
+MagnetometerThread *magnetometerThread = nullptr;
 #endif
 
 #ifdef HAS_I2S
@@ -197,6 +201,8 @@ bool osk_found = false;
 ScanI2C::DeviceAddress rtc_found = ScanI2C::ADDRESS_NONE;
 // The I2C address of the Accelerometer (if found)
 ScanI2C::DeviceAddress accelerometer_found = ScanI2C::ADDRESS_NONE;
+// The I2C address of the Magnetometer (if found)
+ScanI2C::DeviceAddress magnetometer_found = ScanI2C::ADDRESS_NONE;
 // The I2C address of the RGB LED (if found)
 ScanI2C::FoundDevice rgb_found = ScanI2C::FoundDevice(ScanI2C::DeviceType::NONE, ScanI2C::ADDRESS_NONE);
 /// The I2C address of our Air Quality Indicator (if found)
@@ -246,33 +252,12 @@ const char *getDeviceName()
     return name;
 }
 
-// TODO remove from main.cpp
-static int32_t ledBlinker()
-{
-    // Still set up the blinking (heartbeat) interval but skip code path below, so LED will blink if
-    // config.device.led_heartbeat_disabled is changed
-    if (config.device.led_heartbeat_disabled)
-        return 1000;
-
-    static bool ledOn;
-    ledOn ^= 1;
-
-    ledBlink.set(ledOn);
-
-    // have a very sparse duty cycle of LED being on, unless charging, then blink 0.5Hz square wave rate to indicate that
-    return powerStatus->getIsCharging() ? 1000 : (ledOn ? 1 : 1000);
-}
-
 uint32_t timeLastPowered = 0;
 
-static Periodic *ledPeriodic;
 static OSThread *powerFSMthread;
-static OSThread *ambientLightingThread;
+OSThread *ambientLightingThread;
 
-RadioInterface *rIf = NULL;
-#ifdef ARCH_PORTDUINO
 RadioLibHal *RadioLibHAL = NULL;
-#endif
 
 /**
  * Some platforms (nrf52) might provide an alterate version that suppresses calling delay from sleep.
@@ -303,21 +288,16 @@ void earlyInitVariant() {}
 // blink user led in 3 flashes sequence to indicate what is happening
 void waitUntilPowerLevelSafe()
 {
-
-#ifdef LED_PIN
-    pinMode(LED_PIN, OUTPUT);
-#endif
-
     while (powerHAL_isPowerLevelSafe() == false) {
 
-#ifdef LED_PIN
+#ifdef LED_POWER
 
         // 3x: blink for 300 ms, pause for 300 ms
 
         for (int i = 0; i < 3; i++) {
-            digitalWrite(LED_PIN, LED_STATE_ON);
+            digitalWrite(LED_POWER, LED_STATE_ON);
             delay(300);
-            digitalWrite(LED_PIN, LED_STATE_OFF);
+            digitalWrite(LED_POWER, LED_STATE_OFF);
             delay(300);
         }
 #endif
@@ -341,6 +321,11 @@ void setup()
     // initialize power HAL layer as early as possible
     powerHAL_init();
 
+#ifdef LED_POWER
+    pinMode(LED_POWER, OUTPUT);
+    digitalWrite(LED_POWER, LED_STATE_ON);
+#endif
+
     // prevent booting if device is in power failure mode
     // boot sequence will follow when battery level raises to safe mode
     waitUntilPowerLevelSafe();
@@ -353,11 +338,6 @@ void setup()
     digitalWrite(PIN_POWER_EN, HIGH);
 #endif
 
-#ifdef LED_POWER
-    pinMode(LED_POWER, OUTPUT);
-    digitalWrite(LED_POWER, LED_STATE_ON);
-#endif
-
 #ifdef LED_NOTIFICATION
     pinMode(LED_NOTIFICATION, OUTPUT);
     digitalWrite(LED_NOTIFICATION, HIGH ^ LED_STATE_ON);
@@ -365,7 +345,7 @@ void setup()
 
 #ifdef WIFI_LED
     pinMode(WIFI_LED, OUTPUT);
-    digitalWrite(WIFI_LED, LOW);
+    digitalWrite(WIFI_LED, HIGH ^ WIFI_STATE_ON);
 #endif
 
 #ifdef BLE_LED
@@ -374,9 +354,10 @@ void setup()
 #endif
 
     concurrency::hasBeenSetup = true;
-
+#if HAS_SCREEN
     meshtastic_Config_DisplayConfig_OledType screen_model =
         meshtastic_Config_DisplayConfig_OledType::meshtastic_Config_DisplayConfig_OledType_OLED_AUTO;
+#endif
     OLEDDISPLAY_GEOMETRY screen_geometry = GEOMETRY_128_64;
 
 #ifdef USE_SEGGER
@@ -418,8 +399,8 @@ void setup()
 
 #if defined(ARCH_ESP32) && defined(BOARD_HAS_PSRAM)
 #ifndef SENSECAP_INDICATOR
-    // use PSRAM for malloc calls > 256 bytes
-    heap_caps_malloc_extmem_enable(256);
+    // use PSRAM for malloc calls > 2048 bytes
+    heap_caps_malloc_extmem_enable(2048);
 #endif
 #endif
 
@@ -449,6 +430,11 @@ void setup()
 #if defined(VEXT_ENABLE)
     pinMode(VEXT_ENABLE, OUTPUT);
     digitalWrite(VEXT_ENABLE, VEXT_ON_VALUE); // turn on the display power
+#endif
+
+#if defined(PIN_SENSOR_EN)
+    pinMode(PIN_SENSOR_EN, OUTPUT);
+    digitalWrite(PIN_SENSOR_EN, PIN_SENSOR_EN_ACTIVE); // turn on sensor power
 #endif
 
 #if defined(BIAS_T_ENABLE)
@@ -487,16 +473,6 @@ void setup()
     initSPI();
 
     OSThread::setup();
-
-    // TODO make this ifdef based on defined pins and move from main.cpp
-#if defined(ELECROW_ThinkNode_M1) || defined(ELECROW_ThinkNode_M2)
-    // The ThinkNodes have their own blink logic
-    // ledPeriodic = new Periodic("Blink", elecrowLedBlinker);
-#else
-
-    ledPeriodic = new Periodic("Blink", ledBlinker);
-
-#endif
 
     fsInit();
 
@@ -603,6 +579,7 @@ void setup()
     }
 #endif
 
+#if HAS_SCREEN
     auto screenInfo = i2cScanner->firstScreen();
     screen_found = screenInfo.type != ScanI2C::DeviceType::NONE ? screenInfo.address : ScanI2C::ADDRESS_NONE;
 
@@ -620,6 +597,7 @@ void setup()
             screen_model = meshtastic_Config_DisplayConfig_OledType::meshtastic_Config_DisplayConfig_OledType_OLED_AUTO;
         }
     }
+#endif
 
 #define UPDATE_FROM_SCANNER(FIND_FN)
 #if defined(USE_VIRTUAL_KEYBOARD)
@@ -694,10 +672,15 @@ void setup()
     }
 #endif
 
-#if !defined(ARCH_STM32WL)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_ACCELEROMETER
     auto acc_info = i2cScanner->firstAccelerometer();
     accelerometer_found = acc_info.type != ScanI2C::DeviceType::NONE ? acc_info.address : accelerometer_found;
     LOG_DEBUG("acc_info = %i", acc_info.type);
+#endif
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_MAGNETOMETER
+    auto mag_info = i2cScanner->firstMagnetometer();
+    magnetometer_found = mag_info.type != ScanI2C::DeviceType::NONE ? mag_info.address : magnetometer_found;
+    LOG_DEBUG("mag_info = %i", mag_info.type);
 #endif
 
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA260, meshtastic_TelemetrySensorType_INA260);
@@ -711,22 +694,15 @@ void setup()
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMI8658, meshtastic_TelemetrySensorType_QMI8658);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMC5883L, meshtastic_TelemetrySensorType_QMC5883L);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::HMC5883L, meshtastic_TelemetrySensorType_QMC5883L);
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MMC5983MA, meshtastic_TelemetrySensorType_MMC5983MA);
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::ICM42607P, meshtastic_TelemetrySensorType_ICM42607P);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MLX90614, meshtastic_TelemetrySensorType_MLX90614);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::ICM20948, meshtastic_TelemetrySensorType_ICM20948);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX30102, meshtastic_TelemetrySensorType_MAX30102);
-    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::SCD4X, meshtastic_TelemetrySensorType_SCD4X);
-
 #endif
 
 #ifdef HAS_SDCARD
     setupSDCard();
-#endif
-
-    // LED init
-
-#ifdef LED_PIN
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LED_STATE_ON); // turn on for now
 #endif
 
     // Hello
@@ -750,6 +726,9 @@ void setup()
     // We do this as early as possible because this loads preferences from flash
     // but we need to do this after main cpu init (esp32setup), because we need the random seed set
     nodeDB = new NodeDB;
+
+    // Initialize transmit history to persist broadcast throttle timers across reboots
+    TransmitHistory::getInstance()->loadFromDisk();
 #if HAS_TFT
     if (config.display.displaymode == meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
         tftSetup();
@@ -766,23 +745,40 @@ void setup()
     else
         playStartMelody();
 
-    // fixed screen override?
-    if (config.display.oled != meshtastic_Config_DisplayConfig_OledType_OLED_AUTO)
-        screen_model = config.display.oled;
-
+#if HAS_SCREEN
+        // fixed screen override?
 #if defined(USE_SH1107)
     screen_model = meshtastic_Config_DisplayConfig_OledType_OLED_SH1107; // set dimension of 128x128
     screen_geometry = GEOMETRY_128_128;
-#endif
-
-#if defined(USE_SH1107_128_64)
+#elif defined(USE_SH1107_128_64)
     screen_model = meshtastic_Config_DisplayConfig_OledType_OLED_SH1107; // keep dimension of 128x64
+#else
+    if (config.display.oled != meshtastic_Config_DisplayConfig_OledType_OLED_AUTO) {
+        screen_model = config.display.oled;
+
+        // Fix: update geometry for SH1107 128x128 selected via menu
+        if (screen_model == meshtastic_Config_DisplayConfig_OledType_OLED_SH1107_128_128) {
+            screen_geometry = GEOMETRY_128_128;
+            screen_model = meshtastic_Config_DisplayConfig_OledType_OLED_SH1107; // normalize
+        }
+    }
+#endif
+#ifdef OLED_GEOMETRY_OVERRIDE
+    // Per-variant geometry (e.g. 72x40 micro-OLEDs). Takes precedence over the
+    // default GEOMETRY_128_64 set at the top of setup().
+    screen_geometry = OLED_GEOMETRY_OVERRIDE;
+#endif
 #endif
 
 #if !MESHTASTIC_EXCLUDE_I2C
-#if !defined(ARCH_STM32WL)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_ACCELEROMETER
     if (acc_info.type != ScanI2C::DeviceType::NONE) {
         accelerometerThread = new AccelerometerThread(acc_info.type);
+    }
+#endif
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_MAGNETOMETER
+    if (mag_info.type != ScanI2C::DeviceType::NONE) {
+        magnetometerThread = new MagnetometerThread(mag_info.type);
     }
 #endif
 
@@ -938,6 +934,13 @@ void setup()
     service = new MeshService();
     service->init();
 
+    // Set osk_found for trackball/encoder devices BEFORE setupModules so CannedMessageModule can detect it
+#if defined(HAS_TRACKBALL) || (defined(INPUTDRIVER_ENCODER_TYPE) && INPUTDRIVER_ENCODER_TYPE == 2)
+#ifndef HAS_PHYSICAL_KEYBOARD
+    osk_found = true;
+#endif
+#endif
+
     // Now that the mesh service is created, create any modules
     setupModules();
 
@@ -969,12 +972,6 @@ void setup()
     setupNicheGraphics();
 #endif
 
-#ifdef LED_PIN
-    // Turn LED off after boot, if heartbeat by config
-    if (config.device.led_heartbeat_disabled)
-        digitalWrite(LED_PIN, HIGH ^ LED_STATE_ON);
-#endif
-
 // Do this after service.init (because that clears error_code)
 #ifdef HAS_PMU
     if (!pmu_found)
@@ -1000,7 +997,7 @@ void setup()
 #endif
 #endif
 
-    initLoRa();
+    auto rIf = initLoRa();
 
     lateInitVariant(); // Do board specific init (see extra_variants/README.md for documentation)
 
@@ -1028,12 +1025,6 @@ void setup()
 #endif
 #endif
 
-#if defined(HAS_TRACKBALL) || (defined(INPUTDRIVER_ENCODER_TYPE) && INPUTDRIVER_ENCODER_TYPE == 2)
-#ifndef HAS_PHYSICAL_KEYBOARD
-    osk_found = true;
-#endif
-#endif
-
 #if defined(ARCH_ESP32) && !MESHTASTIC_EXCLUDE_WEBSERVER
     // Start web server thread.
     webServerThread = new WebServerThread();
@@ -1055,12 +1046,12 @@ void setup()
     if (!rIf)
         RECORD_CRITICALERROR(meshtastic_CriticalErrorCode_NO_RADIO);
     else {
-        router->addInterface(rIf);
-
         // Log bit rate to debug output
         LOG_DEBUG("LoRA bitrate = %f bytes / sec", (float(meshtastic_Constants_DATA_PAYLOAD_LEN) /
                                                     (float(rIf->getPacketTime(meshtastic_Constants_DATA_PAYLOAD_LEN)))) *
                                                        1000);
+
+        router->addInterface(std::move(rIf));
     }
 
     // This must be _after_ service.init because we need our preferences loaded from flash to have proper timeout values
@@ -1177,6 +1168,21 @@ void loop()
 #endif
     power->powerCommandsCheck();
 
+    if (RadioLibInterface::instance != nullptr) {
+        static uint32_t lastRadioMissedIrqPoll;
+        if (!Throttle::isWithinTimespanMs(lastRadioMissedIrqPoll, 1000)) {
+            lastRadioMissedIrqPoll = millis();
+            RadioLibInterface::instance->pollMissedIrqs();
+        }
+
+        // Periodic AGC reset — warm sleep + recalibrate to prevent stuck AGC gain
+        static uint32_t lastAgcReset;
+        if (!Throttle::isWithinTimespanMs(lastAgcReset, AGC_RESET_INTERVAL_MS)) {
+            lastAgcReset = millis();
+            RadioLibInterface::instance->resetAGC();
+        }
+    }
+
 #ifdef DEBUG_STACK
     static uint32_t lastPrint = 0;
     if (!Throttle::isWithinTimespanMs(lastPrint, 10 * 1000L)) {
@@ -1196,10 +1202,7 @@ void loop()
     }
     if (portduino_status.LoRa_in_error && rebootAtMsec == 0) {
         LOG_ERROR("LoRa in error detected, attempting to recover");
-        if (rIf != nullptr) {
-            delete rIf;
-            rIf = nullptr;
-        }
+        router->addInterface(nullptr);
         if (portduino_config.lora_spi_dev == "ch341") {
             if (ch341Hal != nullptr) {
                 delete ch341Hal;
@@ -1215,8 +1218,9 @@ void loop()
                 exit(EXIT_FAILURE);
             }
         }
-        if (initLoRa()) {
-            router->addInterface(rIf);
+        auto rIf = initLoRa();
+        if (rIf) {
+            router->addInterface(std::move(rIf));
             portduino_status.LoRa_in_error = false;
         } else {
             LOG_WARN("Reconfigure failed, rebooting");

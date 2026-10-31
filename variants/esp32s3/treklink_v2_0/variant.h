@@ -50,6 +50,7 @@
 #define PIN_VIBRATION PIN_VIBRATOR
 #define LED_PIN 2            // Notification LED
 #define LED_STATE_ON 0       // Active-Low LED
+#define LED_POWER LED_PIN    // TrekLink: Meshtastic 2.7.26 drives the heartbeat LED as LED_POWER
 
 // Power Management Latch
 #define POWER_LATCH_PIN 9    // Power Latch pin (Active-High)

@@ -33,6 +33,7 @@ __pycache__
 *~
 
 venv/
+.venv/
 release/
 .vscode/extensions.json
 /compile_commands.json
@@ -54,3 +55,5 @@ CMakeLists.txt
 # PYTHONPATH used by the Nix shell
 .python3
 .gitnexus
+.claude/scheduled_tasks.lock
+userPrefs.jsonc.mcp-session-bak

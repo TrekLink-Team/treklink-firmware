@@ -1,8 +1,11 @@
 #include "configuration.h"
 #if !MESHTASTIC_EXCLUDE_INPUTBROKER
 #include "buzz/BuzzerFeedbackThread.h"
-#include "modules/StatusLEDModule.h"
 #include "modules/SystemCommandsModule.h"
+#endif
+#include "modules/StatusLEDModule.h"
+#if !MESHTASTIC_EXCLUDE_REPLYBOT
+#include "ReplyBotModule.h"
 #endif
 #if !MESHTASTIC_EXCLUDE_PKI
 #include "KeyVerificationModule.h"
@@ -53,9 +56,13 @@
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
 #include "main.h"
-#include "modules/Telemetry/AirQualityTelemetry.h"
 #include "modules/Telemetry/EnvironmentTelemetry.h"
 #include "modules/Telemetry/HealthTelemetry.h"
+#include "modules/Telemetry/Sensor/TelemetrySensor.h"
+#endif
+#if HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
+#include "main.h"
+#include "modules/Telemetry/AirQualityTelemetry.h"
 #include "modules/Telemetry/Sensor/TelemetrySensor.h"
 #endif
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY
@@ -126,10 +133,10 @@ void setupModules()
         buzzerFeedbackThread = new BuzzerFeedbackThread();
     }
 #endif
-#if defined(LED_CHARGE) || defined(LED_PAIRING)
     statusLEDModule = new StatusLEDModule();
+#if !MESHTASTIC_EXCLUDE_REPLYBOT
+    new ReplyBotModule();
 #endif
-
 #if !MESHTASTIC_EXCLUDE_ADMIN
     adminModule = new AdminModule();
 #endif
