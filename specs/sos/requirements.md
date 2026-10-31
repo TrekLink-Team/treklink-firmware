@@ -40,3 +40,21 @@ common SOS pattern for every output that can signal, sparse enough to last.
 
 1. WHILE a fall pre-alarm counts down, the system SHALL keep the pre-alarm signal (a 200 ms beep and
    pulse every second), so a person can tell "about to send" from "sent".
+
+## REQ-SOS-TRG-01: Single-button SOS on v3 and v4 (leader ruling, 2026-10-31)
+
+The T-Beam user button keeps its stock navigation: a click moves to the next screen and a hold of
+0.5 s selects (`InputBroker.cpp:305-306`). SOS is a deliberately longer hold of the same press.
+
+1. WHEN the user button is held, THEN the stock select SHALL fire first, at 0.5 s, unchanged, so a
+   person who meant "select" sees it happen and lets go.
+2. WHILE the hold continues past 3 s, the system SHALL show a banner telling the person that SOS
+   fires if they keep holding.
+3. WHEN the hold reaches 5 s, THEN the system SHALL trigger SOS; a second 5 s hold while SOS is
+   active SHALL cancel it, with the same banner from 3 s.
+4. A hold on the user button SHALL never shut the unit down: the stock long-long press
+   (`INPUT_BROKER_SHUTDOWN` on release after 3.9 s, `ButtonThread.cpp:276-279`) is removed for this
+   button by an override (architecture design §4.2 O-12). The unit powers off with the PMU power key
+   or the menu's confirmed "Shutdown" entry.
+5. Known risk, accepted by the ruling: the select at 0.5 s acts on whatever is focused, so a hold
+   started inside a menu runs that menu item before SOS fires.

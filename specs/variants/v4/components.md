@@ -39,7 +39,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against upstream vari
 | Capability | Value |
 |---|---|
 | `TREKLINK_VARIANT_NAME` | `"TrekLink v4 (T-Beam Supreme)"` |
-| `TREKLINK_SOS_BUTTON_PIN` | absent: SOS on the user button (trigger being redesigned, as for v3) |
+| `TREKLINK_SOS_BUTTON_PIN` | absent: SOS is a 5 s hold of the stock user button, after the stock 0.5 s select (specs/sos REQ-SOS-TRG-01) |
 | `PIN_BUZZER`, `PIN_VIBRATOR`, `TREKLINK_SOS_LED_PIN` | absent: the only local SOS feedback is the screen |
 | `TREKLINK_FALL_SENSOR` | `TREKLINK_FALL_QMI8658` |
 | `TREKLINK_ONBOARD_QUEUE` | 1, 1000 entries, 64 in RAM, 512 KiB flash budget |
@@ -49,7 +49,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against upstream vari
 
 | Resource | Other users |
 |---|---|
-| User button 0 | stock `UserButtonThread`, the same SELECT and SHUTDOWN timings as v3; boot strap pin, so holding it during reset enters the ROM bootloader |
+| User button 0 | stock `UserButtonThread`, the same click and select as v3, hold shutdown removed (O-12); boot strap pin, so holding it during reset enters the ROM bootloader |
 | Main I2C bus 17/18 | OLED, QMC6310, any I2C IMU probe |
 
 ## Known gaps

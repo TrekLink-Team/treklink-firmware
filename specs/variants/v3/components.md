@@ -38,7 +38,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against upstream vari
 | Capability | Value |
 |---|---|
 | `TREKLINK_VARIANT_NAME` | `"TrekLink v3 (T-Beam v1.2)"` |
-| `TREKLINK_SOS_BUTTON_PIN` | absent: SOS on the user button (the trigger gesture is being redesigned, see below) |
+| `TREKLINK_SOS_BUTTON_PIN` | absent: SOS is a 5 s hold of the stock user button, after the stock 0.5 s select (specs/sos REQ-SOS-TRG-01) |
 | `PIN_BUZZER`, `PIN_VIBRATOR` | absent |
 | `TREKLINK_SOS_LED_PIN` | 4 (`LED_POWER`) |
 | `TREKLINK_FALL_SENSOR` | `TREKLINK_FALL_NONE` |
@@ -49,7 +49,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against upstream vari
 
 | Resource | Other users |
 |---|---|
-| User button 38 | stock `UserButtonThread`: 500 ms hold SELECT, release after 3.9 s SHUTDOWN (`InputBroker.cpp:305-307`, `ButtonThread.h:24`). The leader ruled on 2026-10-31 that a long hold on this button is not an acceptable SOS trigger; a new trigger is specified in the SOS module spec before the fix |
+| User button 38 | stock `UserButtonThread`: 500 ms hold SELECT, release after 3.9 s SHUTDOWN (`InputBroker.cpp:305-307`, `ButtonThread.h:24`). TrekLink removes the hold shutdown for this button (architecture design §4.2 O-12) and fires SOS at 5 s (specs/sos REQ-SOS-TRG-01) |
 | GPIO 4 LED | stock power LED at boot (`main.cpp:320-322`) and `StatusLEDModule` charge indication (`StatusLEDModule.cpp:218-219`). Upstream renamed this pin from `LED_PIN` to `LED_POWER` after 2.7.19, so the old `#ifdef LED_PIN` SOS strobe would have compiled out silently on 2.7.26; TrekLink now names it `TREKLINK_SOS_LED_PIN` |
 
 ## Known gaps
