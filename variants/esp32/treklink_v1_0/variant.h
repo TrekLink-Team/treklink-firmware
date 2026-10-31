@@ -75,6 +75,15 @@
 // Default timezone for TrekLink (Vietnam, GMT+7 Indochina Time)
 #define DEFAULT_TIMEZONE "ICT-7"
 
+// Default channel 0 position precision for TrekLink: 32 bits (full). Since Meshtastic 2.7.26 (#10383, #10513)
+// Router::send clamps every position packet the node originates to its channel's precision, and the stock default
+// of 13 bits (Channels.cpp initDefaultChannel) would coarsen the SOS position to about 0.05 degrees. Stock code
+// reads this macro; a userPrefs.jsonc value still wins. Applies when the default channel is written (fresh
+// install or factory reset), not to a channel already stored in flash.
+#ifndef USERPREFS_CHANNEL_0_PRECISION
+#define USERPREFS_CHANNEL_0_PRECISION 32
+#endif
+
 // TrekLink variant flag (enables TrekLink-specific modules)
 #ifndef TREKLINK_VARIANT
 #define TREKLINK_VARIANT
