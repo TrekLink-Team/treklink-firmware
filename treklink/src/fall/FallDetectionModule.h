@@ -6,6 +6,7 @@
 
 #if TREKLINK_HAS_FALL_DETECTION
 
+#include "fall/FallCalibration.h"
 #include "fall/FallDetector.h"
 #include "fall/FallSensorInterface.h"
 #include <Preferences.h>
@@ -62,41 +63,33 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     bool isBeepOn;
 
 
-    // Gyro stillness threshold handed to the detector (tunable by self-calibration)
-    float gyroStillnessThreshold = 0.1f;                          // rad/s
+    // Gyro stillness threshold handed to the detector (set by the calibration)
+    float gyroStillnessThreshold = 1.0f;                          // rad/s
     static constexpr int32_t SAMPLE_PERIOD_MS = 20;               // requested; durations use timestamps
     static constexpr unsigned long PREALARM_TIMEOUT = 30000;     // 30 seconds
     static constexpr unsigned long ALARM_BEEP_INTERVAL = 1000;   // 1 second beep interval
 
 
-    // Phase 2: Self-calibration state
-    enum CalPhase { CAL_NONE, CAL_COLLECTING, CAL_COMPLETE };
-    CalPhase calPhase = CAL_NONE;
+    // Gyro calibration (fall/FallCalibration.h, specs/fall-detection REQ-FALL-CAL-01). Each boot
+    // calibrates while the unit lies still; the stored version-2 result, or the default, is the fallback.
+    treklink::fall::FallCalibration calibration;
+    bool calRunning = false;  // samples are going into the calibration
+    bool bootCalDone = false; // the boot calibration gave its verdict; detection runs from then on
+    bool calAccepted = false; // a calibration was accepted in this boot
+    unsigned long lastCalStart = 0;
+    float gyroBias[3] = {0, 0, 0}; // rad/s, removed before the stillness test (F15)
+    static constexpr unsigned long CAL_RETRY_MS = 60000;
+    static constexpr uint32_t CAL_VERSION = 2;
 
-    static constexpr int CAL_SAMPLES = 250;  // 5s @ 50Hz
-    static constexpr int CAL_RATE_MS = 20;   // 50Hz sampling during calibration
-    int calSampleCount = 0;
-
-    struct CalStats {
-        float sum_x, sum_y, sum_z;
-        float sum_xx, sum_yy, sum_zz;
-        float mean_x, mean_y, mean_z;
-        float std_x, std_y, std_z;
-    };
-    CalStats accelStats, gyroStats;
-
-    float calibratedFreefallThreshold = 0.5f;
-    float calibratedGyroStillness = 0.1f;
-
-    void collectCalibrationSample(const SensorVec3 &accel, const SensorVec3 &gyro);
-    void finalizeCalibration();
     void loadCalibration();
     void saveCalibration();
+    void startCalibration(unsigned long now);
+    void feedCalibration(const SensorVec3 &accel, const SensorVec3 &gyro);
 
     // Helper methods
     void transitionToState(FallState newState);
     float calculateTotalAcceleration(const SensorVec3 &accel);
-    float calculateTotalGyro(const SensorVec3 &gyro);
+    float calculateTotalGyro(const SensorVec3 &gyro); // bias-corrected magnitude
 
     void activatePreAlarm();
     void deactivatePreAlarm();

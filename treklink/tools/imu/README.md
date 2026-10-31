@@ -30,6 +30,6 @@ pyserial: `PY=~/.platformio/penv/bin/python`.
    ```
 
 Each capture writes `<time>-<label>-samples.csv` (`label,seq,t_ms,ax,ay,az,gx,gy,gz,accel_g,gyro_rads,state`;
-acceleration in m/s2, angular rate in rad/s, state 255 while calibrating), `-events.csv` (state
+acceleration and angular rate per axis are raw, in m/s2 and rad/s; `gyro_rads` is the magnitude after the gyro bias of the last accepted calibration is removed; state 255 during the boot calibration), `-events.csv` (state
 changes and the calibration result) and `-console.log` (every other console line). Check the console
 log for keys before committing it: a client that asks for the configuration makes the unit print it.

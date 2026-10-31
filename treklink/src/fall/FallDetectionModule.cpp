@@ -5,8 +5,8 @@
  * IMU-agnostic: uses FallSensorInterface abstraction.
  * Sensor adapter is injected via constructor (MPU6050, ICM20948, QMI8658).
  *
- * Self-calibration: noise floor measured at first boot, thresholds adjusted
- * per-chip and persisted in NVS.
+ * Gyro calibration: each boot measures the gyro bias and noise while the unit lies
+ * still (specs/fall-detection REQ-FALL-CAL-01); free-fall and impact thresholds are fixed.
  */
 
 #include "fall/FallDetectionModule.h"
@@ -61,7 +61,7 @@ float FallDetectionModule::calculateTotalAcceleration(const SensorVec3 &accel)
 
 float FallDetectionModule::calculateTotalGyro(const SensorVec3 &gyro)
 {
-    return sqrt(sq(gyro.x) + sq(gyro.y) + sq(gyro.z));
+    return sqrt(sq(gyro.x - gyroBias[0]) + sq(gyro.y - gyroBias[1]) + sq(gyro.z - gyroBias[2]));
 }
 
 void FallDetectionModule::cancelFallAlarm()
@@ -136,75 +136,88 @@ void FallDetectionModule::triggerAutoSOS()
 }
 
 // ----------------------------------------------------------------------
-// Phase 2: Self-calibration
+// Gyro calibration (REQ-FALL-CAL-01, findings F6 and F15)
 // ----------------------------------------------------------------------
 
-void FallDetectionModule::collectCalibrationSample(const SensorVec3 &accel, const SensorVec3 &gyro)
+void FallDetectionModule::loadCalibration()
 {
-    accelStats.sum_x += accel.x;
-    accelStats.sum_y += accel.y;
-    accelStats.sum_z += accel.z;
-    accelStats.sum_xx += accel.x * accel.x;
-    accelStats.sum_yy += accel.y * accel.y;
-    accelStats.sum_zz += accel.z * accel.z;
-
-    gyroStats.sum_x += gyro.x;
-    gyroStats.sum_y += gyro.y;
-    gyroStats.sum_z += gyro.z;
-    gyroStats.sum_xx += gyro.x * gyro.x;
-    gyroStats.sum_yy += gyro.y * gyro.y;
-    gyroStats.sum_zz += gyro.z * gyro.z;
-}
-
-void FallDetectionModule::finalizeCalibration()
-{
-    float n = (float)CAL_SAMPLES;
-
-    accelStats.mean_x = accelStats.sum_x / n;
-    accelStats.mean_y = accelStats.sum_y / n;
-    accelStats.mean_z = accelStats.sum_z / n;
-    accelStats.std_x = sqrt(accelStats.sum_xx / n - accelStats.mean_x * accelStats.mean_x);
-    accelStats.std_y = sqrt(accelStats.sum_yy / n - accelStats.mean_y * accelStats.mean_y);
-    accelStats.std_z = sqrt(accelStats.sum_zz / n - accelStats.mean_z * accelStats.mean_z);
-
-    gyroStats.mean_x = gyroStats.sum_x / n;
-    gyroStats.mean_y = gyroStats.sum_y / n;
-    gyroStats.mean_z = gyroStats.sum_z / n;
-    gyroStats.std_x = sqrt(gyroStats.sum_xx / n - gyroStats.mean_x * gyroStats.mean_x);
-    gyroStats.std_y = sqrt(gyroStats.sum_yy / n - gyroStats.mean_y * gyroStats.mean_y);
-    gyroStats.std_z = sqrt(gyroStats.sum_zz / n - gyroStats.mean_z * gyroStats.mean_z);
-
-    float accelNoise = (accelStats.std_x + accelStats.std_y + accelStats.std_z) / 3.0f;
-    float gyroNoise = (gyroStats.std_x + gyroStats.std_y + gyroStats.std_z) / 3.0f;
-
-    calibratedFreefallThreshold = fmin(1.0f, fmax(0.3f, 3.5f * accelNoise));
-    calibratedGyroStillness = fmin(0.3f, fmax(0.05f, 3.0f * gyroNoise));
-
-    LOG_INFO("FallDetection: Calibration complete — accelNoise=%.4fg, freefall=%.2fg, gyroStill=%.3frad/s", accelNoise,
-             calibratedFreefallThreshold, calibratedGyroStillness);
+    // Read-write: stored values of another format version, and the keys the old self-calibration wrote
+    // (ff_thresh in mixed units, F6), are erased.
+    Preferences prefs;
+    prefs.begin("fallcal", false);
+    if (prefs.getUInt("ver", 0) == CAL_VERSION) {
+        gyroBias[0] = prefs.getFloat("bx", 0);
+        gyroBias[1] = prefs.getFloat("by", 0);
+        gyroBias[2] = prefs.getFloat("bz", 0);
+        gyroStillnessThreshold = prefs.getFloat("gstill", calibration.limits().defaultStillRads);
+        LOG_INFO("FallDetection: Stored calibration bias=(%.3f,%.3f,%.3f) still=%.3frad/s", gyroBias[0], gyroBias[1],
+                 gyroBias[2], gyroStillnessThreshold);
+    } else {
+        if (prefs.isKey("ver") || prefs.isKey("ff_thresh") || prefs.isKey("gyro_still")) {
+            prefs.clear();
+            LOG_INFO("FallDetection: Erased stored calibration of an old format");
+        }
+        gyroStillnessThreshold = calibration.limits().defaultStillRads;
+    }
+    prefs.end();
+    detector.setStillGyro(gyroStillnessThreshold);
 }
 
 void FallDetectionModule::saveCalibration()
 {
     Preferences prefs;
     prefs.begin("fallcal", false);
-    prefs.putFloat("ff_thresh", calibratedFreefallThreshold);
-    prefs.putFloat("gyro_still", calibratedGyroStillness);
+    prefs.putFloat("bx", gyroBias[0]);
+    prefs.putFloat("by", gyroBias[1]);
+    prefs.putFloat("bz", gyroBias[2]);
+    prefs.putFloat("gstill", gyroStillnessThreshold);
+    prefs.putUInt("ver", CAL_VERSION);
     prefs.end();
 }
 
-void FallDetectionModule::loadCalibration()
+void FallDetectionModule::startCalibration(unsigned long now)
 {
-    Preferences prefs;
-    prefs.begin("fallcal", true);
-    if (prefs.isKey("ff_thresh")) {
-        calibratedFreefallThreshold = prefs.getFloat("ff_thresh", 0.5f);
-        calibratedGyroStillness = prefs.getFloat("gyro_still", 0.1f);
-        calPhase = CAL_COMPLETE;
-        LOG_INFO("FallDetection: Loaded stored calibration (ff=%.2f, gyro=%.3f)", calibratedFreefallThreshold,
-                 calibratedGyroStillness);
+    calibration.restart();
+    calRunning = true;
+    lastCalStart = now;
+}
+
+void FallDetectionModule::feedCalibration(const SensorVec3 &accel, const SensorVec3 &gyro)
+{
+    const float g = 9.80665f;
+    float a[3] = {accel.x / g, accel.y / g, accel.z / g};
+    float w[3] = {gyro.x, gyro.y, gyro.z};
+    treklink::fall::CalVerdict v = calibration.add(a, w);
+    if (v == treklink::fall::CalVerdict::COLLECTING)
+        return;
+
+    calRunning = false;
+    bootCalDone = true;
+    const treklink::fall::CalibrationResult &r = calibration.result();
+    const char *why = v == treklink::fall::CalVerdict::REJECTED_MOVING        ? "moving"
+                      : v == treklink::fall::CalVerdict::REJECTED_MEAN_NOT_1G ? "mean not 1 g"
+                      : v == treklink::fall::CalVerdict::REJECTED_GYRO_NOISE  ? "gyro noise"
+                                                                              : "accepted";
+    if (v == treklink::fall::CalVerdict::ACCEPTED) {
+        for (int i = 0; i < 3; i++)
+            gyroBias[i] = r.bias[i];
+        gyroStillnessThreshold = r.stillRads;
+        detector.setStillGyro(gyroStillnessThreshold);
+        saveCalibration();
+        calAccepted = true;
+        LOG_INFO("FallDetection: Calibration accepted, bias=(%.3f,%.3f,%.3f) still=%.3frad/s", gyroBias[0], gyroBias[1],
+                 gyroBias[2], gyroStillnessThreshold);
+    } else {
+        LOG_INFO("FallDetection: Calibration rejected (%s: mean %.3fg, accel std %.3fg, gyro std %.3frad/s), still=%.3frad/s, "
+                 "retry in %lus",
+                 why, r.meanG, r.accelStdG, r.gyroStdRads, gyroStillnessThreshold, CAL_RETRY_MS / 1000UL);
     }
-    prefs.end();
+#if TREKLINK_IMU_STREAM
+    char detail[96];
+    snprintf(detail, sizeof(detail), "%s mean=%.3f astd=%.3f gstd=%.3f still=%.3f", why, r.meanG, r.accelStdG, r.gyroStdRads,
+             gyroStillnessThreshold);
+    TREKLINK_IMU_EVENT("CALIBRATION", detail);
+#endif
 }
 
 // ----------------------------------------------------------------------
@@ -233,52 +246,10 @@ int32_t FallDetectionModule::runOnce()
         digitalWrite(PIN_VIBRATOR, LOW);
 #endif
 
-        // Enter self-calibration phase
-        calPhase = CAL_COLLECTING;
-        calSampleCount = 0;
-        memset(&accelStats, 0, sizeof(accelStats));
-        memset(&gyroStats, 0, sizeof(gyroStats));
-
         loadCalibration();
-        if (calPhase == CAL_COMPLETE) {
-            // Use the stored gyro stillness threshold; free-fall and impact thresholds are fixed (REQ-FALL-CAL-01)
-            gyroStillnessThreshold = calibratedGyroStillness;
-            detector.setStillGyro(gyroStillnessThreshold);
-            LOG_INFO("FallDetection: Using stored calibration, entering MONITORING");
-            return 100;
-        }
-
-        LOG_INFO("FallDetection: Starting self-calibration (5s stationary at 50Hz)...");
-        return CAL_RATE_MS;
-    }
-
-    // Phase 2: Calibration data collection
-    if (calPhase == CAL_COLLECTING) {
-        SensorVec3 calAccel, calGyro;
-        sensor->readAccel(calAccel);
-        sensor->readGyro(calGyro);
-        TREKLINK_IMU_SAMPLE(calAccel, calGyro, calculateTotalAcceleration(calAccel), calculateTotalGyro(calGyro), 255);
-        collectCalibrationSample(calAccel, calGyro);
-        calSampleCount++;
-
-        if (calSampleCount >= CAL_SAMPLES) {
-            finalizeCalibration();
-#if TREKLINK_IMU_STREAM
-            char detail[48];
-            snprintf(detail, sizeof(detail), "ff=%.3f gyro=%.3f", calibratedFreefallThreshold, calibratedGyroStillness);
-            TREKLINK_IMU_EVENT("CALIBRATED", detail);
-#endif
-            saveCalibration();
-            calPhase = CAL_COMPLETE;
-
-            // Apply the calibrated gyro stillness threshold; free-fall and impact thresholds are fixed
-            gyroStillnessThreshold = calibratedGyroStillness;
-            detector.setStillGyro(gyroStillnessThreshold);
-
-            LOG_INFO("FallDetection: Calibration applied, entering MONITORING");
-        }
-
-        return CAL_RATE_MS;
+        startCalibration(millis());
+        LOG_INFO("FallDetection: Calibrating the gyro (5 s, keep the unit still)");
+        return SAMPLE_PERIOD_MS;
     }
 
     // F14: In SOS_TRIGGERED, skip I2C reads
@@ -297,10 +268,20 @@ int32_t FallDetectionModule::runOnce()
 
     float totalAccel = calculateTotalAcceleration(accel);
     float totalGyro = calculateTotalGyro(gyro);
-    // Datalog state: detector phase 0 to 3 while monitoring, then 4 pre-alarm, 5 SOS.
-    TREKLINK_IMU_SAMPLE(accel, gyro, totalAccel, totalGyro,
-                        currentState == MONITORING ? (uint8_t)detector.phase() : (uint8_t)(currentState + 3));
     unsigned long now = millis();
+    // Datalog state: 255 during the boot calibration, detector phase 0 to 3 while monitoring, then 4
+    // pre-alarm, 5 SOS.
+    TREKLINK_IMU_SAMPLE(accel, gyro, totalAccel, totalGyro,
+                        !bootCalDone                 ? (uint8_t)255
+                        : currentState == MONITORING ? (uint8_t)detector.phase()
+                                                     : (uint8_t)(currentState + 3));
+
+    if (calRunning)
+        feedCalibration(accel, gyro);
+    if (!bootCalDone)
+        return SAMPLE_PERIOD_MS; // detection starts after the boot calibration's verdict
+    if (!calAccepted && !calRunning && currentState == MONITORING && now - lastCalStart >= CAL_RETRY_MS)
+        startCalibration(now);
 
     switch (currentState) {
     case MONITORING:
