@@ -16,7 +16,11 @@ summary: First v2 run of the TrekLink overlay on upstream v2.7.26 and of the com
      test-hook and MENU changes later committed as `3006130`
      (`logs/2026-10-31-v2/overlay-warm1.log:28`, `overlay-nav3.log`). It is no head of any branch,
      so it counts as a development check only.
-  2. `2.7.26.5cd7a71`, the head of `fix/sos-alarm-pattern` (`logs/2026-10-31-v2/boot-warm.log:28`).
+  2. `2.7.26.5cd7a71`, the head of `fix/sos-alarm-pattern` when it was flashed
+     (`logs/2026-10-31-v2/boot-warm.log:28`), kept as tag `run/2026-10-31-v2-image-5cd7a71`. The
+     branch was then rebased onto two documentation commits and a CI file; `git diff 5cd7a71 7140be7`
+     touches only `.github/workflows/overlay.yml` and `specs/architecture/tasks.md`, so the code under
+     test is the code of `7140be7`.
      The diagnostic flags move the log to USB and add the press hook; neither touches the alarm,
      radio or button code under test.
 - **Flash:** `tk.py flash --diagnostic`, application only (bootloader `0x0`, partitions `0x8000`,
