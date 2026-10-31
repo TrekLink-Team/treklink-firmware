@@ -11,6 +11,7 @@
  */
 
 #include "QMI8658FallSensor.h"
+#include "FallSensorUnits.h"
 
 #if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_V4) && __has_include(<SensorQMI8658.hpp>)
 
@@ -52,9 +53,11 @@ void QMI8658FallSensor::updateSensorData()
     // Rate limit I2C transactions to once per 10ms
     uint32_t now = millis();
     if (now - lastReadMs >= 10 || lastReadMs == 0) {
-        // Read accelerometer (returns mg — millig)
+        // SensorLib 0.3.4 getAccelerometer returns g: raw * accelScales, where
+        // accelScales = 8.0 / 32768.0 at ACC_RANGE_8G (SensorQMI8658.hpp:521, 910-923).
         qmi.getAccelerometer(accelX, accelY, accelZ);
-        // Read gyroscope (returns dps — degrees per second)
+        // getGyroscope returns degrees per second: raw * gyroScales, where
+        // gyroScales = 512.0 / 32768.0 at GYR_RANGE_512DPS (SensorQMI8658.hpp:598, 975-988).
         qmi.getGyroscope(gyroX, gyroY, gyroZ);
         lastReadMs = now;
     }
@@ -63,22 +66,20 @@ void QMI8658FallSensor::updateSensorData()
 bool QMI8658FallSensor::readAccel(SensorVec3 &out)
 {
     updateSensorData();
-    // SensorLib getAccelerometer returns mg (milli-g), convert to m/s²:
-    // m/s² = (mg / 1000) * 9.80665
-    out.x = (accelX / 1000.0f) * 9.80665f;
-    out.y = (accelY / 1000.0f) * 9.80665f;
-    out.z = (accelZ / 1000.0f) * 9.80665f;
+    // Cached values are in g (see updateSensorData); a device at rest reads about 1 g on one axis.
+    out.x = treklink::fall::gToMps2(accelX);
+    out.y = treklink::fall::gToMps2(accelY);
+    out.z = treklink::fall::gToMps2(accelZ);
     return true;
 }
 
 bool QMI8658FallSensor::readGyro(SensorVec3 &out)
 {
     updateSensorData();
-    // SensorLib getGyroscope returns dps (degrees per second), convert to rad/s:
-    // rad/s = dps * (PI / 180)
-    out.x = gyroX * (PI / 180.0f);
-    out.y = gyroY * (PI / 180.0f);
-    out.z = gyroZ * (PI / 180.0f);
+    // Cached values are in degrees per second (see updateSensorData).
+    out.x = treklink::fall::dpsToRadS(gyroX);
+    out.y = treklink::fall::dpsToRadS(gyroY);
+    out.z = treklink::fall::dpsToRadS(gyroZ);
     return true;
 }
 
