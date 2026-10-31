@@ -96,6 +96,11 @@ void ICM20948FallSensor::updateSensorData()
 {
     uint32_t now = millis();
     if (now - lastReadMs >= 10 || lastReadMs == 0) {
+        // Stock ICM20948Sensor::runOnce() puts the shared chip to sleep once the screen is off and latches
+        // isAsleep (src/motion/ICM20948Sensor.cpp:54-61); the registers then hold the last sample (F5,
+        // specs/fall-detection REQ-FALL-IMU-01). Waking it before every read costs one register read and
+        // write, and stock does not sleep it again until the screen has been on and off once more.
+        icm->sleep(false);
         icm->getAGMT();
         lastReadMs = now;
     }
