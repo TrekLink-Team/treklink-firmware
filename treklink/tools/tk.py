@@ -280,6 +280,12 @@ def build(env, kind="release", jobs=None):
         os.environ.pop("PLATFORMIO_BUILD_FLAGS", None)
     rc = run(["pio", "run", "-e", env] + (["-j", str(jobs)] if jobs else []))
     if rc == 0:
+        # The envs build with -flto; refuse an image in which a call bypasses a --wrap override.
+        elfs = glob.glob(os.path.join(ROOT, ".pio", "build", env, "firmware*.elf"))
+        if elfs:
+            rc = run([sys.executable, os.path.join(ROOT, "treklink", "tools", "check_overlay.py"), "--elf",
+                      max(elfs, key=os.path.getmtime)])
+    if rc == 0:
         keep_images(env, kind)
     return rc
 

@@ -32,7 +32,8 @@
     "file": "src/mqtt/MQTT.cpp",
     "signature": "void MQTT::onSend(",
     "mirror": "encodeLikeStock() in treklink/src/queue/TrekLinkMqttOverride.cpp",
-    "sha256": "f3cd6c6e7a430350995939b70a740ed385ccc1a927c38685079af0d65307000a"
+    "sha256": "f3cd6c6e7a430350995939b70a740ed385ccc1a927c38685079af0d65307000a",
+    "wrap": "_ZN4MQTT6onSendERK22_meshtastic_MeshPacketS2_h"
   },
   {
     "id": "O-08b",
@@ -47,5 +48,28 @@
     "signature": "ICM20948Singleton *ICM20948Singleton::GetInstance()",
     "mirror": "the pinstance symbol read in treklink/src/fall/sensors/ICM20948FallSensor.cpp",
     "sha256": "f123937b7bf8e5094ab56364c016e36af108379cd6b63335a7863d360a731b9e"
+  },
+  {
+    "id": "O-11b",
+    "file": "src/motion/ICM20948Sensor.cpp",
+    "signature": "int32_t ICM20948Sensor::runOnce()",
+    "occurrence": 2,
+    "mirror": "the sleep(false) before each read in ICM20948FallSensor::updateSensorData() (F5, specs/fall-detection REQ-FALL-IMU-01)",
+    "sha256": "06cac8dc2e7ebb7bbad72bb01ba282edd1a910d016ff3de3ff57291f093a0e37"
+  },
+  {
+    "id": "O-12",
+    "file": "src/input/ButtonThread.cpp",
+    "signature": "bool ButtonThread::initButton(const ButtonConfig &config)",
+    "wrap": "_ZN12ButtonThread10initButtonERK12ButtonConfig",
+    "mirror": "treklink/src/input/UserButtonOverride.cpp (longLongPress cleared for the user button)",
+    "sha256": "8bccd352af290ac1906114c855e43f65f36042f89ccdfd79e79307ef94d597dc"
+  },
+  {
+    "id": "O-12b",
+    "file": "src/input/InputBroker.cpp",
+    "signature": "void InputBroker::Init()",
+    "mirror": "the user-button config UserButtonOverride.cpp recognises and the 0.5 s select of specs/sos REQ-SOS-TRG-01",
+    "sha256": "42b9214ba9ad7f5169708b272e04d93dfb6375361acde1bd7d294a470aa683e7"
   }
 ]
