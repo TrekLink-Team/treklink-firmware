@@ -66,6 +66,10 @@
 #ifndef TREKLINK_OQ_HEALTH_INTERVAL_S
 #define TREKLINK_OQ_HEALTH_INTERVAL_S 300
 #endif
+// Wait before retrying a health report that could not be published (REQ-EVT-12).
+#ifndef TREKLINK_OQ_HEALTH_RETRY_S
+#define TREKLINK_OQ_HEALTH_RETRY_S 30
+#endif
 
 // A record body larger than this is treated as corruption at restore (design.md section 1.1).
 #ifndef TREKLINK_OQ_MAX_RECORD_BYTES

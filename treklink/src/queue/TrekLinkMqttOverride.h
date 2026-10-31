@@ -29,6 +29,8 @@ class TrekLinkMqttDrain : public concurrency::OSThread
 
   private:
     bool linkWasUp = false;
+    uint32_t lastHealthAttemptMs = 0; // a due report that failed waits TREKLINK_OQ_HEALTH_RETRY_S
+    bool healthAttempted = false;
     void publishHealth();
 };
 

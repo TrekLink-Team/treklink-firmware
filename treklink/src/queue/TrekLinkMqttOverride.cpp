@@ -207,6 +207,10 @@ void TrekLinkMqttDrain::publishHealth()
     const uint32_t now = millis();
     if (!queue.healthDue(now))
         return;
+    if (healthAttempted && now - lastHealthAttemptMs < TREKLINK_OQ_HEALTH_RETRY_S * 1000UL)
+        return;
+    healthAttempted = true;
+    lastHealthAttemptMs = now;
     const auto &ch = channels.getByIndex(0);
     if (!ch.settings.uplink_enabled)
         return;
@@ -262,6 +266,7 @@ void TrekLinkMqttDrain::publishHealth()
     }
 #endif
     queue.healthSent(now);
+    healthAttempted = false;
 }
 
 #endif // TREKLINK_OQ_ACTIVE
