@@ -32,18 +32,16 @@ bool QMI8658FallSensor::init()
         return false;
     }
 
-    // Configure accelerometer: ±8g range, 31.25Hz ODR
-    // Note: ACC_ODR_LOWPOWER modes require gyroscope disabled, so use normal ODR
-    qmi.configAccelerometer(SensorQMI8658::ACC_RANGE_8G, SensorQMI8658::ACC_ODR_31_25Hz);
-
-    // Configure gyroscope: ±512dps range, 28.025Hz ODR (lowest available)
-    qmi.configGyroscope(SensorQMI8658::GYR_RANGE_512DPS, SensorQMI8658::GYR_ODR_28_025Hz);
+    // +-16 g so an impact peak is not clipped, at an output rate above the 50 Hz the detector samples
+    // (specs/fall-detection REQ-FALL-RNG-01); the gyro range is the widest SensorLib 0.3.4 offers.
+    qmi.configAccelerometer(SensorQMI8658::ACC_RANGE_16G, SensorQMI8658::ACC_ODR_62_5Hz);
+    qmi.configGyroscope(SensorQMI8658::GYR_RANGE_1024DPS, SensorQMI8658::GYR_ODR_56_05Hz);
 
     // Enable accelerometer and gyroscope
     qmi.enableAccelerometer();
     qmi.enableGyroscope();
 
-    LOG_INFO("QMI8658FallSensor: Initialized (±8g, ±512dps)");
+    LOG_INFO("QMI8658FallSensor: Initialized (+-16g at 62.5 Hz, +-1024dps at 56 Hz)");
     return true;
 }
 
@@ -52,9 +50,8 @@ void QMI8658FallSensor::updateSensorData()
     // Rate limit I2C transactions to once per 10ms
     uint32_t now = millis();
     if (now - lastReadMs >= 10 || lastReadMs == 0) {
-        // Read accelerometer (returns mg — millig)
+        // SensorLib 0.3.4 returns g and dps (SensorQMI8658.hpp:917-919 and :982-984)
         qmi.getAccelerometer(accelX, accelY, accelZ);
-        // Read gyroscope (returns dps — degrees per second)
         qmi.getGyroscope(gyroX, gyroY, gyroZ);
         lastReadMs = now;
     }
@@ -63,11 +60,11 @@ void QMI8658FallSensor::updateSensorData()
 bool QMI8658FallSensor::readAccel(SensorVec3 &out)
 {
     updateSensorData();
-    // SensorLib getAccelerometer returns mg (milli-g), convert to m/s²:
-    // m/s² = (mg / 1000) * 9.80665
-    out.x = (accelX / 1000.0f) * 9.80665f;
-    out.y = (accelY / 1000.0f) * 9.80665f;
-    out.z = (accelZ / 1000.0f) * 9.80665f;
+    // getAccelerometer() returns g: its scale is range / 32768 (SensorQMI8658.hpp:514-525). The old
+    // division by 1000 made every reading 1000 times too small, so v4 always looked in free fall (F16).
+    out.x = accelX * 9.80665f;
+    out.y = accelY * 9.80665f;
+    out.z = accelZ * 9.80665f;
     return true;
 }
 

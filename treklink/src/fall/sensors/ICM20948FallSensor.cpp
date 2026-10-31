@@ -30,14 +30,14 @@ bool ICM20948FallSensor::init()
 
         // Set fall-detection-appropriate full scale on the already-initialized sensor
         ICM_20948_fss_t fss;
-        fss.a = gpm8;
-        fss.g = dps500;
+        fss.a = gpm16; // an impact peak clips at +-8 g (specs/fall-detection REQ-FALL-RNG-01)
+        fss.g = dps2000;
         if (icm->setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), fss) != ICM_20948_Stat_Ok) {
             LOG_WARN("ICM20948FallSensor: Full scale range setup failed on singleton");
             return false;
         }
 
-        LOG_INFO("ICM20948FallSensor: Initialized via singleton (±8g, ±500dps)");
+        LOG_INFO("ICM20948FallSensor: Initialized via singleton (+-16g, +-2000dps)");
         return true;
     }
 
@@ -79,8 +79,8 @@ bool ICM20948FallSensor::init()
     }
 
     ICM_20948_fss_t fss;
-    fss.a = gpm8;
-    fss.g = dps500;
+    fss.a = gpm16;
+    fss.g = dps2000;
     if (fallbackIcm.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), fss) != ICM_20948_Stat_Ok) {
         LOG_WARN("ICM20948FallSensor: Full scale range setup failed");
         return false;
@@ -88,7 +88,7 @@ bool ICM20948FallSensor::init()
 
     icm = &fallbackIcm;
     usingSingleton = false;
-    LOG_INFO("ICM20948FallSensor: Self-initialized (±8g, ±500dps, no compass)");
+    LOG_INFO("ICM20948FallSensor: Self-initialized (+-16g, +-2000dps, no compass)");
     return true;
 }
 

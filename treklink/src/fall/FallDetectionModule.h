@@ -6,6 +6,7 @@
 
 #if TREKLINK_HAS_FALL_DETECTION
 
+#include "fall/FallDetector.h"
 #include "fall/FallSensorInterface.h"
 #include <Preferences.h>
 
@@ -41,32 +42,29 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     virtual int32_t runOnce() override;
 
   private:
-    // Fall detection state machine (IMPACT_DETECTED removed — falls validated via 10s inactivity)
+    // Module states. Free fall, impact, settle and the stillness window live in the platform-free
+    // detector core (fall/FallDetector.h, specs/fall-detection design §2).
     enum FallState {
-        MONITORING,          // Normal operation, watching for falls
-        FREEFALL_DETECTED,   // Detected freefall condition (<threshold g)
-        INACTIVITY_DETECTED, // No movement detected after fall
-        PRE_ALARM,           // Countdown active, waiting for user cancel
-        SOS_TRIGGERED        // Auto-SOS sent, alarm active (F21: has exit path)
+        MONITORING,   // the detector runs on every sample
+        PRE_ALARM,    // countdown active, waiting for user cancel
+        SOS_TRIGGERED // auto-SOS sent, alarm active (F21: has exit path)
     };
 
     FallState currentState;
     FallSensorInterface *sensor;
     bool sensorInitialized;
 
+    treklink::fall::FallDetector detector;
+
     // Timing trackers
-    unsigned long freefallStartTime;
-    unsigned long inactivityStartTime;
     unsigned long prealarmStartTime;
     unsigned long lastAlarmBeepTime;
     bool isBeepOn;
 
 
-    // Detection thresholds (tunable by self-calibration)
-    float freefallThreshold = 0.5f;          // g (<threshold indicates freefall)
-    float gyroStillnessThreshold = 0.1f;     // rad/s (gyro movement threshold)
-    static constexpr unsigned long FREEFALL_MIN_DURATION = 500;  // ms
-    static constexpr unsigned long INACTIVITY_DURATION = 10000;  // 10 seconds
+    // Gyro stillness threshold handed to the detector (tunable by self-calibration)
+    float gyroStillnessThreshold = 0.1f;                          // rad/s
+    static constexpr int32_t SAMPLE_PERIOD_MS = 20;               // requested; durations use timestamps
     static constexpr unsigned long PREALARM_TIMEOUT = 30000;     // 30 seconds
     static constexpr unsigned long ALARM_BEEP_INTERVAL = 1000;   // 1 second beep interval
 
@@ -99,7 +97,6 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     void transitionToState(FallState newState);
     float calculateTotalAcceleration(const SensorVec3 &accel);
     float calculateTotalGyro(const SensorVec3 &gyro);
-    bool checkInactivity(const SensorVec3 &accel, const SensorVec3 &gyro);
 
     void activatePreAlarm();
     void deactivatePreAlarm();

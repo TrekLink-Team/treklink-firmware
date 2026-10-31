@@ -25,7 +25,7 @@ FallDetectionModule *fallDetectionModule;
 
 FallDetectionModule::FallDetectionModule(FallSensorInterface *sensor)
     : SinglePortModule("FallDetection", meshtastic_PortNum_PRIVATE_APP), OSThread("FallDetection"), currentState(MONITORING),
-      sensor(sensor), sensorInitialized(false), freefallStartTime(0), inactivityStartTime(0), prealarmStartTime(0),
+      sensor(sensor), sensorInitialized(false), prealarmStartTime(0),
       lastAlarmBeepTime(0), isBeepOn(false)
 {
     if (sensor) {
@@ -62,17 +62,6 @@ float FallDetectionModule::calculateTotalAcceleration(const SensorVec3 &accel)
 float FallDetectionModule::calculateTotalGyro(const SensorVec3 &gyro)
 {
     return sqrt(sq(gyro.x) + sq(gyro.y) + sq(gyro.z));
-}
-
-bool FallDetectionModule::checkInactivity(const SensorVec3 &accel, const SensorVec3 &gyro)
-{
-    float totalAccel = calculateTotalAcceleration(accel);
-    float totalGyro = calculateTotalGyro(gyro);
-
-    bool accelStill = (fabs(totalAccel - 1.0f) < 0.2f);
-    bool gyroStill = (totalGyro < gyroStillnessThreshold);
-
-    return (accelStill && gyroStill);
 }
 
 void FallDetectionModule::cancelFallAlarm()
@@ -252,9 +241,9 @@ int32_t FallDetectionModule::runOnce()
 
         loadCalibration();
         if (calPhase == CAL_COMPLETE) {
-            // Use stored calibrated thresholds for runtime
-            freefallThreshold = calibratedFreefallThreshold;
+            // Use the stored gyro stillness threshold; free-fall and impact thresholds are fixed (REQ-FALL-CAL-01)
             gyroStillnessThreshold = calibratedGyroStillness;
+            detector.setStillGyro(gyroStillnessThreshold);
             LOG_INFO("FallDetection: Using stored calibration, entering MONITORING");
             return 100;
         }
@@ -282,9 +271,9 @@ int32_t FallDetectionModule::runOnce()
             saveCalibration();
             calPhase = CAL_COMPLETE;
 
-            // Apply calibrated thresholds to runtime values
-            freefallThreshold = calibratedFreefallThreshold;
+            // Apply the calibrated gyro stillness threshold; free-fall and impact thresholds are fixed
             gyroStillnessThreshold = calibratedGyroStillness;
+            detector.setStillGyro(gyroStillnessThreshold);
 
             LOG_INFO("FallDetection: Calibration applied, entering MONITORING");
         }
@@ -308,43 +297,34 @@ int32_t FallDetectionModule::runOnce()
 
     float totalAccel = calculateTotalAcceleration(accel);
     float totalGyro = calculateTotalGyro(gyro);
-    TREKLINK_IMU_SAMPLE(accel, gyro, totalAccel, totalGyro, (uint8_t)currentState);
+    // Datalog state: detector phase 0 to 3 while monitoring, then 4 pre-alarm, 5 SOS.
+    TREKLINK_IMU_SAMPLE(accel, gyro, totalAccel, totalGyro,
+                        currentState == MONITORING ? (uint8_t)detector.phase() : (uint8_t)(currentState + 3));
     unsigned long now = millis();
 
     switch (currentState) {
     case MONITORING:
-        if (totalAccel < freefallThreshold) {
-            freefallStartTime = now;
-            transitionToState(FREEFALL_DETECTED);
-            LOG_DEBUG("FallDetection: Freefall detected (%.2fg)", totalAccel);
-        }
-        break;
-
-    case FREEFALL_DETECTED:
-        if (totalAccel >= freefallThreshold) {
-            unsigned long freefallDuration = now - freefallStartTime;
-
-            if (freefallDuration >= FREEFALL_MIN_DURATION) {
-                // Fall confirmed — bypass impact gate, monitor for inactivity directly
-                inactivityStartTime = now;
-                transitionToState(INACTIVITY_DETECTED);
-                LOG_WARN("FallDetection: Fall detected (freefall %lums), monitoring for inactivity", freefallDuration);
-            } else {
-                transitionToState(MONITORING);
-                LOG_DEBUG("FallDetection: Freefall too short (%lums), ignoring", freefallDuration);
-            }
-        }
-        break;
-
-    case INACTIVITY_DETECTED:
-        if (!checkInactivity(accel, gyro)) {
-            transitionToState(MONITORING);
-            LOG_INFO("FallDetection: Movement detected, user is OK");
-        } else if ((now - inactivityStartTime) >= INACTIVITY_DURATION) {
+        switch (detector.step((uint32_t)now, totalAccel, totalGyro)) {
+        case treklink::fall::Event::CHECK_STARTED:
+            LOG_WARN("FallDetection: Fall check started (%s, free fall %ums, %.2fg)",
+                     detector.cause() == treklink::fall::Cause::IMPACT ? "impact" : "free fall", (unsigned)detector.lastFreeFallMs(),
+                     totalAccel);
+            TREKLINK_IMU_EVENT("CHECK_STARTED", detector.cause() == treklink::fall::Cause::IMPACT ? "impact" : "free fall");
+            break;
+        case treklink::fall::Event::USER_OK:
+            LOG_INFO("FallDetection: Movement after the fall, user is OK (peak %.2fg)", detector.peakG());
+            TREKLINK_IMU_EVENT("USER_OK", nullptr);
+            break;
+        case treklink::fall::Event::RAISE_PREALARM:
+            LOG_WARN("FallDetection: Still for %lus after the fall (peak %.2fg)", detector.config().stillMs / 1000UL,
+                     detector.peakG());
             prealarmStartTime = now;
             lastAlarmBeepTime = now;
             transitionToState(PRE_ALARM);
             activatePreAlarm();
+            break;
+        default:
+            break;
         }
         break;
 
@@ -360,8 +340,7 @@ int32_t FallDetectionModule::runOnce()
         break;
     }
 
-    // 10Hz polling in all active states (including MONITORING)
-    return 100;
+    return SAMPLE_PERIOD_MS;
 }
 
 #else
