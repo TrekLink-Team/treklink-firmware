@@ -152,7 +152,7 @@ contradiction (REQ-ARC-04.3). Shared code tests these, never `TREKLINK_Vn`.
 | O-08 | Durable, priority-ordered MQTT queue replaces the stock 16-entry FIFO | 4: wrap `MQTT::onSend`, called from `Router.cpp:382` and `:826` (the linked image calls `__wrap_` from both, checked with objdump on 2026-10-31). While the link is up and the TrekLink queue is empty, `__real_` runs unchanged; otherwise the packet goes to the TrekLink queue, drained by `TrekLinkMqttDrain` through the public `MQTT::publish()`. An entry is deleted when the link is still up one tick after its publish, the nearest observable stand-in for stock's successful poll | `MQTT::onSend` gating and envelope (uplink, `OK_TO_MQTT`, default-server, PKI, encryption choice), mirrored in `encodeLikeStock()`. Stock decides "private broker" from the resolved address in a file-static flag; the mirror can only read the configured address, so a host name counts as public and uplinks less than stock, never more; O-13 keeps TrekLink traffic out of that gap | `MQTT.cpp`, `MQTT.h` |
 | O-09 | Queue health report on the JSON topic | 3: TrekLink builds the JSON object itself and publishes it through `MQTT::publish()` | none | `MeshPacketSerializer.cpp` `PRIVATE_APP` case |
 | O-10 | v2 SX1268 TCXO at 1.8 V | 1: `SX126X_DIO3_TCXO_VOLTAGE 1.8` and `TCXO_OPTIONAL` | `RadioInterface.cpp:379-391` | `RadioInterface.cpp` |
-| O-11 | Fall detection shares the v2 ICM-20948 with the stock motion driver | 5: the adapter reads the stock `ICM20948Singleton::pinstance` through its linker name. It is set only once stock `ICM20948Sensor::init()` ran `ICM20948Singleton::init()`, whose `begin()` links the I2C interface first; the adapter then joins if WHO_AM_I reads 0xEA, and otherwise starts its own driver, as before. `GetInstance()` cannot be used for the test: it creates an unlinked instance whose first call dereferences a null interface (SparkFun ICM-20948 v1.3.2 `ICM_20948_C.c` `ICM_20948_execute_r`) | `ICM20948Sensor.cpp` singleton | `ICM20948Sensor.cpp/.h` `isInitialized()` |
+| O-11 | Fall detection shares the v2 ICM-20948 with the stock motion driver | 5: the adapter reads the stock `ICM20948Singleton::pinstance` through its linker name. Stock `ICM20948Sensor::init()` sets it through `GetInstance()` and calls `ICM20948Singleton::init()` right after, whose `begin()` links the I2C interface first, so a non-null pointer is safe to call on the cooperative loop. It stays set when that init fails later, so the WHO_AM_I check decides: the adapter joins if it reads 0xEA, and otherwise starts its own driver, as before. The adapter also clears the chip's sleep bit before each read, because stock sleeps the chip once the screen is off (F5, watched as O-11b). `GetInstance()` cannot be used for the test: it creates an unlinked instance whose first call dereferences a null interface (SparkFun ICM-20948 v1.3.2 `ICM_20948_C.c` `ICM_20948_execute_r`) | `ICM20948Sensor.cpp` singleton | `ICM20948Sensor.cpp/.h` `isInitialized()` |
 | O-12 | v3 and v4: no shutdown on the user-button hold, so the 5 s SOS hold is safe (specs/sos REQ-SOS-TRG-01) | 4: wrap `ButtonThread::initButton(ButtonConfig const&)`, called from `InputBroker.cpp`; for the user button TrekLink clears `longLongPress` and calls the real function | `InputBroker.cpp:290-309` user button config, `ButtonThread.cpp:276-279` | none (new) |
 | O-13 | TrekLink packets carry OK-to-MQTT (leader ruling, 2026-10-31) | 2: `config.lora.config_ok_to_mqtt = true` in `variantDefaultConfig()`. Stock sets the bit on every packet the unit originates (`Router.cpp:589`), and `MQTT::onSend` and its O-08 mirror uplink a relayed packet without it only for a private broker, which the queued path cannot see for a host name. So another unit's SOS that a gateway relays while its link is down is uplinked once the link returns. Like every default it applies at first boot or after a factory reset; a unit flashed with its settings kept has to be set once by its owner. Accepted side effect: a stock Meshtastic node that hears a TrekLink packet may uplink it to its own broker | `NodeDB.cpp:589` stock default `false` | none |
 
@@ -165,10 +165,19 @@ title in `UIRenderer.cpp` (a TrekLink screen is later UI work).
 
 `treklink/tools/check_overlay.py`, run in CI and before every sync:
 
-1. Every stock path is byte-identical to the upstream tag recorded in §5, except §2.3.
+1. Every stock path is byte-identical to the upstream tag recorded in §5, except §2.3. Renames are
+   not followed, so a stock file moved into `treklink/` shows as a deleted stock path.
 2. No `TREKLINK_V2`, `TREKLINK_V3` or `TREKLINK_V4` test outside `variants/`.
 3. For each catalogue row with a stock dependency, a stored hash of the dependent stock function or
-   line range; a sync lists every row whose hash changed, for review before the rebase lands.
+   line range (`treklink/overrides.json`, with an occurrence number where a file defines the same
+   signature twice under `#ifdef`); a sync lists every row whose hash changed, for review before the
+   rebase lands.
+4. Every `-Wl,--wrap` in a TrekLink env has a `__wrap_` definition in `treklink/src/` and an
+   `overrides.json` row that names it.
+5. After a build, `check_overlay.py --elf <firmware.elf>` disassembles the image and fails if any
+   function other than the `__wrap_` itself calls a wrapped symbol directly. The envs build with
+   `-flto`, and a call resolved inside one LTO unit would bypass `--wrap` without a link error; the
+   check replaces the manual objdump of 2026-10-31.
 
 ## 5. Upstream base and sync
 
