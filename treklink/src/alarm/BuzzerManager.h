@@ -111,6 +111,26 @@ class BuzzerManager {
         }
     }
 
+    /**
+     * Start a mark: set the LEDC channel up and attach the pin again, then write the duty. Stock
+     * tone() shares LEDC channel 0 and timer 0, reconfigures them and detaches the pin after every
+     * note (Arduino-ESP32 2.0.17 Tone.cpp, ledcWriteTone), so a plain write() after any stock beep
+     * stays silent (finding F2, specs/sos/requirements.md REQ-SOS-ALM-02).
+     */
+    void mark(uint8_t duty)
+    {
+        if (!initialized || !mutex)
+            return;
+        if (xSemaphoreTake(mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            if (currentOwner != OWNER_NONE) {
+                ledcSetup(BUZZER_LEDC_CHANNEL, 2700, 8);
+                ledcAttachPin(PIN_BUZZER, BUZZER_LEDC_CHANNEL);
+                ledcWrite(BUZZER_LEDC_CHANNEL, duty);
+            }
+            xSemaphoreGive(mutex);
+        }
+    }
+
     bool isOwnedBy(BuzzerOwner owner) const { return currentOwner == owner; }
 
   private:

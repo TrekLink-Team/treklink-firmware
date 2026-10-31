@@ -111,15 +111,9 @@ int32_t TrekLinkSOSGesture::runOnce()
         break;
     }
 
-    // SOS beacon retransmission while active
-    if (sosActive) {
+    // SOS beacon retransmission while active; the LED follows the SOS pattern (AlarmPlayer)
+    if (sosActive)
         TrekLinkSOSHelper::instance().tickBeacon(sosStartTime, lastSOSTxTime);
-
-#ifdef TREKLINK_SOS_LED_PIN
-        // 2Hz LED strobe during SOS
-        digitalWrite(TREKLINK_SOS_LED_PIN, (now / 250) % 2);
-#endif
-    }
 
     return SOS_GESTURE_POLL_MS; // 20ms poll interval
 }

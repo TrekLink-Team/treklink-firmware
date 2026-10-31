@@ -5,6 +5,7 @@
 
 #include "sos/TrekLinkSOSHelper.h"
 
+#include "alarm/AlarmPlayer.h"
 #include "alarm/BuzzerManager.h"
 #include "MeshService.h"
 #include "NodeDB.h"
@@ -64,20 +65,16 @@ void TrekLinkSOSHelper::broadcastPosition()
 void TrekLinkSOSHelper::activateAlarms(uint8_t buzzerOwner)
 {
     LOG_INFO("TrekLinkSOS: Activating alarms (owner=%d)", buzzerOwner);
-
-#ifdef PIN_BUZZER
-    BuzzerManager::instance().acquire(static_cast<BuzzerOwner>(buzzerOwner));
-    BuzzerManager::instance().write(128); // 50% duty cycle
-#endif
-
-#ifdef PIN_VIBRATOR
-    digitalWrite(PIN_VIBRATOR, HIGH);
-#endif
+    // The common SOS pattern on every output the variant has (specs/sos REQ-SOS-ALM-01).
+    if (alarmPlayer)
+        alarmPlayer->startSOS(buzzerOwner);
 }
 
 void TrekLinkSOSHelper::deactivateAlarms(uint8_t buzzerOwner)
 {
     LOG_INFO("TrekLinkSOS: Deactivating alarms (owner=%d)", buzzerOwner);
+    if (alarmPlayer)
+        alarmPlayer->stop(buzzerOwner);
 
 #ifdef PIN_BUZZER
     BuzzerManager::instance().write(0);
@@ -89,7 +86,7 @@ void TrekLinkSOSHelper::deactivateAlarms(uint8_t buzzerOwner)
 #endif
 
 #ifdef TREKLINK_SOS_LED_PIN
-    digitalWrite(TREKLINK_SOS_LED_PIN, LOW);
+    digitalWrite(TREKLINK_SOS_LED_PIN, LED_STATE_OFF);
 #endif
 }
 

@@ -21,12 +21,11 @@
 FallDetectionModule *fallDetectionModule;
 
 // F12: Static LUT definition (declared in header)
-constexpr bool FallDetectionModule::SOS_LUT[];
 
 FallDetectionModule::FallDetectionModule(FallSensorInterface *sensor)
     : SinglePortModule("FallDetection", meshtastic_PortNum_PRIVATE_APP), OSThread("FallDetection"), currentState(MONITORING),
       sensor(sensor), sensorInitialized(false), freefallStartTime(0), inactivityStartTime(0), prealarmStartTime(0),
-      lastAlarmBeepTime(0), isBeepOn(false), sosPatternStartTime(0), sosBuzzerOn(false)
+      lastAlarmBeepTime(0), isBeepOn(false)
 {
     if (sensor) {
         LOG_INFO("FallDetection: Module created with %s sensor, will init in runOnce()", sensor->sensorName());
@@ -84,7 +83,6 @@ void FallDetectionModule::cancelAutoSOS()
     if (currentState == SOS_TRIGGERED) {
         LOG_INFO("FallDetection: Auto-SOS cancelled by user");
         TrekLinkSOSHelper::instance().deactivateAlarms(OWNER_FALL);
-        sosBuzzerOn = false;
         transitionToState(MONITORING);
     }
 }
@@ -92,7 +90,10 @@ void FallDetectionModule::cancelAutoSOS()
 void FallDetectionModule::activatePreAlarm()
 {
     LOG_WARN("FallDetection: PRE-ALARM activated - 30s countdown");
-    TrekLinkSOSHelper::instance().activateAlarms(OWNER_FALL);
+    // The pre-alarm keeps its own 1 s beep (specs/sos REQ-SOS-ALM-03); the SOS pattern starts only at auto-SOS.
+#ifdef PIN_BUZZER
+    BuzzerManager::instance().acquire(OWNER_FALL);
+#endif
     isBeepOn = true;
 }
 
@@ -112,7 +113,7 @@ void FallDetectionModule::updateAlarmFeedback()
         isBeepOn = true;
 
 #ifdef PIN_BUZZER
-        BuzzerManager::instance().write(128);
+        BuzzerManager::instance().mark(128); // attach again after any stock tone (F2)
 #endif
 #ifdef PIN_VIBRATOR
         digitalWrite(PIN_VIBRATOR, HIGH);
@@ -136,28 +137,7 @@ void FallDetectionModule::triggerAutoSOS()
     TrekLinkSOSHelper::instance().broadcastPosition();
     TrekLinkSOSHelper::instance().sendSOSTextMessage(TREKLINK_SOS_FALL_TAG);
 
-    sosPatternStartTime = millis();
-    sosBuzzerOn = false;
-
-#ifdef PIN_BUZZER
-    BuzzerManager::instance().acquire(OWNER_FALL);
-#endif
-}
-
-void FallDetectionModule::updateSOSBuzzerPattern()
-{
-#ifndef PIN_BUZZER
-    return;
-#else
-    uint32_t elapsed = millis() - sosPatternStartTime;
-    uint8_t index = (elapsed / 200) % SOS_LUT_LEN;
-    bool shouldBeOn = SOS_LUT[index];
-
-    if (shouldBeOn != sosBuzzerOn) {
-        BuzzerManager::instance().write(shouldBeOn ? 128 : 0);
-        sosBuzzerOn = shouldBeOn;
-    }
-#endif
+    TrekLinkSOSHelper::instance().activateAlarms(OWNER_FALL); // the common SOS pattern (REQ-SOS-ALM-01)
 }
 
 // ----------------------------------------------------------------------
@@ -301,15 +281,7 @@ int32_t FallDetectionModule::runOnce()
 
     // F14: In SOS_TRIGGERED, skip I2C reads
     if (currentState == SOS_TRIGGERED) {
-        updateSOSBuzzerPattern();
-
-#ifdef PIN_VIBRATOR
-        digitalWrite(PIN_VIBRATOR, sosBuzzerOn ? HIGH : LOW);
-#endif
-
-#ifdef TREKLINK_SOS_LED_PIN
-        digitalWrite(TREKLINK_SOS_LED_PIN, (millis() / 250) % 2);
-#endif
+        // AlarmPlayer plays the SOS pattern on the buzzer, motor and LED.
 
         return 200;
     }

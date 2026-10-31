@@ -61,9 +61,6 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     unsigned long lastAlarmBeepTime;
     bool isBeepOn;
 
-    // SOS Morse code pattern state (F12: LUT-based)
-    unsigned long sosPatternStartTime;
-    bool sosBuzzerOn;
 
     // Detection thresholds (tunable by self-calibration)
     float freefallThreshold = 0.5f;          // g (<threshold indicates freefall)
@@ -73,14 +70,6 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     static constexpr unsigned long PREALARM_TIMEOUT = 30000;     // 30 seconds
     static constexpr unsigned long ALARM_BEEP_INTERVAL = 1000;   // 1 second beep interval
 
-    // F12: SOS Morse LUT
-    static constexpr bool SOS_LUT[28] = {
-        1,0,1,0,1,0,                       // S (...)
-        1,1,1,0,1,1,1,0,1,1,1,0,           // O (---)
-        1,0,1,0,1,0,                       // S (...)
-        0,0,0,0                             // Gap
-    };
-    static constexpr uint8_t SOS_LUT_LEN = 28;
 
     // Phase 2: Self-calibration state
     enum CalPhase { CAL_NONE, CAL_COLLECTING, CAL_COMPLETE };
@@ -116,7 +105,6 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     void deactivatePreAlarm();
     void triggerAutoSOS();
     void updateAlarmFeedback();
-    void updateSOSBuzzerPattern();
 };
 
 extern FallDetectionModule *fallDetectionModule;

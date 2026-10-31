@@ -6,6 +6,7 @@
 
 #include "NodeDB.h"
 #include "Observer.h"
+#include "alarm/AlarmPlayer.h"
 #include "fall/FallDetectionModule.h"
 #include "input/InputBroker.h"
 #include "main.h"
@@ -103,6 +104,8 @@ void start()
 
     applyOwnerDefault();
     applyCannedMessageDefault();
+
+    alarmPlayer = new AlarmPlayer(); // before the SOS modules, which start and stop it
 
 #ifdef TREKLINK_SOS_BUTTON_PIN
     trekLinkButtonModule = new TrekLinkButtonModule();

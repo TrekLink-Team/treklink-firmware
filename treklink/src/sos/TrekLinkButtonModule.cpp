@@ -13,6 +13,7 @@
 #ifdef TREKLINK_SOS_BUTTON_PIN
 
 #include "sos/TrekLinkSOSHelper.h"
+#include "alarm/AlarmPlayer.h"
 #include "alarm/BuzzerManager.h"
 #include "fall/FallDetectionModule.h"
 #include "Capabilities.h"
@@ -46,10 +47,6 @@ TrekLinkButtonModule::TrekLinkButtonModule()
     LOG_INFO("TrekLinkButton: Vibrator initialized on GPIO %d", PIN_VIBRATOR);
 #endif
 
-#ifdef PIN_BUZZER
-    // One-time BuzzerManager init (F4: prevents LEDC channel conflict)
-    BuzzerManager::instance().init();
-#endif
 }
 
 // ============================================================
@@ -193,7 +190,9 @@ void TrekLinkButtonModule::onHoldThreshold()
         sosStartTime = millis();
         lastSOSTxTime = millis();
 
-        // Trigger confirmation: 3 short pulses
+        // Trigger confirmation: 3 short pulses, then the SOS pattern takes the motor (REQ-SOS-ALM-01.5)
+        if (alarmPlayer)
+            alarmPlayer->holdVibrator(true);
         startConfirmation(CONFIRM_TRIGGER_PULSES, CONFIRM_TRIGGER_ON_MS, CONFIRM_TRIGGER_OFF_MS);
 
         // Show persistent SOS banner (duration=0 = stays until dismissed)
@@ -267,6 +266,8 @@ void TrekLinkButtonModule::updateConfirmation()
             lastConfirmPulseTime = now;
 
             if (confirmPulsesRemaining == 0) {
+                if (alarmPlayer)
+                    alarmPlayer->holdVibrator(false); // the SOS pattern drives the motor again
                 return; // Done
             }
         }
@@ -303,15 +304,9 @@ int32_t TrekLinkButtonModule::runOnce()
     // Run confirmation feedback (non-blocking pulse sequence)
     updateConfirmation();
 
-    // SOS beacon — retransmit position periodically via helper
-    if (sosActive) {
+    // SOS beacon: retransmit the position periodically; the LED follows the SOS pattern (AlarmPlayer)
+    if (sosActive)
         TrekLinkSOSHelper::instance().tickBeacon(sosStartTime, lastSOSTxTime);
-
-#ifdef TREKLINK_SOS_LED_PIN
-        // 2Hz LED strobe during SOS
-        digitalWrite(TREKLINK_SOS_LED_PIN, (millis() / 250) % 2);
-#endif
-    }
 
     return 20; // Poll every 20ms (matches UpDownInterruptBase)
 }
