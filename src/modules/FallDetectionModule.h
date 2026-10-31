@@ -98,6 +98,8 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     };
     CalStats accelStats, gyroStats;
 
+    static constexpr float FREEFALL_THRESHOLD_MAX = 0.6f; // g, well under the 1 g of a resting unit
+    static constexpr uint8_t CALIBRATION_VERSION = 2;    // stored values without it predate the F6 fix
     float calibratedFreefallThreshold = 0.5f;
     float calibratedGyroStillness = 0.1f;
 

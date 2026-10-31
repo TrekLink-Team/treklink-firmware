@@ -199,10 +199,12 @@ void FallDetectionModule::finalizeCalibration()
     gyroStats.std_y = sqrt(gyroStats.sum_yy / n - gyroStats.mean_y * gyroStats.mean_y);
     gyroStats.std_z = sqrt(gyroStats.sum_zz / n - gyroStats.mean_z * gyroStats.mean_z);
 
-    float accelNoise = (accelStats.std_x + accelStats.std_y + accelStats.std_z) / 3.0f;
+    // readAccel() returns m/s2 while the free-fall threshold is in g (F6): convert the noise first.
+    float accelNoise = (accelStats.std_x + accelStats.std_y + accelStats.std_z) / 3.0f / 9.81f;
     float gyroNoise = (gyroStats.std_x + gyroStats.std_y + gyroStats.std_z) / 3.0f;
 
-    calibratedFreefallThreshold = fmin(1.0f, fmax(0.3f, 3.5f * accelNoise));
+    // Keep the threshold well under the 1 g a resting unit reads, or a still unit counts as falling.
+    calibratedFreefallThreshold = fmin(FREEFALL_THRESHOLD_MAX, fmax(0.3f, 3.5f * accelNoise));
     calibratedGyroStillness = fmin(0.3f, fmax(0.05f, 3.0f * gyroNoise));
 
     LOG_INFO("FallDetection: Calibration complete — accelNoise=%.4fg, freefall=%.2fg, gyroStill=%.3frad/s", accelNoise,
@@ -213,6 +215,7 @@ void FallDetectionModule::saveCalibration()
 {
     Preferences prefs;
     prefs.begin("fallcal", false);
+    prefs.putUChar("cal_ver", CALIBRATION_VERSION);
     prefs.putFloat("ff_thresh", calibratedFreefallThreshold);
     prefs.putFloat("gyro_still", calibratedGyroStillness);
     prefs.end();
@@ -221,13 +224,20 @@ void FallDetectionModule::saveCalibration()
 void FallDetectionModule::loadCalibration()
 {
     Preferences prefs;
-    prefs.begin("fallcal", true);
+    prefs.begin("fallcal", false);
     if (prefs.isKey("ff_thresh")) {
-        calibratedFreefallThreshold = prefs.getFloat("ff_thresh", 0.5f);
-        calibratedGyroStillness = prefs.getFloat("gyro_still", 0.1f);
-        calPhase = CAL_COMPLETE;
-        LOG_INFO("FallDetection: Loaded stored calibration (ff=%.2f, gyro=%.3f)", calibratedFreefallThreshold,
-                 calibratedGyroStillness);
+        float storedFreefall = prefs.getFloat("ff_thresh", 0.5f);
+        // Values saved before F6 was fixed carry no version and can hold 1.0 g: drop them and recalibrate.
+        if (prefs.getUChar("cal_ver", 0) != CALIBRATION_VERSION || storedFreefall > FREEFALL_THRESHOLD_MAX) {
+            LOG_WARN("FallDetection: Dropping old stored calibration (ff=%.2f), recalibrating", storedFreefall);
+            prefs.clear();
+        } else {
+            calibratedFreefallThreshold = storedFreefall;
+            calibratedGyroStillness = prefs.getFloat("gyro_still", 0.1f);
+            calPhase = CAL_COMPLETE;
+            LOG_INFO("FallDetection: Loaded stored calibration (ff=%.2f, gyro=%.3f)", calibratedFreefallThreshold,
+                     calibratedGyroStillness);
+        }
     }
     prefs.end();
 }
