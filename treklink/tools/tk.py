@@ -260,11 +260,37 @@ def build(env, diagnostic=False):
         os.environ["PLATFORMIO_BUILD_FLAGS"] = DIAGNOSTIC_FLAGS
     else:
         os.environ.pop("PLATFORMIO_BUILD_FLAGS", None)
-    return run(["pio", "run", "-e", env])
+    rc = run(["pio", "run", "-e", env])
+    if rc == 0:
+        keep_images(env, diagnostic)
+    return rc
 
 
-def build_dir(env):
-    return os.path.join(ROOT, ".pio", "build", env)
+# PlatformIO cleans the whole build directory when the build flags change (a diagnostic build after a
+# release build, or the reverse), so every successful build is copied to its own folder and flashed from
+# there: .pio/treklink-images/<env>[-diagnostic]/<version>/ (outside .pio/build, which PlatformIO cleans).
+IMAGES = os.path.join(ROOT, ".pio", "treklink-images")
+
+
+def keep_images(env, diagnostic):
+    src = os.path.join(ROOT, ".pio", "build", env)
+    apps = [p for p in glob.glob(os.path.join(src, "firmware-*.bin")) if not p.endswith(".factory.bin")]
+    if not apps:
+        return
+    app = max(apps, key=os.path.getmtime)
+    version = os.path.basename(app)[len("firmware-" + env + "-") : -len(".bin")]
+    dst = os.path.join(IMAGES, env + ("-diagnostic" if diagnostic else ""), version)
+    os.makedirs(dst, exist_ok=True)
+    for name in ["bootloader.bin", "partitions.bin", os.path.basename(app), os.path.basename(app)[:-4] + ".factory.bin"]:
+        if os.path.exists(os.path.join(src, name)):
+            shutil.copy2(os.path.join(src, name), dst)
+    print(f"\n  images kept in {dst}")
+
+
+def build_dir(env, diagnostic=False):
+    """The newest kept image folder for env, or PlatformIO's build folder if none was kept."""
+    found = sorted(glob.glob(os.path.join(IMAGES, env + ("-diagnostic" if diagnostic else ""), "*")), key=os.path.getmtime)
+    return found[-1] if found else os.path.join(ROOT, ".pio", "build", env)
 
 
 # Application-only offsets (chapter 17 §7 rule 2): bootloader, partitions, boot_app0, application. NVS and
@@ -275,8 +301,8 @@ BOOTLOADER_OFFSET = {"esp32s3": 0x0, "esp32": 0x1000}
 BOOT_APP0 = os.path.join(PIO_HOME, "packages", "framework-arduinoespressif32", "tools", "partitions", "boot_app0.bin")
 
 
-def flash_images(env):
-    d = build_dir(env)
+def flash_images(env, diagnostic=False):
+    d = build_dir(env, diagnostic)
     apps = [p for p in glob.glob(os.path.join(d, "firmware*.bin")) if not p.endswith(".factory.bin")]
     app = max(apps, key=os.path.getmtime) if apps else os.path.join(d, "firmware.bin")
     images = [
@@ -292,10 +318,10 @@ def flash_images(env):
     return images
 
 
-def factory_image(env):
-    found = sorted(glob.glob(os.path.join(build_dir(env), "*.factory.bin")))
+def factory_image(env, diagnostic=False):
+    found = sorted(glob.glob(os.path.join(build_dir(env, diagnostic), "*.factory.bin")))
     if not found:
-        sys.exit(f"no factory image in {build_dir(env)}; run: tk.py build --env {env}")
+        sys.exit(f"no factory image in {build_dir(env, diagnostic)}; run: tk.py build --env {env}")
     return found[-1]
 
 
@@ -309,8 +335,8 @@ def esptool(chip, port, *args):
     return run([sys.executable, ESPTOOL, "--chip", chip, "--port", port, "--baud", "921600", *args])
 
 
-def flash(env, port, ask=input):
-    images = flash_images(env)
+def flash(env, port, ask=input, diagnostic=False):
+    images = flash_images(env, diagnostic)
     confirm_latch(env, ask)
     args = ["write_flash"]
     for off, path in images:
@@ -318,8 +344,8 @@ def flash(env, port, ask=input):
     return esptool(ENVS[env]["chip"], port, *args)
 
 
-def install(env, port, ask=input):
-    image = factory_image(env)
+def install(env, port, ask=input, diagnostic=False):
+    image = factory_image(env, diagnostic)
     print("\n  FULL INSTALL erases the unit: node settings, channel key, fall calibration and the")
     print("  onboard queue are lost.")
     if ask("  Type ERASE to continue: ").strip() != "ERASE":
@@ -447,8 +473,7 @@ def main():
         p.add_argument("--env", required=True, choices=list(ENVS))
         if name != "build":
             p.add_argument("--port")
-        else:
-            p.add_argument("--diagnostic", action="store_true", help="USB console and test hooks, bench only")
+        p.add_argument("--diagnostic", action="store_true", help="USB console and test hooks, bench only")
     p = sub.add_parser("test", help="diagnostic images only: press a button or print the SOS state")
     p.add_argument("command", help='for example "press 4 3500" or "state"')
     p.add_argument("--port")
@@ -478,9 +503,9 @@ def main():
     if a.cmd == "build":
         return build(a.env, a.diagnostic)
     if a.cmd == "flash":
-        return flash(a.env, pick_port(a.port))
+        return flash(a.env, pick_port(a.port), diagnostic=a.diagnostic)
     if a.cmd == "install":
-        return install(a.env, pick_port(a.port))
+        return install(a.env, pick_port(a.port), diagnostic=a.diagnostic)
     if a.cmd == "test":
         send_test_command(pick_port(a.port), a.command, a.listen, a.out)
         return 0
