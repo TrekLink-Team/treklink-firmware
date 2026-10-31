@@ -1,0 +1,51 @@
+[
+  {
+    "id": "O-01",
+    "file": "src/main.cpp",
+    "signature": "void setup()",
+    "mirror": "treklink/src/VariantDefaults.cpp (tzdef use)",
+    "sha256": "b0bb0d9d39aab3e0fd2cf3a1c3bea130e7c6e18866085d0ed03a35c783ba7ecc"
+  },
+  {
+    "id": "O-02",
+    "file": "src/modules/CannedMessageModule.cpp",
+    "signature": "void CannedMessageModule::installDefaultCannedMessageModuleConfig()",
+    "mirror": "STOCK_CANNED_MESSAGES in treklink/src/TrekLink.cpp",
+    "sha256": "a5e8d8d7c1514f656eccbbe775c30c07df7c7906716ff790395fe7582a53d13c"
+  },
+  {
+    "id": "O-04",
+    "file": "src/mesh/NodeDB.cpp",
+    "signature": "void NodeDB::installDefaultDeviceState()",
+    "mirror": "applyOwnerDefault() in treklink/src/TrekLink.cpp",
+    "sha256": "384c46c2033773bbbd3884641db26028aed0f051651feaac3652dee0d83f0d85"
+  },
+  {
+    "id": "O-06",
+    "file": "src/input/UpDownInterruptImpl1.cpp",
+    "signature": "bool UpDownInterruptImpl1::init()",
+    "mirror": "the v2 INPUTDRIVER_TWO_WAY_ROCKER defines",
+    "sha256": "c42e31f5b443da5c89ff50ba6f3a6e76a95af41b823a808c7cf3e7148d117965"
+  },
+  {
+    "id": "O-08",
+    "file": "src/mqtt/MQTT.cpp",
+    "signature": "void MQTT::onSend(",
+    "mirror": "encodeLikeStock() in treklink/src/queue/TrekLinkMqttOverride.cpp",
+    "sha256": "f3cd6c6e7a430350995939b70a740ed385ccc1a927c38685079af0d65307000a"
+  },
+  {
+    "id": "O-08b",
+    "file": "src/mqtt/MQTT.cpp",
+    "signature": "void MQTT::publishQueuedMessages()",
+    "mirror": "TrekLinkMqttDrain::runOnce()",
+    "sha256": "dabe50015e0d96ea9dd4bafbe5efa95a3f928e4e2a5e64159eb7a4b995776c68"
+  },
+  {
+    "id": "O-11",
+    "file": "src/motion/ICM20948Sensor.cpp",
+    "signature": "ICM20948Singleton *ICM20948Singleton::GetInstance()",
+    "mirror": "the pinstance symbol read in treklink/src/fall/sensors/ICM20948FallSensor.cpp",
+    "sha256": "f123937b7bf8e5094ab56364c016e36af108379cd6b63335a7863d360a731b9e"
+  }
+]
