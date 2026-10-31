@@ -13,7 +13,16 @@ One spec root for the repository (chapter 02 §2 of the conventions). Variant sp
 starts with frontmatter (`status`, `support`, `hw_verified`, `verified`), and the header status
 line was corrected where it still read "DRAFT" after every task had been ticked.
 
+## Architecture
+
+[architecture/](architecture/): how TrekLink sits on upstream Meshtastic as an overlay (draft, 2026-10-31). Read it before
+changing any build file or adding code.
+
 ## By variant
+
+Each active variant has a `components.md`, the authoritative list of its parts, pins and TrekLink
+capabilities. The older `requirements.md`, `design.md` and `tasks.md` beside it predate the
+overlay and give way to `components.md` where they disagree.
 
 | Folder | Hardware | Status | Support | Hardware-verified |
 |---|---|---|---|---|
