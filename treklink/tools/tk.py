@@ -254,32 +254,50 @@ def send_test_command(port, command, listen=8.0, out_file=None):
 DIAGNOSTIC_FLAGS = "-DARDUINO_USB_CDC_ON_BOOT=1 -DTREKLINK_TEST_HOOKS=1"
 
 
-def build(env, diagnostic=False, jobs=None):
-    if diagnostic:
-        print(f"\n  DIAGNOSTIC build: PLATFORMIO_BUILD_FLAGS=\"{DIAGNOSTIC_FLAGS}\"")
-        os.environ["PLATFORMIO_BUILD_FLAGS"] = DIAGNOSTIC_FLAGS
+# A datalog image is a diagnostic image that also streams every fall-detector IMU sample as CSV
+# (specs/fall-detection REQ-FALL-LOG-01); `tk.py imu` records it. Bench only, never a release.
+KIND_FLAGS = {
+    "release": "",
+    "diagnostic": DIAGNOSTIC_FLAGS,
+    "datalog": DIAGNOSTIC_FLAGS + " -DTREKLINK_IMU_STREAM=1",
+}
+
+
+def image_kind(a):
+    return "datalog" if getattr(a, "datalog", False) else "diagnostic" if getattr(a, "diagnostic", False) else "release"
+
+
+def kind_suffix(kind):
+    return "" if kind == "release" else "-" + kind
+
+
+def build(env, kind="release", jobs=None):
+    flags = KIND_FLAGS[kind]
+    if flags:
+        print(f"\n  {kind.upper()} build: PLATFORMIO_BUILD_FLAGS=\"{flags}\"")
+        os.environ["PLATFORMIO_BUILD_FLAGS"] = flags
     else:
         os.environ.pop("PLATFORMIO_BUILD_FLAGS", None)
     rc = run(["pio", "run", "-e", env] + (["-j", str(jobs)] if jobs else []))
     if rc == 0:
-        keep_images(env, diagnostic)
+        keep_images(env, kind)
     return rc
 
 
 # PlatformIO cleans the whole build directory when the build flags change (a diagnostic build after a
 # release build, or the reverse), so every successful build is copied to its own folder and flashed from
-# there: .pio/treklink-images/<env>[-diagnostic]/<version>/ (outside .pio/build, which PlatformIO cleans).
+# there: .pio/treklink-images/<env>[-diagnostic|-datalog]/<version>/ (outside .pio/build, which PlatformIO cleans).
 IMAGES = os.path.join(ROOT, ".pio", "treklink-images")
 
 
-def keep_images(env, diagnostic):
+def keep_images(env, kind):
     src = os.path.join(ROOT, ".pio", "build", env)
     apps = [p for p in glob.glob(os.path.join(src, "firmware-*.bin")) if not p.endswith(".factory.bin")]
     if not apps:
         return
     app = max(apps, key=os.path.getmtime)
     version = os.path.basename(app)[len("firmware-" + env + "-") : -len(".bin")]
-    dst = os.path.join(IMAGES, env + ("-diagnostic" if diagnostic else ""), version)
+    dst = os.path.join(IMAGES, env + kind_suffix(kind), version)
     os.makedirs(dst, exist_ok=True)
     for name in ["bootloader.bin", "partitions.bin", os.path.basename(app), os.path.basename(app)[:-4] + ".factory.bin"]:
         if os.path.exists(os.path.join(src, name)):
@@ -287,9 +305,9 @@ def keep_images(env, diagnostic):
     print(f"\n  images kept in {dst}")
 
 
-def build_dir(env, diagnostic=False):
+def build_dir(env, kind="release"):
     """The newest kept image folder for env, or PlatformIO's build folder if none was kept."""
-    found = sorted(glob.glob(os.path.join(IMAGES, env + ("-diagnostic" if diagnostic else ""), "*")), key=os.path.getmtime)
+    found = sorted(glob.glob(os.path.join(IMAGES, env + kind_suffix(kind), "*")), key=os.path.getmtime)
     return found[-1] if found else os.path.join(ROOT, ".pio", "build", env)
 
 
@@ -301,8 +319,8 @@ BOOTLOADER_OFFSET = {"esp32s3": 0x0, "esp32": 0x1000}
 BOOT_APP0 = os.path.join(PIO_HOME, "packages", "framework-arduinoespressif32", "tools", "partitions", "boot_app0.bin")
 
 
-def flash_images(env, diagnostic=False):
-    d = build_dir(env, diagnostic)
+def flash_images(env, kind="release"):
+    d = build_dir(env, kind)
     apps = [p for p in glob.glob(os.path.join(d, "firmware*.bin")) if not p.endswith(".factory.bin")]
     app = max(apps, key=os.path.getmtime) if apps else os.path.join(d, "firmware.bin")
     images = [
@@ -318,10 +336,10 @@ def flash_images(env, diagnostic=False):
     return images
 
 
-def factory_image(env, diagnostic=False):
-    found = sorted(glob.glob(os.path.join(build_dir(env, diagnostic), "*.factory.bin")))
+def factory_image(env, kind="release"):
+    found = sorted(glob.glob(os.path.join(build_dir(env, kind), "*.factory.bin")))
     if not found:
-        sys.exit(f"no factory image in {build_dir(env, diagnostic)}; run: tk.py build --env {env}")
+        sys.exit(f"no factory image in {build_dir(env, kind)}; run: tk.py build --env {env}")
     return found[-1]
 
 
@@ -335,8 +353,8 @@ def esptool(chip, port, *args):
     return run([sys.executable, ESPTOOL, "--chip", chip, "--port", port, "--baud", "921600", *args])
 
 
-def flash(env, port, ask=input, diagnostic=False):
-    images = flash_images(env, diagnostic)
+def flash(env, port, ask=input, kind="release"):
+    images = flash_images(env, kind)
     confirm_latch(env, ask)
     args = ["write_flash"]
     for off, path in images:
@@ -344,8 +362,8 @@ def flash(env, port, ask=input, diagnostic=False):
     return esptool(ENVS[env]["chip"], port, *args)
 
 
-def install(env, port, ask=input, diagnostic=False):
-    image = factory_image(env, diagnostic)
+def install(env, port, ask=input, kind="release"):
+    image = factory_image(env, kind)
     print("\n  FULL INSTALL erases the unit: node settings, channel key, fall calibration and the")
     print("  onboard queue are lost.")
     if ask("  Type ERASE to continue: ").strip() != "ERASE":
@@ -370,6 +388,47 @@ def capture_log(port, seconds, out):
                 sys.stdout.flush()
     s.close()
     print(f"\n  log appended to {out}")
+
+
+def capture_imu(port, seconds, label, out_dir):
+    """Record the IMU stream of a datalog image (specs/fall-detection REQ-FALL-LOG-01) to CSV."""
+    os.makedirs(out_dir, exist_ok=True)
+    stem = os.path.join(out_dir, "%s-%s" % (time.strftime("%Y%m%d-%H%M%S"), label))
+    s = open_port(port)
+    header = None
+    rows = events = 0
+    buf = b""
+    end = time.time() + seconds
+    with open(stem + "-samples.csv", "w") as fs, open(stem + "-events.csv", "w") as fe, open(stem + "-console.log", "wb") as fl:
+        fe.write("seq,t_ms,event,detail\n")
+        while time.time() < end:
+            buf += s.read(4096)
+            *lines, buf = buf.split(b"\n")
+            for raw in lines:
+                line = raw.decode("ascii", "replace").strip()
+                if line.startswith("#IMUHDR,"):
+                    if header is None:
+                        header = line[len("#IMUHDR,") :]
+                        fs.write("label," + header + "\n")
+                elif line.startswith("#IMU,"):
+                    if header is None:
+                        header = "seq,t_ms,ax,ay,az,gx,gy,gz,accel_g,gyro_rads,state"
+                        fs.write("label," + header + "\n")
+                    fs.write(label + "," + line[len("#IMU,") :] + "\n")
+                    rows += 1
+                elif line.startswith("#EVT,"):
+                    fe.write(line[len("#EVT,") :] + "\n")
+                    events += 1
+                    print("  event " + line[len("#EVT,") :])
+                else:
+                    fl.write(raw + b"\n")
+            sys.stdout.write("\r  %s: %d samples, %d events, %3.0f s left " % (label, rows, events, max(0, end - time.time())))
+            sys.stdout.flush()
+    s.close()
+    print(f"\n  written {stem}-samples.csv, -events.csv and -console.log")
+    if rows == 0:
+        print("  no samples: is the unit running a datalog image (tk.py build --datalog)?")
+    return 0 if rows else 1
 
 
 # ---------------------------------------------------------------- menu
@@ -473,7 +532,9 @@ def main():
         p.add_argument("--env", required=True, choices=list(ENVS))
         if name != "build":
             p.add_argument("--port")
-        p.add_argument("--diagnostic", action="store_true", help="USB console and test hooks, bench only")
+        kinds = p.add_mutually_exclusive_group()
+        kinds.add_argument("--diagnostic", action="store_true", help="USB console and test hooks, bench only")
+        kinds.add_argument("--datalog", action="store_true", help="diagnostic image that streams IMU samples, bench only")
         if name == "build":
             p.add_argument("--jobs", type=int, help="parallel compile jobs (fewer uses less memory)")
     p = sub.add_parser("test", help="diagnostic images only: press a button or print the SOS state")
@@ -481,6 +542,11 @@ def main():
     p.add_argument("--port")
     p.add_argument("--listen", type=float, default=8.0)
     p.add_argument("--out", help="append the raw serial output to this file")
+    p = sub.add_parser("imu", help="datalog images only: record the fall-detector IMU stream to CSV")
+    p.add_argument("--port")
+    p.add_argument("--seconds", type=float, default=60)
+    p.add_argument("--label", default="unlabelled", help="what the unit did, for example rest-screen-off or drop-1m")
+    p.add_argument("--out", default=os.path.join(ROOT, "docs", "test-runs", "imu"), help="output folder")
     p = sub.add_parser("log")
     p.add_argument("--port")
     p.add_argument("--seconds", type=float, default=30)
@@ -503,14 +569,16 @@ def main():
             print_unit(info)
         return 0 if "node" in info else 1
     if a.cmd == "build":
-        return build(a.env, a.diagnostic, a.jobs)
+        return build(a.env, image_kind(a), a.jobs)
     if a.cmd == "flash":
-        return flash(a.env, pick_port(a.port), diagnostic=a.diagnostic)
+        return flash(a.env, pick_port(a.port), kind=image_kind(a))
     if a.cmd == "install":
-        return install(a.env, pick_port(a.port), diagnostic=a.diagnostic)
+        return install(a.env, pick_port(a.port), kind=image_kind(a))
     if a.cmd == "test":
         send_test_command(pick_port(a.port), a.command, a.listen, a.out)
         return 0
+    if a.cmd == "imu":
+        return capture_imu(pick_port(a.port), a.seconds, a.label, a.out)
     if a.cmd == "log":
         capture_log(pick_port(a.port), a.seconds, a.out)
         return 0

@@ -14,6 +14,7 @@
 #if TREKLINK_HAS_FALL_DETECTION
 
 #include "alarm/BuzzerManager.h"
+#include "fall/FallDatalog.h"
 #include "sos/TrekLinkSOSHelper.h"
 #include "Capabilities.h"
 #include "main.h"
@@ -45,6 +46,11 @@ void FallDetectionModule::transitionToState(FallState newState)
         return;
 
     LOG_DEBUG("FallDetection: State transition %d -> %d", currentState, newState);
+#if TREKLINK_IMU_STREAM
+    char detail[8];
+    snprintf(detail, sizeof(detail), "%d", (int)newState);
+    TREKLINK_IMU_EVENT("STATE", detail);
+#endif
     currentState = newState;
 }
 
@@ -231,6 +237,7 @@ int32_t FallDetectionModule::runOnce()
 
         sensorInitialized = true;
         LOG_INFO("FallDetection: %s initialized", sensor->sensorName());
+        TREKLINK_IMU_BEGIN(sensor->sensorName());
 
 #ifdef PIN_VIBRATOR
         pinMode(PIN_VIBRATOR, OUTPUT);
@@ -261,11 +268,17 @@ int32_t FallDetectionModule::runOnce()
         SensorVec3 calAccel, calGyro;
         sensor->readAccel(calAccel);
         sensor->readGyro(calGyro);
+        TREKLINK_IMU_SAMPLE(calAccel, calGyro, calculateTotalAcceleration(calAccel), calculateTotalGyro(calGyro), 255);
         collectCalibrationSample(calAccel, calGyro);
         calSampleCount++;
 
         if (calSampleCount >= CAL_SAMPLES) {
             finalizeCalibration();
+#if TREKLINK_IMU_STREAM
+            char detail[48];
+            snprintf(detail, sizeof(detail), "ff=%.3f gyro=%.3f", calibratedFreefallThreshold, calibratedGyroStillness);
+            TREKLINK_IMU_EVENT("CALIBRATED", detail);
+#endif
             saveCalibration();
             calPhase = CAL_COMPLETE;
 
@@ -295,6 +308,7 @@ int32_t FallDetectionModule::runOnce()
 
     float totalAccel = calculateTotalAcceleration(accel);
     float totalGyro = calculateTotalGyro(gyro);
+    TREKLINK_IMU_SAMPLE(accel, gyro, totalAccel, totalGyro, (uint8_t)currentState);
     unsigned long now = millis();
 
     switch (currentState) {
