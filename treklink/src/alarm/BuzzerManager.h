@@ -131,6 +131,16 @@ class BuzzerManager {
         }
     }
 
+    /// During a mark: set it up again only if something else changed the channel's duty or frequency.
+    void keepMark(uint8_t duty)
+    {
+        if (!initialized || currentOwner == OWNER_NONE)
+            return;
+        const uint32_t freq = ledcReadFreq(BUZZER_LEDC_CHANNEL);
+        if (ledcRead(BUZZER_LEDC_CHANNEL) != duty || freq < 2600 || freq > 2800)
+            mark(duty);
+    }
+
     bool isOwnedBy(BuzzerOwner owner) const { return currentOwner == owner; }
 
   private:

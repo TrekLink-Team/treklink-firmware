@@ -13,9 +13,11 @@
 
 // Stock ICM20948Singleton keeps its instance in a private static and offers no "initialized" accessor;
 // GetInstance() would create an unconnected instance whose first I2C call dereferences a null serif.
-// The pointer is read through its linker symbol instead (specs/architecture design §4.2 O-11): it is
-// non-null only after stock ICM20948Sensor::init() ran ICM20948Singleton::init(), whose begin() links
-// the I2C interface before any chip check.
+// The pointer is read through its linker symbol instead (specs/architecture design §4.2 O-11). Stock
+// ICM20948Sensor::init() sets it through GetInstance() and calls ICM20948Singleton::init() right after,
+// whose begin() links the I2C interface first, so a non-null pointer is safe to call on the
+// cooperative loop. It stays set if init() failed later, so the WHO_AM_I check below is what decides
+// whether to join.
 extern ICM20948Singleton *treklinkStockIcmInstance asm("_ZN17ICM20948Singleton9pinstanceE");
 
 bool ICM20948FallSensor::init()

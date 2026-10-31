@@ -20,8 +20,17 @@ AlarmPlayer::AlarmPlayer() : concurrency::OSThread("TrekLinkAlarm")
 
 void AlarmPlayer::startSOS(uint8_t newOwner)
 {
-    if (playing)
+    if (playing) {
+        // A button SOS during a fall alarm takes the alarm over, so the SOS lock holds it (BuzzerManager).
+        if (newOwner == OWNER_SOS && owner != OWNER_SOS) {
+#ifdef PIN_BUZZER
+            BuzzerManager::instance().acquire(OWNER_SOS);
+#endif
+            LOG_INFO("TrekLinkAlarm: SOS takes the pattern over from owner %u", (unsigned)owner);
+            owner = newOwner;
+        }
         return;
+    }
 #ifdef PIN_BUZZER
     BuzzerManager::instance().acquire(static_cast<BuzzerOwner>(newOwner));
 #endif
@@ -36,6 +45,8 @@ void AlarmPlayer::startSOS(uint8_t newOwner)
 
 void AlarmPlayer::stop(uint8_t stopOwner)
 {
+    if (playing && stopOwner != owner)
+        return; // only the owner that holds the pattern stops it
     if (playing)
         LOG_INFO("TrekLinkAlarm: SOS pattern off (owner=%u)", (unsigned)stopOwner);
     playing = false;
@@ -56,6 +67,13 @@ int32_t AlarmPlayer::runOnce()
         markOn = on;
         setOutputs(on);
     }
+#ifdef PIN_BUZZER
+    else if (on) {
+        // Stock tone() runs in its own task and may end a note in the middle of a mark, writing duty 0
+        // and detaching the pin; restore the mark within one tick (REQ-SOS-ALM-02).
+        BuzzerManager::instance().keepMark(128);
+    }
+#endif
     return 20;
 }
 

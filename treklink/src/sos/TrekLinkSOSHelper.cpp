@@ -73,8 +73,11 @@ void TrekLinkSOSHelper::activateAlarms(uint8_t buzzerOwner)
 void TrekLinkSOSHelper::deactivateAlarms(uint8_t buzzerOwner)
 {
     LOG_INFO("TrekLinkSOS: Deactivating alarms (owner=%d)", buzzerOwner);
-    if (alarmPlayer)
+    if (alarmPlayer) {
         alarmPlayer->stop(buzzerOwner);
+        if (alarmPlayer->isPlaying())
+            return; // another owner's SOS is still playing: a fall cancel must not silence a button SOS
+    }
 
 #ifdef PIN_BUZZER
     BuzzerManager::instance().write(0);

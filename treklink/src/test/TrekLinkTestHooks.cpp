@@ -62,6 +62,10 @@ ProcessMessage TrekLinkTestHooks::handleReceived(const meshtastic_MeshPacket &mp
     // becomes; mesh traffic from other nodes never matches.
     if (!(mp.from == 0 || isFromUs(&mp)) || mp.to != nodeDB->getNodeNum())
         return ProcessMessage::CONTINUE;
+    // A packet heard over LoRa, MQTT or UDP never presses a button, even with a forged sender.
+    if (mp.transport_mechanism != meshtastic_MeshPacket_TransportMechanism_TRANSPORT_INTERNAL &&
+        mp.transport_mechanism != meshtastic_MeshPacket_TransportMechanism_TRANSPORT_API)
+        return ProcessMessage::CONTINUE;
     const auto &d = mp.decoded;
     char text[64];
     size_t n = d.payload.size < sizeof(text) - 1 ? d.payload.size : sizeof(text) - 1;
