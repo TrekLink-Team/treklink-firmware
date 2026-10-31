@@ -254,13 +254,13 @@ def send_test_command(port, command, listen=8.0, out_file=None):
 DIAGNOSTIC_FLAGS = "-DARDUINO_USB_CDC_ON_BOOT=1 -DTREKLINK_TEST_HOOKS=1"
 
 
-def build(env, diagnostic=False):
+def build(env, diagnostic=False, jobs=None):
     if diagnostic:
         print(f"\n  DIAGNOSTIC build: PLATFORMIO_BUILD_FLAGS=\"{DIAGNOSTIC_FLAGS}\"")
         os.environ["PLATFORMIO_BUILD_FLAGS"] = DIAGNOSTIC_FLAGS
     else:
         os.environ.pop("PLATFORMIO_BUILD_FLAGS", None)
-    rc = run(["pio", "run", "-e", env])
+    rc = run(["pio", "run", "-e", env] + (["-j", str(jobs)] if jobs else []))
     if rc == 0:
         keep_images(env, diagnostic)
     return rc
@@ -474,6 +474,8 @@ def main():
         if name != "build":
             p.add_argument("--port")
         p.add_argument("--diagnostic", action="store_true", help="USB console and test hooks, bench only")
+        if name == "build":
+            p.add_argument("--jobs", type=int, help="parallel compile jobs (fewer uses less memory)")
     p = sub.add_parser("test", help="diagnostic images only: press a button or print the SOS state")
     p.add_argument("command", help='for example "press 4 3500" or "state"')
     p.add_argument("--port")
@@ -501,7 +503,7 @@ def main():
             print_unit(info)
         return 0 if "node" in info else 1
     if a.cmd == "build":
-        return build(a.env, a.diagnostic)
+        return build(a.env, a.diagnostic, a.jobs)
     if a.cmd == "flash":
         return flash(a.env, pick_port(a.port), diagnostic=a.diagnostic)
     if a.cmd == "install":
