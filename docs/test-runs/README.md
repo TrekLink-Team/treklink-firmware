@@ -26,3 +26,4 @@ Each file records:
 |---|---|---|---|
 | 2026-10-29 | v2 | [SOS field observation](2026-10-29-v2-sos-observation.md) | trigger observed; rest not tested |
 | 2026-10-29 | v2 | [Hardware run: SOS, fall, compass](2026-10-29-v2-hardware-run.md) | SOS trigger partial, buzzer fails after a beep, fall detection fails, compass fails uncalibrated |
+| 2026-10-31 | v2 | [Overlay on v2.7.26 and the SOS pattern, unattended](2026-10-31-v2-overlay-sos-pattern.md) | logs pass for boot, SOS trigger and cancel, buttons; IMU misdetected after one warm reset (F7, stock); nothing heard or felt |

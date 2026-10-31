@@ -1,0 +1,190 @@
+DEBUG | ??:??:?? 41 [SerialConsole] Send config: network
+DEBUG | ??:??:?? 42 [SerialConsole] FromRadio=STATE_SEND_FILEMANIFEST
+DEBUG | ??:??:?? 42 [SerialConsole] File: /Messages_default.msgs (4761) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/cannedConf.proto (176) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/channels.proto (57) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/config.proto (183) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/device.proto (195) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/module.proto (123) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/nodes.proto (1231) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/transmit_history.dat (13) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /prefs/uiconfig.proto (5) bytes
+DEBUG | ??:??:?? 42 [SerialConsole] File: /static/.gitkeep (0) bytes
+INFO  | ??:??:?? 42 [SerialConsole] Config Send Complete millis=42187
+DEBUG | ??:??:?? 42 [SerialConsole] Enqueued local (id=0x6ae57a0f fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 42 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+DEBUG | ??:??:?? 42 [Router] handleReceived(REMOTE) (id=0x6ae57a0f fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 42 [Router] Module 'text' wantsPacket=1
+INFO  | ??:??:?? 42 [Router] Received text msg from=0x0, id=0x6ae57a0f, msg=tk-test:press 4 3500
+DEBUG | ??:??:?? 42 [Router] Module 'text' considered
+DEBUG | ??:??:?? 42 [Router] Module 'ExternalNotificationModule' wantsPacket=1
+DEBUG | ??:??:?? 42 [Router] Module 'ExternalNotificationModule' considered
+DEBUG | ??:??:?? 42 [Router] Module 'routing' wantsPacket=1
+DEBUG | ??:??:?? 42 [Router] Routing sniffing (id=0x6ae57a0f fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 42 [Router] Module 'routing' considered
+DEBUG | ??:??:?? 42 [Router] Module 'TrekLinkTestHooks' wantsPacket=1
+INFO  | ??:??:?? 42 [Router] TrekLinkTestHooks: press GPIO 4 for 3500 ms
+DEBUG | ??:??:?? 42 [Router] Module 'TrekLinkTestHooks' considered
+DEBUG | ??:??:?? 42 [Router] Module 'TrekLinkTestHooks' handled and skipped other processing
+INFO  | ??:??:?? 42 Tell client we have new packets 3
+WARN  | ??:??:?? 45 [TrekLinkButton] SOS Button: Triggering SOS mode (hold 3s)
+WARN  | ??:??:?? 45 [TrekLinkButton] TrekLinkSOS: SOS TRIGGERED (owner=2)
+DEBUG | ??:??:?? 45 [TrekLinkButton] Partially randomized packet id 3555484813
+DEBUG | ??:??:?? 45 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 45 [TrekLinkButton] handleReceived(LOCAL) (id=0xd3ec648d fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=3 priority=127)
+DEBUG | ??:??:?? 45 [TrekLinkButton] No modules interested in portnum=3, src=LOCAL
+INFO  | ??:??:?? 45 [TrekLinkButton] Packet History - insert: Using new slot @uptime 45.455s TRACE NEW
+DEBUG | ??:??:?? 45 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 45 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 45 [TrekLinkButton] enqueue for send (id=0xd3ec648d fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=25 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 45 [TrekLinkButton] txGood=1,txRelay=0,rxGood=0,rxBad=0
+DEBUG | ??:??:?? 45 [TrekLinkButton] Partially randomized packet id 1272001678
+DEBUG | ??:??:?? 45 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 45 [TrekLinkButton] handleReceived(LOCAL) (id=0x4bd1348e fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=1 priority=127)
+DEBUG | ??:??:?? 45 [TrekLinkButton] No modules interested in portnum=1, src=LOCAL
+INFO  | ??:??:?? 45 [TrekLinkButton] Packet History - insert: Using new slot @uptime 45.526s TRACE NEW
+DEBUG | ??:??:?? 45 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 45 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 45 [TrekLinkButton] enqueue for send (id=0x4bd1348e fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 45 [TrekLinkButton] txGood=1,txRelay=0,rxGood=0,rxBad=0
+INFO  | ??:??:?? 45 [TrekLinkButton] TrekLinkSOS: Sent text: SOS - [No GPS]
+INFO  | ??:??:?? 45 [TrekLinkButton] TrekLinkSOS: Activating alarms (owner=2)
+INFO  | ??:??:?? 45 [TrekLinkButton] TrekLinkAlarm: SOS pattern on (owner=2)
+INFO  | ??:??:?? 45 Tell client we have new packets 5
+DEBUG | ??:??:?? 45 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+WARN  | ??:??:?? 45 [RadioIf] Can not send yet, busyRx
+WARN  | ??:??:?? 45 [RadioIf] Can not send yet, busyRx
+INFO  | ??:??:?? 45 [TrekLinkTestHooks] TrekLinkTestHooks: release GPIO 4
+INFO  | ??:??:?? 45 [TrekLinkTestHooks] TrekLinkTestHooks: state sos=1 fall_prealarm=0 fall_sos=0
+DEBUG | ??:??:?? 45 [RadioIf] Ignore false preamble detection
+INFO  | ??:??:?? 50 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 50 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 50 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 50 [TrekLinkButton] Skip position send; no fresh position since boot
+DEBUG | ??:??:?? 51 [SerialConsole] FromRadio=STATE_SEND_FILEMANIFEST
+DEBUG | ??:??:?? 51 [SerialConsole] File: /Messages_default.msgs (4761) bytes
+DEBUG | ??:??:?? 51 [SerialConsole] File: /prefs/cannedConf.proto (176) bytes
+DEBUG | ??:??:?? 51 [SerialConsole] File: /prefs/channels.proto (57) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/config.proto (183) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/device.proto (195) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/module.proto (123) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/nodes.proto (1231) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/transmit_history.dat (13) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /prefs/uiconfig.proto (5) bytes
+DEBUG | ??:??:?? 52 [SerialConsole] File: /static/.gitkeep (0) bytes
+INFO  | ??:??:?? 52 [SerialConsole] Config Send Complete millis=52088
+DEBUG | ??:??:?? 52 [SerialConsole] Enqueued local (id=0x6ae57a19 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 52 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+DEBUG | ??:??:?? 52 [Router] handleReceived(REMOTE) (id=0x6ae57a19 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 52 [Router] Module 'text' wantsPacket=1
+INFO  | ??:??:?? 52 [Router] Received text msg from=0x0, id=0x6ae57a19, msg=tk-test:press 0 200
+DEBUG | ??:??:?? 52 [Router] Module 'text' considered
+DEBUG | ??:??:?? 52 [Router] Module 'ExternalNotificationModule' wantsPacket=1
+DEBUG | ??:??:?? 52 [Router] Module 'ExternalNotificationModule' considered
+DEBUG | ??:??:?? 52 [Router] Module 'routing' wantsPacket=1
+DEBUG | ??:??:?? 52 [Router] Routing sniffing (id=0x6ae57a19 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 52 [Router] Module 'routing' considered
+DEBUG | ??:??:?? 52 [Router] Module 'TrekLinkTestHooks' wantsPacket=1
+INFO  | ??:??:?? 52 [Router] TrekLinkTestHooks: press GPIO 0 for 200 ms
+DEBUG | ??:??:?? 52 [Router] Module 'TrekLinkTestHooks' considered
+DEBUG | ??:??:?? 52 [Router] Module 'TrekLinkTestHooks' handled and skipped other processing
+INFO  | ??:??:?? 52 Tell client we have new packets 6
+INFO  | ??:??:?? 52 [TrekLinkTestHooks] TrekLinkTestHooks: release GPIO 0
+INFO  | ??:??:?? 52 [TrekLinkTestHooks] TrekLinkTestHooks: state sos=1 fall_prealarm=0 fall_sos=0
+INFO  | ??:??:?? 52 [upDown1] TrekLinkTestHooks: input event 10 from upDown1
+INFO  | ??:??:?? 55 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 55 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 55 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 55 [TrekLinkButton] Skip position send; no fresh position since boot
+DEBUG | ??:??:?? 58 [SerialConsole] Send config: network
+DEBUG | ??:??:?? 58 [SerialConsole] FromRadio=STATE_SEND_FILEMANIFEST
+DEBUG | ??:??:?? 58 [SerialConsole] File: /Messages_default.msgs (4761) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/cannedConf.proto (176) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/channels.proto (57) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/config.proto (183) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/device.proto (195) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/module.proto (123) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/nodes.proto (1231) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/transmit_history.dat (13) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /prefs/uiconfig.proto (5) bytes
+DEBUG | ??:??:?? 59 [SerialConsole] File: /static/.gitkeep (0) bytes
+INFO  | ??:??:?? 59 [SerialConsole] Config Send Complete millis=59118
+DEBUG | ??:??:?? 59 [RadioIf] Completed sending (id=0xd3ec648d fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=25 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 59 [SerialConsole] PACKET FROM PHONE (id=0x6ae57a20 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 59 [SerialConsole] Enqueued local (id=0x6ae57a20 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 59 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+DEBUG | ??:??:?? 59 [Router] handleReceived(REMOTE) (id=0x6ae57a20 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 59 [Router] Module 'text' wantsPacket=1
+INFO  | ??:??:?? 59 [Router] Received text msg from=0x0, id=0x6ae57a20, msg=tk-test:state
+DEBUG | ??:??:?? 59 [Router] Module 'text' considered
+DEBUG | ??:??:?? 59 [Router] Module 'ExternalNotificationModule' wantsPacket=1
+DEBUG | ??:??:?? 59 [Router] Module 'ExternalNotificationModule' considered
+DEBUG | ??:??:?? 59 [Router] Module 'routing' wantsPacket=1
+DEBUG | ??:??:?? 59 [Router] Routing sniffing (id=0x6ae57a20 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 59 [Router] Module 'routing' considered
+DEBUG | ??:??:?? 59 [Router] Module 'TrekLinkTestHooks' wantsPacket=1
+INFO  | ??:??:?? 59 [Router] TrekLinkTestHooks: state sos=1 fall_prealarm=0 fall_sos=0
+DEBUG | ??:??:?? 59 [Router] Module 'TrekLinkTestHooks' considered
+DEBUG | ??:??:?? 59 [Router] Module 'TrekLinkTestHooks' handled and skipped other processing
+INFO  | ??:??:?? 59 Tell client we have new packets 7
+DEBUG | ??:??:?? 60 SX126x AGC reset: warm sleep + Calibrate(0x7F)
+DEBUG | ??:??:?? 60 Started Tx (id=0x4bd1348e fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 60 0 packets remain in the TX queue
+DEBUG | ??:??:?? 60 Packet TX: 518ms
+DEBUG | ??:??:?? 60 Completed sending (id=0x4bd1348e fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+INFO  | ??:??:?? 60 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 60 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 60 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 60 [TrekLinkButton] Skip position send; no fresh position since boot
+DEBUG | ??:??:?? 62 [SerialConsole] FromRadio=STATE_SEND_FILEMANIFEST
+DEBUG | ??:??:?? 62 [SerialConsole] File: /Messages_default.msgs (4761) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/cannedConf.proto (176) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/channels.proto (57) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/config.proto (183) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/device.proto (195) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/module.proto (123) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/nodes.proto (1231) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/transmit_history.dat (13) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /prefs/uiconfig.proto (5) bytes
+DEBUG | ??:??:?? 62 [SerialConsole] File: /static/.gitkeep (0) bytes
+INFO  | ??:??:?? 62 [SerialConsole] Config Send Complete millis=62817
+DEBUG | ??:??:?? 62 [SerialConsole] Enqueued local (id=0x6ae57a24 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 62 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+INFO  | ??:??:?? 62 [Router] Packet History - insert: Using new slot @uptime 62.862s TRACE NEW
+DEBUG | ??:??:?? 62 [Router] handleReceived(REMOTE) (id=0x6ae57a24 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 62 [Router] Module 'text' wantsPacket=1
+INFO  | ??:??:?? 62 [Router] Received text msg from=0x0, id=0x6ae57a24, msg=tk-test:press 4 3500
+DEBUG | ??:??:?? 62 [Router] Module 'text' considered
+DEBUG | ??:??:?? 62 [Router] Module 'ExternalNotificationModule' wantsPacket=1
+DEBUG | ??:??:?? 62 [Router] Module 'ExternalNotificationModule' considered
+DEBUG | ??:??:?? 62 [Router] Module 'routing' wantsPacket=1
+DEBUG | ??:??:?? 62 [Router] Routing sniffing (id=0x6ae57a24 fr=0x00000000 to=0x0aa3a268, transport = 0, WantAck=0, HopLim=0 Ch=0x0 Portnum=1)
+DEBUG | ??:??:?? 62 [Router] Module 'routing' considered
+DEBUG | ??:??:?? 62 [Router] Module 'TrekLinkTestHooks' wantsPacket=1
+INFO  | ??:??:?? 62 [Router] TrekLinkTestHooks: press GPIO 4 for 3500 ms
+DEBUG | ??:??:?? 62 [Router] Module 'TrekLinkTestHooks' considered
+DEBUG | ??:??:?? 62 [Router] Module 'TrekLinkTestHooks' handled and skipped other processing
+INFO  | ??:??:?? 62 [DeviceTelemetry] Send: air_util_tx=0.054528, channel_utilization=3.271667, battery_level=58, voltage=3.789000, uptime=62
+DEBUG | ??:??:?? 62 [DeviceTelemetry] Partially randomized packet id 1897306255
+DEBUG | ??:??:?? 63 [DeviceTelemetry] updateTelemetry LOCAL
+DEBUG | ??:??:?? 63 [DeviceTelemetry] Node status update: 0 online, 8 total
+INFO  | ??:??:?? 63 [DeviceTelemetry] Send packet to phone
+DEBUG | ??:??:?? 63 [DeviceTelemetry] Noise floor: -75 dBm (samples: 1, latest: -75 dBm)
+INFO  | ??:??:?? 63 [DeviceTelemetry] Sending local stats: uptime=62, channel_utilization=3.271667, air_util_tx=0.054528, num_online_nodes=0, num_total_nodes=8, noise_floor=-75
+INFO  | ??:??:?? 63 [DeviceTelemetry] num_packets_tx=3, num_packets_rx=0, num_packets_rx_bad=0
+DEBUG | ??:??:?? 63 [DeviceTelemetry] Partially randomized packet id 1433647248
+INFO  | ??:??:?? 63 Tell client we have new packets 10
+DEBUG | ??:??:?? 63 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+DEBUG | ??:??:?? 63 [SerialConsole] phone downloaded packet (id=0x7116988f fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=67 priority=10)
+DEBUG | ??:??:?? 63 [SerialConsole] FromRadio=STATE_SEND_PACKETS
+DEBUG | ??:??:?? 63 [SerialConsole] phone downloaded packet (id=0x5573b890 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=67 priority=10)
+INFO  | ??:??:?? 65 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 65 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 65 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 65 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 66 [TrekLinkButton] SOS Button: Cancelling SOS mode (hold 3s)
+INFO  | ??:??:?? 66 [TrekLinkButton] TrekLinkSOS: SOS CANCELLED (owner=2)
+INFO  | ??:??:?? 66 [TrekLinkButton] TrekLinkSOS: Deactivating alarms (owner=2)
+INFO  | ??:??:?? 66 [TrekLinkButton] TrekLinkAlarm: SOS pattern off (owner=2)
+INFO  | ??:??:?? 66 [TrekLinkTestHooks] TrekLinkTestHooks: release GPIO 4
+INFO  | ??:??:?? 66 [TrekLinkTestHooks] TrekLinkTestHooks: state sos=0 fall_prealarm=0 fall_sos=0
