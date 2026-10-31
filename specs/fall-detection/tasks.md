@@ -34,7 +34,8 @@ the common SOS pattern; the release candidate is the top of the stack.
   free fall path; impact path; short free fall ignored; a move inside the window restarts the run;
   no run in 20 s gives "user is OK"; a run starting late completes; timestamps with 27 ms jitter
   - _Requirements: REQ-FALL-SIG-01, REQ-FALL-STL-01_
-- [ ] 3.3 Module uses the core at 20 ms; ICM and QMI ranges and the QMI rate (design §4, §6)
+- [ ] 3.3 Module uses the core at 20 ms; ICM and QMI ranges and the QMI rate; QMI acceleration in g,
+  not milli-g (F16) (design §4, §6)
   - _Requirements: REQ-FALL-RNG-01, REQ-FALL-PRE-01_
 - [ ] 3.4 `replay.cpp` over the captures of 2.3; set the provisional constants from them and record
   the reason in the run file
@@ -42,7 +43,7 @@ the common SOS pattern; the release candidate is the top of the stack.
 ## Branch 4: `fix/fall-calibration` (F6 and F15)
 
 - [ ] 4.1 `FallCalibration.h` core and its native tests: accepted still run, rejected moving run,
-  rejected tilted mean, threshold clamp, bias removal
+  rejected mean away from 1 g, threshold clamp, bias removal
   - _Requirements: REQ-FALL-CAL-01_
 - [ ] 4.2 Module: boot calibration, stored version 2 values, erase of the old keys, 60 s retry
 - [ ] 4.3 Build matrix at the top of the stack: treklink-v2 (release, diagnostic, datalog), treklink-v3,

@@ -79,7 +79,7 @@ Provisional values; the datalog capture replaces them, and the run file records 
 ## 5. Calibration
 
 - `FallCalibration` accumulates sums per axis in g and rad/s over 250 samples at the 20 ms period,
-  then reports accept or reject with the reason (moving, tilted mean, noisy gyro).
+  then reports accept or reject with the reason (moving, mean away from 1 g, noisy gyro).
 - NVS namespace `fallcal` (unchanged name), keys `ver` (= 2), `bx`, `by`, `bz`, `gstill`. At start
   the module reads `ver`; any other value, or the old keys `ff_thresh` and `gyro_still`, is erased.
 - Each boot calibrates afresh, because gyro bias moves with temperature; the stored value is the
@@ -113,6 +113,8 @@ Provisional values; the datalog capture replaces them, and the run file records 
   `configGyroscope(GYR_RANGE_1024DPS, GYR_ODR_56_05Hz)`, the widest gyro range in SensorLib 0.3.4
   (`SensorQMI8658.hpp:53-61`). Stock 2.7.26 has no QMI8658 motion driver, so nothing else configures
   the chip (`specs/variants/v4/components.md`).
+- `getAccelerometer()` returns g and `getGyroscope()` dps in SensorLib 0.3.4; the adapter multiplies
+  by 9.80665 and by pi/180 (F16: it divided the g value by 1000 before).
 
 ## 7. Datalog image, REQ-FALL-LOG-01
 

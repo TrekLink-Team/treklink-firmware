@@ -77,6 +77,12 @@ confirms it; the capture and the chosen values are recorded in a test-run file a
    driver offers up to ±2000 dps, so an impact peak is not clipped at ±8 g.
 2. On v4 the QMI8658 output data rate SHALL be at least the 50 Hz sampling rate (62.5 Hz
    accelerometer; the SensorLib 0.3.4 default used before was 31.25 Hz).
+3. Every adapter SHALL return acceleration in m/s² and angular rate in rad/s
+   (`FallSensorInterface.h`). Finding F16, KNOWN from the library source, not run on a v4: SensorLib
+   0.3.4 `getAccelerometer()` returns g (scale range/32768, `SensorQMI8658.hpp:514-525`,
+   `:917-919`), and the v4 adapter treated it as milli-g and divided by 1000
+   (`treklink/src/fall/sensors/QMI8658FallSensor.cpp:66-70` at `f71f0a312`), so every v4 reading
+   was about 0.001 g: always in free fall and never still.
 
 ## REQ-FALL-CAL-01: Gyro calibration (findings F6 and F15, leader ruling 2026-10-31)
 
