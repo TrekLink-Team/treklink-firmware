@@ -17,7 +17,7 @@
 using namespace treklink::fall;
 
 // SensorLib 0.3.4 scales for the ranges QMI8658FallSensor::init configures.
-static const float QMI_ACCEL_SCALE_8G = 8.0f / 32768.0f;    // SensorQMI8658.hpp:521, g per LSB
+static const float QMI_ACCEL_SCALE_8G = 8.0f / 32768.0f;      // SensorQMI8658.hpp:521, g per LSB
 static const float QMI_GYRO_SCALE_512DPS = 512.0f / 32768.0f; // SensorQMI8658.hpp:598, dps per LSB
 
 // Equivalent of SensorQMI8658::getAccelerometer for one axis, in g.
