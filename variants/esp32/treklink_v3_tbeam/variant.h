@@ -41,7 +41,7 @@
 
 // 4. Default canned messages list
 #undef CANNED_MESSAGE_MODULE_MESSAGES_DEFAULT
-#define CANNED_MESSAGE_MODULE_MESSAGES_DEFAULT                                                                                     \
-    "MEDICAL-HELP|LOST-HELP|SAFE|EVAC|LOW BAT|COMING|FOUND|LOST|"                                                                  \
-    "OK|NO|CHECK?|STOP|GO|WAIT ME|COME2ME|TURNBACK|MEET AT|REQST|"                                                                 \
+#define CANNED_MESSAGE_MODULE_MESSAGES_DEFAULT                                                                                   \
+    "MEDICAL-HELP|LOST-HELP|SAFE|EVAC|LOW BAT|COMING|FOUND|LOST|"                                                                \
+    "OK|NO|CHECK?|STOP|GO|WAIT ME|COME2ME|TURNBACK|MEET AT|REQST|"                                                               \
     "N|S|E|W|R|L|TRAIL|CHKPT|CAMP|DANGR|LO|HI|SPPLY|FD|WTER"
