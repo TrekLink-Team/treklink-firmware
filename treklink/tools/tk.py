@@ -18,6 +18,7 @@ import argparse
 import curses
 import glob
 import json
+import re
 import os
 import shutil
 import struct
@@ -206,10 +207,11 @@ def ld(field, data):
     return bytes([(field << 3) | 2]) + enc_varint(len(data)) + data
 
 
-def send_test_command(port, command, listen=8.0):
+def send_test_command(port, command, listen=8.0, out_file=None):
     """Diagnostic images only: send "tk-test:<command>" to the unit itself and print its TrekLink log lines."""
     s = open_port(port)
-    s.write(b"\x94\xc3" + struct.pack(">H", 3) + bytes([0x18]) + enc_varint(0x7EC2))
+    want = bytes([0x18]) + enc_varint(0x7EC2)  # ToRadio.want_config_id
+    s.write(b"\x94\xc3" + struct.pack(">H", len(want)) + want)
     raw = bytearray()
     node = None
     end = time.time() + 6
@@ -233,10 +235,14 @@ def send_test_command(port, command, listen=8.0):
     while time.time() < end:
         out += s.read(4096)
     s.close()
-    text = out.decode("utf-8", "replace")
+    if out_file:
+        with open(out_file, "ab") as f:
+            f.write(out)
+    text = re.sub(r"\x1b\[[0-9;]*m", "", out.decode("utf-8", "replace"))
     for line in text.splitlines():
-        if "TrekLink" in line or "SOS" in line or "Fall" in line:
-            print("  " + "".join(ch for ch in line if ch.isprintable()))
+        line = "".join(ch for ch in line if ch.isprintable())
+        if " | " in line and any(k in line for k in ("TrekLink", "SOS", "Fall", "Input", "Button", "Buzz", "alarm")):
+            print("  " + line[line.find(" | ") + 3 :])
     return text
 
 
@@ -261,17 +267,28 @@ def build_dir(env):
     return os.path.join(ROOT, ".pio", "build", env)
 
 
+# Application-only offsets (chapter 17 §7 rule 2): bootloader, partitions, boot_app0, application. NVS and
+# LittleFS are left alone, so the unit keeps its settings. The classic ESP32 bootloader sits at 0x1000.
+# Offsets are fixed here on purpose: asking PlatformIO for its metadata re-runs its configuration and
+# can clean the build directory when the build flags differ (seen 2026-10-31).
+BOOTLOADER_OFFSET = {"esp32s3": 0x0, "esp32": 0x1000}
+BOOT_APP0 = os.path.join(PIO_HOME, "packages", "framework-arduinoespressif32", "tools", "partitions", "boot_app0.bin")
+
+
 def flash_images(env):
-    """(offset, path) pairs for an application-only flash, from PlatformIO's own project metadata."""
-    out = subprocess.check_output(["pio", "project", "metadata", "-e", env, "--json-output"], cwd=ROOT, text=True)
-    meta = json.loads(out)[env]
-    images = [(int(img["offset"], 16), img["path"]) for img in meta["extra"].get("flash_images", [])]
-    apps = [p for p in glob.glob(os.path.join(build_dir(env), "firmware*.bin")) if not p.endswith(".factory.bin")]
-    app = max(apps, key=os.path.getmtime) if apps else os.path.join(build_dir(env), "firmware.bin")
-    images.append((int(meta["extra"].get("application_offset", "0x10000"), 16), app))
+    d = build_dir(env)
+    apps = [p for p in glob.glob(os.path.join(d, "firmware*.bin")) if not p.endswith(".factory.bin")]
+    app = max(apps, key=os.path.getmtime) if apps else os.path.join(d, "firmware.bin")
+    images = [
+        (BOOTLOADER_OFFSET[ENVS[env]["chip"]], os.path.join(d, "bootloader.bin")),
+        (0x8000, os.path.join(d, "partitions.bin")),
+        (0xE000, BOOT_APP0),
+        (0x10000, app),
+    ]
     missing = [p for _, p in images if not os.path.exists(p)]
     if missing:
         sys.exit("not built yet, missing: " + ", ".join(missing) + f"\nrun: tk.py build --env {env}")
+    print("  image: " + os.path.basename(app))
     return images
 
 
@@ -436,6 +453,7 @@ def main():
     p.add_argument("command", help='for example "press 4 3500" or "state"')
     p.add_argument("--port")
     p.add_argument("--listen", type=float, default=8.0)
+    p.add_argument("--out", help="append the raw serial output to this file")
     p = sub.add_parser("log")
     p.add_argument("--port")
     p.add_argument("--seconds", type=float, default=30)
@@ -464,7 +482,7 @@ def main():
     if a.cmd == "install":
         return install(a.env, pick_port(a.port))
     if a.cmd == "test":
-        send_test_command(pick_port(a.port), a.command, a.listen)
+        send_test_command(pick_port(a.port), a.command, a.listen, a.out)
         return 0
     if a.cmd == "log":
         capture_log(pick_port(a.port), a.seconds, a.out)

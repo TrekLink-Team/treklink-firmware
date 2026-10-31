@@ -4,12 +4,14 @@ type: reference
 status: approved
 owner: KhoaDD
 summary: One-page matrix of the four TrekLink hardware variants, as the code builds them.
-verified: {commit: 09f2a81, date: 2026-10-29, scope: "env names, build flags, SOS path, alarm pins, IMU, MQTT"}
+verified: {commit: ba1cd1d, date: 2026-10-31, scope: "env names, env files and capabilities on the overlay branch"}
 ---
 
 # TrekLink hardware variants
 
-This page is the single source of truth for what "v1" to "v4" mean in this repository. v3 and v4
+This page is the single source of truth for what "v1" to "v4" mean in this repository. Since the
+2026-10-31 overlay move (`specs/architecture`), each active variant's parts, pins and capabilities are
+listed in `specs/variants/<vN>/components.md`; this page is the summary across them. v3 and v4
 are the LilyGo off-the-shelf boards (T-Beam v1.2 and T-Beam Supreme), confirmed by the leader on
 2026-10-29. The older hardware-tier roadmap that used v3 and v4 for custom pre-production PCBs is
 kept in [`.deprecated/2026-10-29-hardware-tier-roadmap/`](.deprecated/2026-10-29-hardware-tier-roadmap/).
@@ -22,10 +24,10 @@ Wire-format facts (packets, priorities, portnums, MQTT topics) are not repeated 
 | | v1 | v2 | v3 | v4 |
 |---|---|---|---|---|
 | Hardware | Perfboard prototype, ESP32-WROOM-32, Ra-02 SX1278 | Custom 4-layer PCB, ESP32-S3, SX1268 | LilyGo T-Beam v1.2, ESP32 | LilyGo T-Beam Supreme, ESP32-S3 |
-| PlatformIO env | `treklink` | `treklink-v2` | `treklink-v3-tbeam` | `treklink-v4-supreme` |
-| Env file | `variants/esp32/treklink_v1_0/platformio.ini:1` | `variants/esp32s3/treklink_v2_0/platformio.ini:1` | `variants/esp32/treklink_v3_tbeam/platformio.ini:1` | `variants/esp32s3/treklink_v4_supreme/platformio.ini:1` |
+| PlatformIO env | `treklink` (old history only) | `treklink-v2` | `treklink-v3` | `treklink-v4` |
+| Env file | not ported | `variants/esp32s3/treklink_v2/platformio.ini` | `variants/esp32/treklink_v3/platformio.ini` | `variants/esp32s3/treklink_v4/platformio.ini` |
 | Base | `esp32_base`, board `treklink-esp32` | `esp32s3_base`, board `esp32-s3-devkitc-1` | extends stock `env:tbeam` | extends stock `env:tbeam-s3-core` |
-| Version flag | none (`TREKLINK_VARIANT` only) | `TREKLINK_V2` | `TREKLINK_V3` | `TREKLINK_V4` |
+| Capabilities (`specs/architecture` design §3.2) | not applicable | `TREKLINK_SOS_BUTTON_PIN 4`, buzzer, vibrator, LED, `TREKLINK_FALL_SENSOR_ICM20948` | LED `LED_POWER` 4 | `TREKLINK_FALL_SENSOR_QMI8658` |
 | SOS trigger | dedicated button, GPIO 34 (`treklink_v1_0/variant.h:30`) | dedicated button, GPIO 4 (`treklink_v2_0/variant.h:36`) | 3 s hold on the user button, GPIO 38 (`tbeam/variant.h:6`) | 3 s hold on the user button, GPIO 0 (`tbeam-s3-core/variant.h:9`) |
 | SOS module | `TrekLinkButtonModule` | `TrekLinkButtonModule` | `TrekLinkSOSGesture` | `TrekLinkSOSGesture` |
 | Local SOS alarm | buzzer GPIO 33, vibrator GPIO 4 | buzzer GPIO 11, vibrator GPIO 12 | LED GPIO 4 blinks; no buzzer, no vibrator | none: no buzzer, vibrator or `LED_PIN` |
@@ -36,12 +38,11 @@ Wire-format facts (packets, priorities, portnums, MQTT topics) are not repeated 
 | Hardware SOS test | not tested this term | 2026-10-29 run at `ea37a06`: trigger works, buzzer silent after any stock beep, cancel local only, fall detection cannot trigger (see [test runs](test-runs/README.md)) | not tested | not tested |
 | Spec | [specs/variants/v1](../specs/variants/v1/) | [specs/variants/v2](../specs/variants/v2/) | [specs/variants/v3](../specs/variants/v3/) | [specs/variants/v4](../specs/variants/v4/) |
 
-Sources for the module and IMU rows: `src/modules/Modules.cpp:199-224`. The compile-time rules
-that pair each version flag with a button layout are in `src/modules/TrekLinkVariantValidation.h:18-60`
-(v1 and v2 must define `BUTTON_PIN_SOS` and `PIN_BUZZER`; v3 and v4 must not define
-`BUTTON_PIN_SOS`). The alarm row follows from `TrekLinkSOSHelper::activateAlarms()`, which drives
-only the pins a variant defines (`src/modules/TrekLinkSOSHelper.cpp:66-78`), and from the LED blink
-in `TrekLinkSOSGesture.cpp:118-120`.
+Sources for the module and IMU rows: `treklink/src/TrekLink.cpp` (`treklink::start()`), which creates
+the SOS and fall modules from the capabilities each `variant.h` declares; `treklink/src/Capabilities.h`
+stops the build on a contradictory set. The alarm row follows from `TrekLinkSOSHelper::activateAlarms()`
+(`treklink/src/sos/TrekLinkSOSHelper.cpp`), which drives only the pins a variant defines, and from the
+LED strobe on `TREKLINK_SOS_LED_PIN`. The v1 column describes the old history (tag `archive/pre-overlay`).
 
 ## Known gaps between the specs and the code
 

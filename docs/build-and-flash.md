@@ -4,7 +4,7 @@ type: guide
 status: approved
 owner: KhoaDD
 summary: How to build, flash, monitor and test the TrekLink firmware with PlatformIO.
-verified: {commit: 09f2a81, date: 2026-10-29, scope: "env names and test env read from platformio files; commands not run in this pass"}
+verified: {commit: ba1cd1d, date: 2026-10-31, scope: "env names, tk.py commands and the treklink-v2 build run on the overlay branch"}
 ---
 
 # Build, flash and test
@@ -12,6 +12,29 @@ verified: {commit: 09f2a81, date: 2026-10-29, scope: "env names and test env rea
 Consolidates the former `docs/development-rules.md` and `docs/lifecycle.md` (kept in
 [`.deprecated/2026-10-29-repo-docs-v0/`](.deprecated/2026-10-29-repo-docs-v0/)). Git and pull
 request rules are not repeated here: they are `treklink-docs/_docs/01-conventions/07-github-workflow-git-conventions.md`.
+
+## The tk tool
+
+`treklink/tools/tk.py` does the bench work from a menu, with no assistant: list the connected units,
+read one (node, owner name, `pio_env`, firmware version, battery), build an image, flash the
+application while keeping the unit's settings, do a full install, and capture a serial log. It
+runs on the Python PlatformIO installs, which already has pyserial:
+
+```bash
+~/.platformio/penv/bin/python treklink/tools/tk.py
+```
+
+Each menu entry is also a command (`ports`, `read`, `build`, `flash`, `install`, `log`, `test`;
+`--help` lists the options), and every step prints the command it runs. Before a flash or reset of a
+v2 the tool stops and asks for the power button to be held. A full install asks for the word ERASE,
+because it wipes the node settings, the channel key, the fall calibration and the onboard queue.
+
+`tk.py build --diagnostic` builds an image that logs over USB (needed on v2, finding F1) and accepts
+`tk.py test "press <gpio> <ms>"` and `tk.py test state`, which press a button by pulling its GPIO
+low. Diagnostic images are for the bench only; never flash one to a rented unit.
+
+Offsets used for an application flash: bootloader `0x0` on ESP32-S3 (`0x1000` on the classic ESP32
+of v3), partitions `0x8000`, `boot_app0` `0xe000`, application `0x10000`.
 
 ## Prerequisites
 
@@ -25,10 +48,12 @@ The root `platformio.ini` loads every `variants/*/*/platformio.ini` and defaults
 
 | Variant | Env | Stock regression env |
 |---|---|---|
-| v1 (deprecated) | `treklink` | not applicable |
 | v2 | `treklink-v2` | not applicable |
-| v3 | `treklink-v3-tbeam` | `tbeam` |
-| v4 | `treklink-v4-supreme` | `tbeam-s3-core` |
+| v3 | `treklink-v3` | `tbeam` |
+| v4 | `treklink-v4` | `tbeam-s3-core` |
+
+v1 is not built on the overlay branch (deprecated, D-076); its last build is on the old history,
+tag `archive/pre-overlay`.
 
 Board details per variant: [variants.md](variants.md).
 
@@ -41,7 +66,8 @@ Board details per variant: [variants.md](variants.md).
 | Clean | `pio run -e <env> -t clean` |
 | Flash | `pio run -e <env> -t upload` |
 | Serial monitor | `pio device monitor` |
-| Native unit tests (includes `test/test_onboard_queue/`) | `pio test -e native` |
+| Native unit tests of the queue core | `pio test -e native -f treklink_queue` |
+| Overlay check (stock tree untouched, overrides watched) | `python3 treklink/tools/check_overlay.py` |
 
 `native` is defined in `variants/native/portduino/platformio.ini:14`.
 

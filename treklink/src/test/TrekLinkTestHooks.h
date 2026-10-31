@@ -15,8 +15,10 @@
 
 #if defined(TREKLINK_TEST_HOOKS) && TREKLINK_TEST_HOOKS
 
+#include "Observer.h"
 #include "SinglePortModule.h"
 #include "concurrency/OSThread.h"
+#include "input/InputBroker.h"
 
 class TrekLinkTestHooks : public SinglePortModule, private concurrency::OSThread
 {
@@ -28,6 +30,10 @@ class TrekLinkTestHooks : public SinglePortModule, private concurrency::OSThread
     int32_t runOnce() override;
 
   private:
+    // Logs every stock input event, so a test can see that a pressed button reached the InputBroker.
+    int onInput(const InputEvent *event);
+    CallbackObserver<TrekLinkTestHooks, const InputEvent *> inputObserver =
+        CallbackObserver<TrekLinkTestHooks, const InputEvent *>(this, &TrekLinkTestHooks::onInput);
     int pressPin = -1;
     uint32_t releaseAt = 0;
     static bool pinAllowed(int pin);

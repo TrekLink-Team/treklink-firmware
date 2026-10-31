@@ -30,15 +30,18 @@
 #define GPS_UBLOX
 
 // User Interface Buttons
-#define BUTTON_PIN 0                 // MENU: the stock user button (short next, long select)
 #define TREKLINK_SOS_BUTTON_PIN 4    // Dedicated SOS button, owned by TrekLinkButtonModule
 #define POWER_SENSE_PIN 13           // Power button sense (Active-Low)
 
-// UP and DOWN through the stock two-way rocker input (specs/architecture design §4.2 O-06)
+// UP, DOWN and MENU through the stock two-way rocker input (specs/architecture design §4.2 O-06):
+// UP previous, DOWN next, MENU select, MENU held select-long. No stock BUTTON_PIN: MENU must not
+// also be a stock user button (both would act on GPIO 0), and shutdown is the menu's confirmed
+// "Shutdown" entry, never a button hold (finding F10).
 #define INPUTDRIVER_ENCODER_TYPE 2
 #define INPUTDRIVER_TWO_WAY_ROCKER 1
 #define INPUTDRIVER_TWO_WAY_ROCKER_LEFT 7  // UP
 #define INPUTDRIVER_TWO_WAY_ROCKER_RIGHT 8 // DOWN
+#define INPUTDRIVER_TWO_WAY_ROCKER_BTN 0   // MENU (select)
 
 // Battery Monitoring
 #define BATTERY_PIN 1        // ADC1_CH0 (GPIO 1)

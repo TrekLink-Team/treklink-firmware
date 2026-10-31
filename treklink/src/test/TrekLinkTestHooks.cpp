@@ -24,6 +24,15 @@ TrekLinkTestHooks::TrekLinkTestHooks()
     : SinglePortModule("TrekLinkTestHooks", meshtastic_PortNum_TEXT_MESSAGE_APP), concurrency::OSThread("TrekLinkTestHooks")
 {
     LOG_WARN("TrekLinkTestHooks: DIAGNOSTIC IMAGE, button presses can be injected over USB");
+    if (inputBroker)
+        inputObserver.observe(inputBroker);
+}
+
+int TrekLinkTestHooks::onInput(const InputEvent *event)
+{
+    if (event)
+        LOG_INFO("TrekLinkTestHooks: input event %d from %s", (int)event->inputEvent, event->source ? event->source : "?");
+    return 0;
 }
 
 bool TrekLinkTestHooks::pinAllowed(int pin)
@@ -38,6 +47,10 @@ bool TrekLinkTestHooks::pinAllowed(int pin)
 #endif
 #ifdef INPUTDRIVER_TWO_WAY_ROCKER_LEFT
     if (pin == INPUTDRIVER_TWO_WAY_ROCKER_LEFT || pin == INPUTDRIVER_TWO_WAY_ROCKER_RIGHT)
+        return true;
+#endif
+#ifdef INPUTDRIVER_TWO_WAY_ROCKER_BTN
+    if (pin == INPUTDRIVER_TWO_WAY_ROCKER_BTN)
         return true;
 #endif
     return false;

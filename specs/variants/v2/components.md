@@ -45,7 +45,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against variants/esp3
 | `TREKLINK_FALL_SENSOR` | `TREKLINK_FALL_ICM20948` |
 | `TREKLINK_ONBOARD_QUEUE` | 1, 1000 entries, 64 in RAM, 512 KiB flash budget |
 | Region | `REGULATORY_LORA_REGIONCODE` MY_433 (shown to people as VN 433) |
-| Navigation | stock user button on 0 for MENU; stock two-way rocker input for UP 7 and DOWN 8 (architecture design §4.2 O-06) |
+| Navigation | stock two-way rocker input: UP 7, DOWN 8, MENU 0 as its select button (architecture design §4.2 O-06); no stock `BUTTON_PIN` |
 
 ## Shared resources to watch
 
@@ -55,6 +55,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against variants/esp3
 | ICM-20948 | stock `AccelerometerThread` and compass; findings F5, F7 |
 | GPIO 2 LED | stock status LED handling |
 | GPIO 9 latch | any reset releases it: hold the power button during a flash or reset (chapter 17 §7) |
+| GPIO 43 | `SX126X_RXEN`, the radio's RX switch, and also UART0 TX, where a release image writes its log because v2 has no USB console (F1). Log output may toggle the RF switch (inferred, not measured); a diagnostic image moves the log to USB |
 
 ## Known open findings
 

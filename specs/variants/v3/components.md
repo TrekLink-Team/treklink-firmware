@@ -50,7 +50,7 @@ verified: {commit: 54e0d8d, date: 2026-10-31, scope: "pins against upstream vari
 | Resource | Other users |
 |---|---|
 | User button 38 | stock `UserButtonThread`: 500 ms hold SELECT, release after 3.9 s SHUTDOWN (`InputBroker.cpp:305-307`, `ButtonThread.h:24`). The leader ruled on 2026-10-31 that a long hold on this button is not an acceptable SOS trigger; a new trigger is specified in the SOS module spec before the fix |
-| GPIO 4 LED | stock power LED at boot (`main.cpp:320-322`) and `StatusLEDModule` charge indication (`StatusLEDModule.cpp:218-219`) |
+| GPIO 4 LED | stock power LED at boot (`main.cpp:320-322`) and `StatusLEDModule` charge indication (`StatusLEDModule.cpp:218-219`). Upstream renamed this pin from `LED_PIN` to `LED_POWER` after 2.7.19, so the old `#ifdef LED_PIN` SOS strobe would have compiled out silently on 2.7.26; TrekLink now names it `TREKLINK_SOS_LED_PIN` |
 
 ## Known gaps
 
