@@ -1,144 +1,393 @@
-# Agent instructions
+# TrekLink: AI Agent Rules & Steering Directives
 
-This repository is the [Meshtastic](https://meshtastic.org) firmware — a C++17 embedded codebase targeting ESP32 / nRF52 / RP2040 / STM32WL / Linux-Portduino LoRa mesh radios — plus a Python MCP server in `mcp-server/` that AI agents use to flash, configure, and test connected devices.
+> **Canonical file.** This exact content lives in five places: `capstone/`, `treklink-docs/`,
+> `treklink-web/`, `treklink-firmware/`, and `TrekLink-Team.github.io/`. They are identical by
+> design, do not let them drift. If you edit one, edit all five in the same pass.
+>
+> **Applies to every AI coding assistant**, Claude Code, Cursor, Copilot, Antigravity, Codex,
+> Windsurf, Gemini CLI, OpenCode. Conventions v2, 2026-09-13.
 
-## Primary instruction file
+---
 
-**Read `.github/copilot-instructions.md` first.** That file is the canonical agent-facing document for this repo. It covers project layout, coding conventions (naming, module framework, Observer pattern, thread safety), the build system, CI/CD, the native C++ test suite, and — most importantly for automation work — the **MCP Server & Hardware Test Harness** section. Read it top-to-bottom before starting any non-trivial change.
+## 0. Read This Before Doing Anything
 
-This file (`AGENTS.md`) is a short pointer + quick reference for agents that don't read `.github/copilot-instructions.md` by default.
+You are working on **TrekLink** (FPT capstone FA26SE159), a LoRa-mesh trekking safety and
+operations platform. The workspace is a `capstone/` parent folder containing four sibling
+repositories plus the graded academic reports.
 
-## Quick command reference
+**At the start of every session, before any other action:**
 
-| Action                           | Command                                                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Build a firmware variant         | `pio run -e <env>` (e.g. `pio run -e rak4631`, `pio run -e heltec-v3`)                                        |
-| Build native macOS host binary   | `pio run -e native-macos` (Homebrew prereqs + CH341 LoRa setup in `variants/native/portduino/platformio.ini`) |
-| Clean + rebuild                  | `pio run -e <env> -t clean && pio run -e <env>`                                                               |
-| Flash a device                   | `pio run -e <env> -t upload --upload-port <port>` (or use the `pio_flash` MCP tool)                           |
-| Run firmware unit tests (native) | `pio test -e native`                                                                                          |
-| Run MCP hardware tests           | `./mcp-server/run-tests.sh`                                                                                   |
-| Live TUI test runner             | `mcp-server/.venv/bin/meshtastic-mcp-test-tui`                                                                |
-| Format before commit             | `trunk fmt`                                                                                                   |
-| Regenerate protobuf bindings     | `bin/regen-protos.sh`                                                                                         |
-| Generate CI matrix               | `./bin/generate_ci_matrix.py all [--level pr]`                                                                |
+1. **Resolve the docs root** (§1) and read
+   `_docs/01-conventions/00-index.md`. At minimum then read **07** (git), **10** (Jira) and
+   **11** (AI-first) in full.
+2. **Check open decisions**: `_docs/00-project-context/03-decisions-and-risk-register.md`.
+   Anything marked `OPEN` may block the task you are about to start. Say so before starting it.
+3. **Check for recent sessions**: glob `docs/sessions/` and `ignore/*/docs/sessions/` for anything
+   from the last ~24h touching the same area. **Do not re-derive what a recent session already
+   found**, reading a 20-line session file is orders of magnitude cheaper than repeating the
+   investigation.
+4. **Locate today** on `_docs/00-project-context/02-roadmap-and-milestones.md`, which sprint,
+   which roadmap week, what is due.
 
-## MCP server (device + test automation)
+Do this **autonomously, without being asked.** A developer should never have to tell you to follow
+the conventions. If you find yourself about to ask "should I follow the project conventions?", the
+answer is yes and the question wastes a turn.
 
-The `mcp-server/` package exposes ~32 MCP tools for device discovery, building, flashing, serial monitoring, and live-node administration. Tools are grouped as:
+---
 
-- **Discovery**: `list_devices`, `list_boards`, `get_board`
-- **Build & flash**: `build`, `clean`, `pio_flash`, `erase_and_flash` (ESP32 factory), `update_flash` (ESP32 OTA), `touch_1200bps`
-- **Serial sessions**: `serial_open`, `serial_read`, `serial_list`, `serial_close`
-- **Device reads**: `device_info`, `list_nodes`
-- **Device writes** (require `confirm=True`): `set_owner`, `get_config`, `set_config`, `get_channel_url`, `set_channel_url`, `send_text`, `reboot`, `shutdown`, `factory_reset`, `set_debug_log_api`
-- **userPrefs admin**: `userprefs_get`, `userprefs_set`, `userprefs_reset`, `userprefs_manifest`, `userprefs_testing_profile`
-- **Vendor escape hatches**: `esptool_*`, `nrfutil_*`, `picotool_*`
+## 1. Repository Layout & Path Resolution
 
-Setup: `cd mcp-server && python3 -m venv .venv && .venv/bin/pip install -e '.[test]'`. The repo registers the server via `.mcp.json` — Claude Code picks it up automatically.
+```text
+capstone/                      ← OPEN THIS as your workspace root — and now a git repo of its own
+├── AGENTS.md                  ← this file
+├── scripts/sync.sh            ← auto-commits and pushes this repo (D-022)
+├── Documents/                 ← graded academic deliverables. Not engineering docs.
+│   ├── reports/               ← Reports 1–7 (.md source + .docx) and slide decks; figures in reports/assets/
+│   ├── tracking/              ← Progress Log and tracking workbooks — .xlsx, one editor at a time
+│   ├── course-material/       ← issued by the school/supervisor. READ-ONLY.
+│   ├── templates/             ← blank forms. READ-ONLY — copy out, never fill in place.
+│   └── meetings/              ← supervisor briefs and minutes
+├── treklink-docs/             ← SSOT: conventions, decisions, backlog, templates
+│   └── _docs/                 ← the canonical documentation root
+├── treklink-web/              ← the active build
+│   ├── gateway/  backend/  frontend/
+│   └── specs/{module}/        ← requirements.md → design.md → tasks.md
+├── treklink-firmware/         ← inherited SU26 LoRa firmware (editable per D-008, surgically)
+└── TrekLink-Team.github.io/   ← public landing site, Astro to GitHub Pages. The name is fixed
+                                 by GitHub: a Pages user site must match <owner>.github.io
+```
 
-See `mcp-server/README.md` for argument shapes and the **MCP Server & Hardware Test Harness** section of `.github/copilot-instructions.md` for agent usage rules (tool surface, fixture contract, firmware integration points, recovery playbooks).
+**Resolving the docs root**, in order:
 
-## Slash commands (AI-assisted workflows)
+| You are opened on | Docs root |
+|---|---|
+| `capstone/` (**recommended**) | `treklink-docs/_docs/` |
+| `treklink-docs/` | `_docs/` |
+| `treklink-web/`, `treklink-firmware/` or `TrekLink-Team.github.io/` | `../treklink-docs/_docs/` |
 
-Three test-and-diagnose workflows exist as slash commands:
+> [!IMPORTANT]
+> **If you cannot resolve the docs root, stop and say so.** Do not guess at the conventions, and do
+> not fall back to generic best practice. A previous vendored copy of the conventions inside
+> `treklink-web/docs/conventions/` was deleted (Decision **D-011**) precisely because it drifted
+> and then confidently taught the wrong rules. A missing answer is cheaper than a wrong one.
 
-- **`/test` (Claude Code) / `/mcp-test` (Copilot)** — run the hardware test suite and interpret failures
-- **`/diagnose` / `/mcp-diagnose`** — read-only device health report
-- **`/repro` / `/mcp-repro`** — flakiness triage: re-run one test N times, diff firmware logs between passes and failures
+**Prefer being opened on `capstone/`.** Cross-repo work is the normal case here, a spec in
+`treklink-docs`, a wire format in `treklink-firmware`, the code in `treklink-web`.
 
-Bodies live in `.claude/commands/` and `.github/prompts/` respectively. `.claude/commands/README.md` is the index.
+---
 
-## Encryption at a glance
+## 2. The Non-Negotiables
 
-Two layers, both in `src/mesh/CryptoEngine.cpp`:
+### 2.1 Docs first, code later
 
-- **Channel (symmetric)** — **AES-CTR** with a channel-wide PSK (AES-128 or AES-256). Nonce = packet_id ‖ from_node ‖ block_counter. No AEAD; integrity is soft (channel-hash filter). The well-known default PSK lives in `src/mesh/Channels.h`; a 1-byte PSK is a short-form index into it.
-- **Per-peer PKI** — **X25519 ECDH** (Curve25519, 32-byte keys) → SHA-256 → **AES-256-CCM** with an 8-byte MAC. Fresh 32-bit `extraNonce` per packet, sent in the clear alongside the MAC. 12-byte wire overhead (`MESHTASTIC_PKC_OVERHEAD`). Used for DMs. Also used for remote admin (`src/modules/AdminModule.cpp`), where AdminMessage authorization is gated by `config.security.admin_key[0..2]`. Disabled entirely in Ham mode (`user.is_licensed=true`).
+No production code, database migration, or UI view before the module's spec suite exists and is
+approved: `specs/{module}/requirements.md` (EARS) → `design.md` → `tasks.md` → `api-design/*.md`.
+The gate is real. See `01-conventions/02-spec-driven-development-workflow.md`.
 
-Key rotation to never trigger casually: only the **full** factory reset (`factory_reset_device`, `eraseBleBonds=true`) wipes `security.private_key` and regenerates the keypair — every peer holds the old public key, so DMs silently fail PKI decrypt until NodeInfo re-exchanges. The **partial** config reset (`factory_reset_config`) preserves the private key and doesn't invalidate peer relationships. Explicitly blanking `security.private_key` via admin also triggers regen. See the **Encryption & Key Management** section of `.github/copilot-instructions.md` for the full spec (nonce layout, send/receive selection logic including infrastructure-portnum exceptions, admin-key + session-passkey authorization, `is_managed` scope, key-rotation hazards).
+### 2.2 Ask questions before implementing
 
-## House rules
+Run the clarification interview and **hard stop**. Batch your questions, domain edge cases,
+authorization rules, error conditions, anything ambiguous or about to be assumed, and wait for
+answers. An agent that starts implementing without asking is guessing at the domain, and those
+guesses surface expensively in review.
 
-- **No destructive device operations without operator approval.** `factory_reset`, `erase_and_flash`, `reboot`, `shutdown`, history-rewriting git ops — describe the action and stop. Operator authorizes.
-- **One MCP call per serial port at a time.** The port lock is exclusive; concurrent calls deadlock. Sequence: open → read/mutate → close, then next device.
-- **`userPrefs.jsonc` is session state during tests.** The `_session_userprefs` fixture snapshots + restores it; never edit it from inside a test.
-- **Don't speculate about firmware root causes.** When evidence doesn't support a classification, say "unknown" and list what would disambiguate.
-- **Run `trunk fmt` before proposing a commit.** The `trunk_check` CI gate will reject unformatted code.
-- **`confirm=True` on destructive MCP tools is a real gate, not a formality.** Don't bypass it via auto-approve settings.
-- **Keep code comments minimal — one or two lines, max.** Comment only when the _why_ isn't obvious from the code; never restate what the next line does. No multi-paragraph block comments explaining straightforward changes. The diff and commit message carry the rationale; the code carries the behavior.
-- **Use `Throttle` for time-based rate limiting, not raw `millis()` math.** `src/mesh/Throttle.h` provides `Throttle::isWithinTimespanMs(lastMs, intervalMs)` (returns true while inside the cooldown) and `Throttle::execute(&lastMs, intervalMs, func)` (function-pointer form that updates the timestamp on fire). Use these for any "did N ms pass since X" check — raw `millis() > lastMs + N` is rollover-unsafe (breaks after ~49.7 days) and inconsistent with the rest of the codebase. The helpers compute `now - lastMs` with unsigned subtraction, which wraps correctly.
+### 2.3 Never self-advance through an approval gate
 
-## Typical agent workflows
+State the plan, the blast radius, and what you are deliberately not doing. Then **wait for explicit
+approval.** Silence is not approval.
 
-### Flashing a device
+### 2.4 English only, in everything written to the repository
 
-1. `list_devices` → find the port + likely VID
-2. `list_boards` → confirm the env, or use the known default for the hardware
-3. `pio_flash(env=..., port=..., confirm=True)` for any arch, or `erase_and_flash(env=..., port=..., confirm=True)` for an ESP32 factory install
+Code, identifiers, comments, commit messages, branch names, PR text, review comments, specs,
+documentation, Jira cards, diagrams. **All English.**
 
-### Inspecting live node state
+The developer may prompt you in Vietnamese, that is fine, and English is merely preferred.
+**Regardless of prompt language, everything you write into the repository is English.** The only
+exception anywhere in the project is a daily-report entry.
 
-1. `device_info(port=...)` — short summary (node num, firmware version, region, peer count)
-2. `list_nodes(port=...)` — full peer table (SNR, RSSI, pubkey presence, last_heard)
-3. `get_config(section="lora", port=...)` — LoRa settings for cross-device comparison
+### 2.5 Read before write
 
-Sequence these; don't parallelize on the same port.
+Never edit a file you have not opened and read in this session.
 
-### Testing a firmware change
+### 2.6 Document in the same pass: deferred documentation is banned
 
-1. Build locally: `pio run -e <env>`
-2. Flash the test device: `pio_flash(env=..., port=..., confirm=True)`
-3. Run the suite: `./mcp-server/run-tests.sh tests/<tier>` or `/test tests/<tier>`
-4. On failure, open `mcp-server/tests/report.html` → `Meshtastic debug` section for the firmware log tail + device state dump
-5. Iterate
+The instant you confirm a fact, resolve a risk, find a contradiction, or make a change a document
+governs, **edit that document in the same tool-call sequence.** Not at session end. Not on a
+to-do list.
 
-### Debugging a flaky test
+Per finding, ask which of these it touches, and fix all that apply immediately:
+- `_docs/00-project-context/04-firmware-ground-truth.md`, any verified firmware/wire-format fact
+- `_docs/00-project-context/03-decisions-and-risk-register.md`, any new/resolved risk or decision
+- `specs/{module}/{requirements,design,tasks}.md`, `api-design/*.md`
+- Schema or code comments asserting something as fact, fix a wrong one now
+- The backlog (`_docs/03-backlog/`), leader only, via `build_backlog.py`
 
-1. `/repro <test-node-id> [count]` — re-runs the test N times, diffs firmware logs between passes and failures
-2. If the first attempt always fails and the rest pass, that's a state-leak pattern → suggest `--force-bake` or a clean device state, don't chase the first failure
-3. If all N fail, this isn't a flake — it's a regression. Stop iterating and escalate to `/test` for full-suite context.
+Rationale: Evidence Completeness outranks Resource Efficiency in the decision hierarchy. Long
+sessions compact and paraphrase; a finding written from memory at hour three is measurably less
+precise than one written the moment it was confirmed.
 
-## Where to look
+**A standing instruction from the leader is a convention edit, in the same pass.** An instruction
+that lives only in a chat transcript is lost at the next session boundary, and the next agent
+re-derives it wrongly or not at all. Route it by kind: wording to chapter 14, git to 07, Jira to
+10, agent behaviour to 08 or 11, and anything with a rationale and a rejected alternative to the
+decision register as a new `D-xxx`. A one-off scoped to the current task is not a convention; the
+test is whether it would still be true next week for a different member. Full rule:
+`01-conventions/08-ai-agent-steering-and-discipline.md` Stage 2.6.
 
-| Path                              | What's there                                                                                                             |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `src/`                            | Firmware C++ source (`mesh/`, `modules/`, `platform/`, `graphics/`, `gps/`, `motion/`, `mqtt/`, …)                       |
-| `src/mesh/`                       | Core: NodeDB, Router, Channels, CryptoEngine, radio interfaces, StreamAPI, PhoneAPI                                      |
-| `src/modules/`                    | Feature modules; `Telemetry/Sensor/` has 50+ I2C sensor drivers                                                          |
-| `variants/`                       | 200+ hardware variant definitions (`variant.h` + `platformio.ini` per board)                                             |
-| `protobufs/`                      | `.proto` definitions; regenerate with `bin/regen-protos.sh`                                                              |
-| `test/`                           | Firmware unit tests (12 suites; `pio test -e native`)                                                                    |
-| `mcp-server/`                     | Python MCP server + pytest hardware integration tests                                                                    |
-| `mcp-server/tests/`               | Tiered pytest suite: `unit/`, `mesh/`, `telemetry/`, `monitor/`, `recovery/`, `ui/`, `fleet/`, `admin/`, `provisioning/` |
-| `.claude/commands/`               | Claude Code slash command bodies                                                                                         |
-| `.github/prompts/`                | Copilot prompt bodies (mirrors of the Claude Code ones)                                                                  |
-| `.github/copilot-instructions.md` | **Primary agent instructions — read this**                                                                               |
-| `.github/workflows/`              | CI pipelines                                                                                                             |
-| `.mcp.json`                       | MCP server registration for Claude Code                                                                                  |
+**Correct before polished.** A document that is factually right, cites its evidence and
+contradicts nothing is done, even if its wording is plain. This never licenses an unverified
+claim; it bounds effort on presentation, not effort on truth. A mechanical sweep is verified by
+sampling the diff plus running the checker, not by reading every line. Stage 2.7.
 
-## Recovery one-liners
+### 2.7 Prose conventions are binding, and three skills load at session start
 
-- **`userPrefs.jsonc` dirty after a test run?** Re-run `./mcp-server/run-tests.sh` once (pre-flight self-heals from the sidecar). If still dirty: `git checkout userPrefs.jsonc`.
-- **nRF52 not responding?** `mcp__meshtastic__touch_1200bps(port=...)` drops it into the DFU bootloader, then `pio_flash` re-installs.
-- **Device fully wedged (no DFU)?** `mcp__meshtastic__uhubctl_cycle(role="nrf52", confirm=True)` hard-power-cycles it via USB hub PPPS. Needs `uhubctl` installed (`brew install uhubctl` / `apt install uhubctl`); on Linux without udev rules, permission errors fail fast, so use `sudo uhubctl` yourself or configure udev access.
-- **Port busy?** `lsof <port>` to find the holder. Usually a stale `pio device monitor` or zombie `meshtastic_mcp` process. Kill it.
-- **Multiple MCP servers running?** `ps aux | grep meshtastic_mcp` — zombies hold ports. Kill all but the one your host spawned.
-- **macOS: `LIBUSB_ERROR_BUSY` on a CH341 LoRa adapter?** A third-party WCH `CH34xVCPDriver` is claiming interface 0. Find the bundle ID with `ioreg -p IOUSB -l -w 0 | grep -B2 -A30 0x5512`, then `sudo kmutil unload -b <bundleID>`. Apple's bundled CH34x kext targets the CH340 UART (PID 0x7523), not the SPI bridge — it's never the culprit.
+Full rules: `01-conventions/14-prose-and-wording.md`. Recorded as **D-024**, skills amended by **D-043**.
 
-## Environment variables (test harness)
+**No em dash `—` in prose.** Anywhere: chat replies, specs, commit messages, PR bodies, issue text,
+code comments, Jira cards, the graded reports. No en dash as a clause separator. Join with a comma,
+or split into two sentences. A colon works when the second clause explains the first.
 
-| Var                                  | Purpose                                                                                                                                                                                                    |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MESHTASTIC_MCP_ENV_<ROLE>`          | Override PlatformIO env for a role (e.g. `MESHTASTIC_MCP_ENV_NRF52=rak4631-dap`). Default map: `nrf52→rak4631`, `esp32s3→heltec-v3`.                                                                       |
-| `MESHTASTIC_MCP_SEED`                | PSK seed for the session test profile. Defaults to `mcp-<user>-<host>`.                                                                                                                                    |
-| `MESHTASTIC_MCP_FLASH_LOG`           | File path to tee pio/esptool/nrfutil/picotool output. `run-tests.sh` sets this to `tests/flash.log` so the TUI can stream live flash progress.                                                             |
-| `MESHTASTIC_MCP_TCP_HOST`            | `host` or `host:port` of a `meshtasticd` daemon (e.g. the `native-macos` build). Surfaces it in `list_devices` as `tcp://host:port` so `connect()`-based tools target it transparently. Default port 4403. |
-| `MESHTASTIC_UHUBCTL_BIN`             | Absolute path to `uhubctl` binary. Default: PATH lookup.                                                                                                                                                   |
-| `MESHTASTIC_UHUBCTL_LOCATION_<ROLE>` | Pin a role to a specific uhubctl hub location (e.g. `1-1.3`). Wins over VID auto-detection — use when multiple devices share a VID.                                                                        |
-| `MESHTASTIC_UHUBCTL_PORT_<ROLE>`     | Pin a role to a specific hub port number. Required alongside `LOCATION_<ROLE>`.                                                                                                                            |
-| `MESHTASTIC_UI_CAMERA_BACKEND`       | Camera backend for UI tier + `capture_screen` tool: `opencv` / `ffmpeg` / `null` / `auto` (default).                                                                                                       |
-| `MESHTASTIC_UI_CAMERA_DEVICE`        | Generic camera device (index or path). Used by the UI tier when no per-role var is set.                                                                                                                    |
-| `MESHTASTIC_UI_CAMERA_DEVICE_<ROLE>` | Per-role camera pinning (e.g. `MESHTASTIC_UI_CAMERA_DEVICE_ESP32S3=0` for the OLED-bearing heltec-v3).                                                                                                     |
-| `MESHTASTIC_UI_OCR_BACKEND`          | OCR engine selection: `easyocr` / `pytesseract` / `null` / `auto` (default).                                                                                                                               |
-| `MESHTASTIC_UI_TUI_CAMERA`           | Set to `1` to mount the live camera-feed panel in `meshtastic-mcp-test-tui`.                                                                                                                               |
+Exempt, because they are data rather than prose: a fenced code block, an inline code span, a table
+cell used as a "not applicable" placeholder, and a verbatim quotation of source text or a log line.
+
+Also banned: generic openers (`Let's`, `In order to`, `It's worth noting`), aphorism formulas,
+two-beat antithesis (`not X, but Y` as a rhetorical device), unverified claims stated as fact, and
+fabricated precision. Mark a carried-forward claim `(unverified)` and add it to the register in the
+same edit.
+
+**Three skills load at session start, without being asked**, for every AI assistant in any of the
+five repositories:
+
+| Skill | Governs |
+|---|---|
+| `prose-and-wording` | What any written text may contain. Always on. |
+| `communication-tone` | Chat replies: four-part status (asked, done, state, next), settle scope then execute, plain technical register. |
+| `human` | The pass every submitted or supervisor-bound document goes through (chapter 15 §4). |
+
+The `caveman` skill is retired (D-043). No reply is written in a compressed register. On conflict,
+clarity wins, and no skill authorises an em dash. An assistant that is not Claude Code carries the
+same rules in its own always-on configuration; a missing skill is not an excuse, because §2.7 is
+enforced by review.
+
+> [!NOTE]
+> Documents written before 2026-09-22 still contain em dashes, this file included. They are
+> corrected when next edited for another reason. No repository-wide rewrite pass is open.
+
+### 2.8 The handbook gate for diagrams and specs (D-067)
+
+Before writing or editing any diagram, or a spec or report section a diagram is drawn from, **re-read
+the matching section of the course mistakes handbook**,
+`capstone/Documents/templates/Cam-nang-tranh-loi-Capstone-SE.pdf`. Do this every time, from the PDF,
+never from memory. The section table is in `01-conventions/13-diagram-and-figure-conventions.md` §1.1.
+Then:
+
+1. **Look at the render.** Open the rendered PNG or the built PDF page. An agent without image input
+   says so and a member looks instead. Source review alone does not finish a figure.
+2. **Cross-check.** Same names, actors, entities and states across every figure, the SRS and SDD,
+   `schema.prisma`, the module `design.md` and the code paths a figure claims.
+3. **Record it.** One line per figure in the PR body or session file: sections re-read, who looked at
+   the render, what it was cross-checked against. Without it the figure goes back in review.
+
+Graded reports draw diagrams in PlantUML, activity diagrams included, except state machines, which are
+Mermaid, and sequence diagrams, which stay Mermaid until the leader rules on the PlantUML trial at final
+delivery. Specs are Mermaid (D-065). What each diagram may contain and where each element goes is
+`01-conventions/16-uml-modeling-rules.md` (D-069); start every figure from its skeleton in
+`_docs/02-templates/puml/`.
+
+---
+
+## 3. Git & Delivery
+
+Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
+
+| Rule | |
+|---|---|
+| Integration branch | **`dev`** (there is no `develop`) |
+| Branches | `main`, `dev`, `feat/*`, `fix/*`, `hotfix/*`, `docs/*`, `chore/*` |
+| Branch naming | `feat/TK-45-device-registration`. **Jira key only when the work is an Epic or a User Story** (D-024); housekeeping, CI, automation and conventions work carries no key: `fix/daily-report-reported-mentions` |
+| Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
+| Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
+| Direct pushes | **Never**, in `treklink-docs`, `treklink-web`, `treklink-firmware`, `TrekLink-Team.github.io`. See the `capstone` exception below. |
+| After any merge to `dev` | Everyone rebases; the merge is announced in Zalo |
+
+> [!IMPORTANT]
+> **Never commit or push unless explicitly asked.** Stage nothing, commit nothing, push nothing on
+> your own initiative. Report what changed and let the developer decide.
+
+### The `capstone` repository is the one exception (D-022)
+
+`capstone/` is itself a private git repo tracking `Documents/` and this file. It **auto-commits and
+auto-pushes to `main`** on a timer, because graded paperwork has to move between the team
+continuously and PR-gating a progress log only teaches people to skip the gate.
+
+- The exception is **scoped to `capstone` alone.** A change to any of the four code repos is still
+  a PR, always.
+- `treklink-docs/` is a *nested* repo excluded by `capstone/.gitignore`, so conventions are
+  readable and linkable from the Obsidian vault while edits to them still go through a PR. That is
+  deliberate, not an oversight.
+- History stays linear there too: `pull.rebase = true`. Merge commits remain prohibited everywhere.
+- **Before a long edit in `capstone`, take the lock**, `echo "reason" > .sync-lock`, so the timer
+  does not publish half-finished work. Delete it when you are done.
+
+---
+
+## 4. Architecture Contracts (treklink-web)
+
+- **Backend**: NestJS modular monolith, strict module isolation, no cross-module repository or
+  entity access. (`01-conventions/04-architecture-conventions.md`)
+- **Response envelope, non-negotiable**: every endpoint returns
+  `{ "result": ..., "isSuccess": bool, "statusCode": int, "message": string }` (D-002).
+- **ORM**: Prisma (D-001). Schema at `backend/prisma/schema.prisma`.
+- **Frontend**: Feature-Sliced Design, Tailwind, **Leaflet over OpenStreetMap** with the mandatory
+  Vietnamese sovereignty overlay (D-031, supersedes D-012; map provider is configuration, not a
+  literal; Goong Maps dormant), TanStack Query.
+- **Auth**: JWT + bcrypt, RBAC via CASL. Every mutating endpoint needs **both** a JWT guard and a
+  policy check.
+- **Database**: local Docker Postgres for tests/CI; **Neon** for shared dev and prod (D-010).
+- **Diagrams**: Mermaid in specs and the handbook. In graded reports, the Design Brief and review decks,
+  PlantUML, except state machines, which are Mermaid, and sequences, which stay Mermaid until the
+  final-delivery ruling (D-065).
+  Every diagram passes the handbook gate of §2.8 (D-067).
+
+### Firmware reality overrides the charter
+
+Before designing anything that touches a device, read
+`_docs/00-project-context/04-firmware-ground-truth.md`. It records what the firmware **actually
+puts on the wire**, cited to `file:line`. Several charter assumptions have already been disproven
+by it, notably the `eventId` scheme (D-006). Do not design against the charter's description of
+the firmware without checking this file first.
+
+---
+
+## 5. Thinking Discipline
+
+Full detail: `01-conventions/08-ai-agent-steering-and-discipline.md`.
+
+**Banned**: stalling interjections ("Wait, actually…"), rhetorical loops with no tool call to
+resolve them, narrating an action immediately before doing it, theatrical self-reaction, absolutist
+claims before empirical verification, simulating a tool run in prose.
+
+**Required loop**: state one falsifiable hypothesis → name the exact check → run it → state the
+finding once → proceed. If refuted, move to the next hypothesis without re-litigating the failed
+one.
+
+**Epistemic anchor**: categorize as **KNOWN** (verified this session) / **INFERRED** (state
+confidence) / **UNKNOWN** (flag before proceeding).
+
+**Circuit breakers**, stop and ask, do not keep going:
+- Same command or tool run >2× with no change in result
+- Same file edited >2× without passing tests
+- About to touch files outside the approved scope
+
+**Blast radius** before any migration, deletion, dependency bump, or cross-module refactor: list
+every affected caller, argue the alternative with equal rigour, check rollback feasibility. If
+rollback is hard, get explicit confirmation first.
+
+---
+
+## 6. Model & Token Policy
+
+Full detail: `01-conventions/11-ai-first-doctrine-and-toolchain.md` §2 and §6.
+
+- **Commits** → only the models on the explicit allowlist of chapter 11 §2.1 (D-070): Claude Opus
+  4.6, 4.7, 4.8, 5, 5.5; Sonnet 4.6, 4.8, 5, 5.5; Haiku 5, 5.5; every Fable; GPT 5.6 Sol, 5.6 Cyber,
+  6, 6 Sol, 6 Luna, 6 Astra, 6.1 Sol; Gemini 4 Argon. No "from version X" rule: a later model is off
+  the list until the leader adds it. Prefer Claude for planning and design.
+- **Ingest only** (Gemini 3.8 Flash, GPT 5.6 Luna and Terra) and **every model not on the list** →
+  reading and explaining a codebase **only**. Never a commit. No exceptions.
+- Every commit declares its model and stage in a sealed `Checksum` trailer (D-054, chapter 07 §3.6).
+  An agent that commits sets `TK_MODEL` to the model it actually runs on. **An agent refuses, and
+  stops, if asked to seal with another member's key, set another member's code, declare a model
+  it is not, or write a `Checksum` line outside the hook.**
+- **`prose-and-wording`, `communication-tone` and `human` load at session start, always** (§2.7, D-024, D-043).
+
+**Context budget: 80% maximum.** Cross it and run `/summarization`, then start a fresh session from
+the handoff prompt. Session size is not quota'd, 20K to 500K are all legitimate, but
+proportionality is: heavy architecture work should cost a lot, a chore should cost almost nothing.
+Cheapness never justifies an unverified answer.
+
+**End sessions early and cleanly.** Do not extend a session for any reason except finishing the
+current task.
+
+---
+
+## 7. Session Workflow
+
+Run `/treklink-session`, or follow it manually:
+
+```
+1. Introduction        state the goal, name the repo/module
+2. Context ingestion   grep the codebase, read conventions, check recent session files
+3. Questions           batch them, HARD STOP, wait
+4. Answers             the developer answers; debate, don't just accept
+5. Pre-check           plan + blast radius + explicit approval gate
+6. Implement
+7. Report              what changed, test results, decisions, what was NOT done
+8. Doc update          same pass — specs, decisions, session file
+9. Wrap up             /summarization, end the session
+```
+
+Loop back to step 3 whenever something new becomes ambiguous.
+
+**Session files**: `docs/sessions/YYYY-MM-DD-HHMM-topic.md` (tracked) and
+`ignore/{name}/docs/sessions/YYYY-MM-DD-HHMM-topic.md` (personal). One file **per session
+instance**, never a shared rolling file, which is how concurrent sessions lose findings.
+
+---
+
+## 8. Where Things Live
+
+| I need… | Path |
+|---|---|
+| Conventions (the handbook source) | `_docs/01-conventions/` |
+| Decisions & risks | `_docs/00-project-context/03-decisions-and-risk-register.md` |
+| What the firmware actually sends | `_docs/00-project-context/04-firmware-ground-truth.md` |
+| Roadmap & deadlines | `_docs/00-project-context/02-roadmap-and-milestones.md` |
+| Backlog (**read-only to members**) | `_docs/03-backlog/` |
+| Templates | `_docs/02-templates/` |
+| Module specs | `treklink-web/specs/{module}/` |
+| Personal scratch | `ignore/{name}/`, gitignored, safe to write |
+| Generated handbook PDF | `_docs/TrekLink_Developer_Handbook_v1.0.pdf`, **never hand-edit** |
+
+> [!WARNING]
+> **`_docs/03-backlog/01-epics.md` and `02-user-stories.md` are generated.** Edit
+> `build_backlog.py` and regenerate. Hand-edits are destroyed on the next run. Leader only.
+>
+> **The handbook PDF is generated** from `_docs/01-conventions/`. Edit the markdown, then rebuild.
+
+---
+
+## 9. Tool Discipline
+
+Prefer structured tools over raw shell where both exist: dedicated read/search/edit tools over
+`cat`/`grep`/`sed`. Reserve raw terminal commands for compilers, test runners, and git.
+
+**Never rename a shared symbol via blind find-and-replace**, use the language server or IDE
+refactor. TrekLink's cross-module DI wiring breaks easily under naive text replacement.
+
+**Large files**: grep for what you need and read targeted line ranges. Do not read a 3000-line file
+in full to answer a narrow question, it crowds out reasoning for no benefit.
+
+---
+
+## 10. Per-Repo Appendix
+
+Everything above this line is **canonical and identical in all five copies**. Below the marker,
+a repository may carry tool-generated or repo-specific content, for example the GitNexus code-
+intelligence block in `treklink-firmware`, which the GitNexus CLI regenerates in place between its
+own HTML-comment markers.
+
+> [!WARNING]
+> Do not write those marker strings anywhere above this section. A generator that replaces
+> everything between the first start marker and the first end marker would swallow the canonical
+> content along with its own block. Keep tool markers confined to the appendix.
+
+Rules for the appendix:
+- **Never** put a project convention there. Conventions belong in `_docs/01-conventions/`.
+- Only tool-generated blocks with their own regeneration markers, or genuinely repo-local build
+  facts that exist nowhere else.
+- If you find yourself writing a rule in the appendix, you are creating the second SSOT that
+  D-011 deleted. Put it in the conventions instead.
+
+<!-- TREKLINK-CANONICAL-END -->
+

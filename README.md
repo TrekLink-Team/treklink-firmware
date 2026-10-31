@@ -1,39 +1,133 @@
-<div align="center" markdown="1">
+# TrekLink
 
-<img src=".github/meshtastic_logo.png" alt="Meshtastic Logo" width="80"/>
-<h1>Meshtastic Firmware</h1>
+> **Meshtastic-Powered Off-Grid Search & Rescue (SAR) Firmware**  
+> Unified PlatformIO pipeline for multi-generational TrekLink devices (v1.0, v2.0, v3.0, v4.0)
 
-![GitHub release downloads](https://img.shields.io/github/downloads/meshtastic/firmware/total)
-[![CI](https://img.shields.io/github/actions/workflow/status/meshtastic/firmware/main_matrix.yml?branch=master&label=actions&logo=github&color=yellow)](https://github.com/meshtastic/firmware/actions/workflows/ci.yml)
-[![CLA assistant](https://cla-assistant.io/readme/badge/meshtastic/firmware)](https://cla-assistant.io/meshtastic/firmware)
-[![Fiscal Contributors](https://opencollective.com/meshtastic/tiers/badge.svg?label=Fiscal%20Contributors&color=deeppink)](https://opencollective.com/meshtastic/)
-[![Vercel](https://img.shields.io/static/v1?label=Powered%20by&message=Vercel&style=flat&logo=vercel&color=000000)](https://vercel.com?utm_source=meshtastic&utm_campaign=oss)
+TrekLink is a custom branded firmware fork of [Meshtastic](https://meshtastic.org/) optimized for Search & Rescue (SAR) operations and backcountry expeditions. It adds custom branding, a unified SOS emergency trigger/cancel system, IMU-based fall detection, regional defaults, and optimized canned messages.
 
-<a href="https://trendshift.io/repositories/5524" target="_blank"><img src="https://trendshift.io/api/badge/repositories/5524" alt="meshtastic%2Ffirmware | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
+[![Platform: ESP32/ESP32-S3](https://img.shields.io/badge/Platform-ESP32%20%2F%20ESP32--S3-blue.svg)](https://www.espressif.com/)
+[![Meshtastic: 2.7.19](https://img.shields.io/badge/Meshtastic-2.7.19-green.svg)](https://meshtastic.org/)
+[![Radio: 433MHz](https://img.shields.io/badge/Radio-433MHz%20LoRa-orange.svg)]()
 
-</div>
+---
 
-</div>
+## 📱 Hardware Variants
 
-<div align="center">
-	<a href="https://meshtastic.org">Website</a>
-	-
-	<a href="https://meshtastic.org/docs/">Documentation</a>
-</div>
+TrekLink supports four device generations deployed across custom hardware and commercial off-the-shelf (COTS) hardware. The full matrix, with pins, MQTT support and test status, is [docs/variants.md](docs/variants.md).
 
-## Overview
+| Variant                          | Hardware Platform     | MCU      | IMU Sensor | SOS Trigger Method            | Buzzer |
+| -------------------------------- | --------------------- | -------- | ---------- | ----------------------------- | ------ |
+| **v1.0** (deprecated, mesh only) | Perfboard prototype   | ESP32    | MPU6050    | Dedicated Button (GPIO 34)    | Yes    |
+| **v2.0**                         | Custom PCB            | ESP32-S3 | ICM-20948  | Dedicated Button (GPIO 4)     | Yes    |
+| **v3.0**                         | LilyGo T-Beam v1.2    | ESP32    | _None_     | 3s User Button Hold (GPIO 38) | No     |
+| **v4.0**                         | LilyGo T-Beam Supreme | ESP32-S3 | QMI8658    | 3s User Button Hold (GPIO 0)  | No     |
 
-This repository contains the official device firmware for Meshtastic, an open-source LoRa mesh networking project designed for long-range, low-power communication without relying on internet or cellular infrastructure. The firmware supports various hardware platforms, including ESP32, nRF52, RP2040/RP2350, and Linux-based devices.
+---
 
-Meshtastic enables text messaging, location sharing, and telemetry over a decentralized mesh network, making it ideal for outdoor adventures, emergency preparedness, and remote operations.
+## 🚀 Quick Start & Build Targets
 
-### Get Started
+Firmware builds are managed via PlatformIO. To avoid LittleFS compilation issues on standard toolchains, use the `-t buildprog` target to build the firmware binary alone.
 
-- 🔧 **[Building Instructions](https://meshtastic.org/docs/development/firmware/build)** – Learn how to compile the firmware from source.
-- ⚡ **[Flashing Instructions](https://meshtastic.org/docs/getting-started/flashing-firmware/)** – Install or update the firmware on your device.
+```bash
+# Clone the repository
+git clone https://github.com/TrekLink-Team/treklink-firmware.git
+cd treklink-firmware
 
-Join our community and help improve Meshtastic! 🚀
+# Build specific TrekLink variants
+pio run -e treklink -t buildprog            # v1.0 ESP32 perfboard (deprecated)
+pio run -e treklink-v2 -t buildprog         # v2.0 Custom ESP32-S3 PCB
+pio run -e treklink-v3-tbeam -t buildprog   # v3.0 LilyGo T-Beam v1.2
+pio run -e treklink-v4-supreme -t buildprog # v4.0 LilyGo T-Beam Supreme
 
-## Stats
+# Flash to device (e.g. v4.0)
+pio run -e treklink-v4-supreme -t upload
 
-![Alt](https://repobeats.axiom.co/api/embed/8025e56c482ec63541593cc5bd322c19d5c0bdcf.svg "Repobeats analytics image")
+# Verify stock Meshtastic regression targets compile cleanly
+pio run -e tbeam -t buildprog
+pio run -e tbeam-s3-core -t buildprog
+```
+
+---
+
+## ✨ Features
+
+- **Branding Integration:** Auto-applies "TrekLink" node naming prefix, BLE name, and splash screen logo to distinguish SAR devices.
+- **Centralized SOS System (`TrekLinkSOSHelper`):** Central state machine handles triggering/canceling emergency status, broadcasting GPS/text packets, and driving buzzers/vibrators.
+- **IMU-Agnostic Fall Detection:** Unified `FallDetectionModule` utilizing a common `FallSensorInterface`. Supports `MPU6050`, `ICM20948`, and `QMI8658` (via `SensorLib`).
+- **Gesture SOS (`TrekLinkSOSGesture`):** Polls single-button COTS hardware (v3.0/v4.0) for a 3-second hold to trigger/cancel emergency mode, leaving short presses unhindered for screen navigation.
+- **Strict Compile-Time Safety (`TrekLinkVariantValidation`):** Static assert system prevents flashing mismatching configurations or running multiple variant flags simultaneously.
+- **Local Defaults:** Auto-configured to Malaysia/Vietnam 433MHz region (`MY_433`), timezone `ICT-7`, and pre-loaded with Search & Rescue brevity canned messages.
+
+---
+
+## 🏗️ Project Structure
+
+```
+treklink-firmware/
+├── variants/
+│   ├── esp32/
+│   │   ├── treklink_v1_0/          # v1.0 variant overlay & build flags
+│   │   └── treklink_v3_tbeam/      # v3.0 T-Beam v1.2 overlay
+│   └── esp32s3/
+│       ├── treklink_v2_0/          # v2.0 Custom PCB S3 overlay
+│       └── treklink_v4_supreme/    # v4.0 T-Beam Supreme S3 overlay
+├── src/
+│   ├── modules/
+│   │   ├── sensors/
+│   │   │   ├── MPU6050FallSensor   # v1.0 IMU adapter
+│   │   │   ├── ICM20948FallSensor  # v2.0 IMU adapter
+│   │   │   └── QMI8658FallSensor   # v4.0 IMU adapter
+│   │   ├── FallSensorInterface.h   # Sensor abstraction layer
+│   │   ├── FallDetectionModule     # Thread for fall logic & alarm
+│   │   ├── TrekLinkSOSHelper       # Centralized SOS state & actions
+│   │   ├── TrekLinkButtonModule    # Dedicated button handler (v1.0/v2.0)
+│   │   ├── TrekLinkSOSGesture      # Single button gesture handler (v3.0/v4.0)
+│   │   ├── BuzzerManager.h         # Shared thread-safe buzzer singleton
+│   │   └── TrekLinkVariantValidation.h # Compile-time configuration check
+│   └── main.cpp                    # BLE name and early init
+├── docs/                           # Firmware documentation index: docs/README.md
+├── specs/                          # Specs per variant and per module: specs/README.md
+├── platformio.ini                  # Core build environment settings
+└── README.md                       # This file
+```
+
+---
+
+## 🧪 Verification & Boot Logs
+
+When a device boots, it checks the configured hardware profile and prints the active variant to the serial monitor:
+
+```
+[INFO] Variant: TrekLink v4.0 (T-Beam Supreme)
+[INFO] TrekLink SOS Gesture Module initialized (BUTTON_PIN=0)
+[INFO] TrekLink Fall Detection Module initialized (QMI8658)
+```
+
+Pairing via the mobile app will advertise the BLE name as `TrekLink_XXXX` (based on MAC address).
+
+---
+
+## 🔌 Flashing
+
+Flashing procedures for every variant, including the v2.0 power-latch caution and the LilyGo
+bootloader sequences, are in [docs/build-and-flash.md](docs/build-and-flash.md#flashing).
+
+---
+
+## 📜 License
+
+- **TrekLink Custom Additions:** MIT License
+- **Meshtastic Core Codebase:** GPL-3.0 License
+
+---
+
+## 📞 Support & Resources
+
+- **Issues:** [GitHub Issues](https://github.com/TrekLink-Team/treklink-firmware/issues)
+- **Meshtastic Discord:** [Join Community](https://discord.gg/meshtastic)
+- **Documentation:** [Meshtastic Docs](https://meshtastic.org/docs/)
+
+---
+
+**Happy Meshing!** 📡🏔️

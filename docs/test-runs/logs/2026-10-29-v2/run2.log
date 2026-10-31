@@ -1,0 +1,231 @@
+ts_tx=1, num_packets_rx=0, num_packets_rx_bad=0
+DEBUG | ??:??:?? 63 [DeviceTelemetry] Partially randomized packet id 3118827407
+DEBUG | ??:??:?? 63 [Power] Battery: usbPower=0, isCharging=0, batMv=3377, batPct=16
+WARN  | ??:??:?? 122 [TrekLinkButton] SOS Button: Triggering SOS mode (hold 3s)
+WARN  | ??:??:?? 122 [TrekLinkButton] TrekLinkSOS: SOS TRIGGERED (owner=2)
+DEBUG | ??:??:?? 122 [TrekLinkButton] Partially randomized packet id 3293719440
+DEBUG | ??:??:?? 122 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 122 [TrekLinkButton] handleReceived(LOCAL) (id=0xc4522b90 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=3 priority=127)
+DEBUG | ??:??:?? 122 [TrekLinkButton] No modules interested in portnum=3, src=LOCAL
+INFO  | ??:??:?? 122 [TrekLinkButton] Packet History - insert: Using new slot @uptime 122.093s TRACE NEW
+DEBUG | ??:??:?? 122 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 122 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 122 [TrekLinkButton] enqueue for send (id=0xc4522b90 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 122 [TrekLinkButton] txGood=1,txRelay=0,rxGood=0,rxBad=0
+INFO  | ??:??:?? 122 [TrekLinkButton] tophone queue status queue is full, discard oldest
+DEBUG | ??:??:?? 122 [TrekLinkButton] Partially randomized packet id 1549152145
+DEBUG | ??:??:?? 122 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 122 [TrekLinkButton] handleReceived(LOCAL) (id=0x5c562f91 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=1 priority=127)
+DEBUG | ??:??:?? 122 [TrekLinkButton] No modules interested in portnum=1, src=LOCAL
+INFO  | ??:??:?? 122 [TrekLinkButton] Packet History - insert: Using new slot @uptime 122.171s TRACE NEW
+DEBUG | ??:??:?? 122 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 122 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 122 [TrekLinkButton] enqueue for send (id=0x5c562f91 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 122 [TrekLinkButton] txGood=1,txRelay=0,rxGood=0,rxBad=0
+INFO  | ??:??:?? 122 [TrekLinkButton] tophone queue status queue is full, discard oldest
+INFO  | ??:??:?? 122 [TrekLinkButton] TrekLinkSOS: Sent text: SOS - [No GPS]
+INFO  | ??:??:?? 122 [TrekLinkButton] TrekLinkSOS: Activating alarms (owner=2)
+WARN  | ??:??:?? 122 [RadioIf] Can not send yet, busyRx
+WARN  | ??:??:?? 122 [RadioIf] Can not send yet, busyRx
+WARN  | ??:??:?? 122 [RadioIf] Can not send yet, busyRx
+DEBUG | ??:??:?? 122 [RadioIf] Ignore false preamble detection
+DEBUG | ??:??:?? 123 [RadioIf] Started Tx (id=0xc4522b90 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 123 [RadioIf] 1 packets remain in the TX queue
+DEBUG | ??:??:?? 123 [RadioIf] Packet TX: 395ms
+DEBUG | ??:??:?? 123 [RadioIf] Completed sending (id=0xc4522b90 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 123 [RadioIf] Started Tx (id=0x5c562f91 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 123 [RadioIf] 0 packets remain in the TX queue
+DEBUG | ??:??:?? 123 [Power] Battery: usbPower=0, isCharging=0, batMv=3373, batPct=16
+DEBUG | ??:??:?? 124 [RadioIf] Packet TX: 518ms
+DEBUG | ??:??:?? 124 [RadioIf] Completed sending (id=0x5c562f91 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+INFO  | ??:??:?? 127 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 127 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 127 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 127 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 132 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 132 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 132 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 132 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 137 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 137 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 137 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 137 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 142 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 142 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 142 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 142 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 147 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 147 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 147 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 147 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 152 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 152 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 152 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 152 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 156 [TrekLinkButton] SOS Button: Cancelling SOS mode (hold 3s)
+INFO  | ??:??:?? 156 [TrekLinkButton] TrekLinkSOS: SOS CANCELLED (owner=2)
+INFO  | ??:??:?? 156 [TrekLinkButton] TrekLinkSOS: Deactivating alarms (owner=2)
+DEBUG | ??:??:?? 183 [Power] Battery: usbPower=0, isCharging=0, batMv=3376, batPct=16
+[197894][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[197901][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[197911][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+WARN  | ??:??:?? 206 [TrekLinkButton] SOS Button: Triggering SOS mode (hold 3s)
+WARN  | ??:??:?? 206 [TrekLinkButton] TrekLinkSOS: SOS TRIGGERED (owner=2)
+DEBUG | ??:??:?? 206 [TrekLinkButton] Partially randomized packet id 2998216594
+DEBUG | ??:??:?? 206 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 206 [TrekLinkButton] handleReceived(LOCAL) (id=0xb2b52792 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=3 priority=127)
+DEBUG | ??:??:?? 206 [TrekLinkButton] No modules interested in portnum=3, src=LOCAL
+INFO  | ??:??:?? 206 [TrekLinkButton] Packet History - insert: Using new slot @uptime 206.966s TRACE NEW
+DEBUG | ??:??:?? 206 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 206 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 206 [TrekLinkButton] enqueue for send (id=0xb2b52792 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 207 [TrekLinkButton] txGood=3,txRelay=0,rxGood=0,rxBad=0
+INFO  | ??:??:?? 207 [TrekLinkButton] tophone queue status queue is full, discard oldest
+DEBUG | ??:??:?? 207 [TrekLinkButton] Partially randomized packet id 1663195027
+DEBUG | ??:??:?? 207 [TrekLinkButton] Ignore update from self
+DEBUG | ??:??:?? 207 [TrekLinkButton] handleReceived(LOCAL) (id=0x63225793 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x0 Portnum=1 priority=127)
+DEBUG | ??:??:?? 207 [TrekLinkButton] No modules interested in portnum=1, src=LOCAL
+INFO  | ??:??:?? 207 [TrekLinkButton] Packet History - insert: Using new slot @uptime 207.045s TRACE NEW
+DEBUG | ??:??:?? 207 [TrekLinkButton] Expand short PSK #1
+DEBUG | ??:??:?? 207 [TrekLinkButton] Use AES128 key!
+DEBUG | ??:??:?? 207 [TrekLinkButton] enqueue for send (id=0x63225793 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 207 [TrekLinkButton] txGood=3,txRelay=0,rxGood=0,rxBad=0
+INFO  | ??:??:?? 207 [TrekLinkButton] tophone queue status queue is full, discard oldest
+INFO  | ??:??:?? 207 [TrekLinkButton] TrekLinkSOS: Sent text: SOS - [No GPS]
+INFO  | ??:??:?? 207 [TrekLinkButton] TrekLinkSOS: Activating alarms (owner=2)
+DEBUG | ??:??:?? 207 [RadioIf] Started Tx (id=0xb2b52792 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 207 [RadioIf] 1 packets remain in the TX queue
+DEBUG | ??:??:?? 207 [RadioIf] Packet TX: 395ms
+DEBUG | ??:??:?? 207 [RadioIf] Completed sending (id=0xb2b52792 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=20 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 209 [RadioIf] Started Tx (id=0x63225793 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+DEBUG | ??:??:?? 209 [RadioIf] 0 packets remain in the TX queue
+DEBUG | ??:??:?? 209 [RadioIf] Packet TX: 518ms
+DEBUG | ??:??:?? 209 [RadioIf] Completed sending (id=0x63225793 fr=0x0aa3a268 to=0xffffffff, transport = 0, WantAck=0, HopLim=3 Ch=0x8 encrypted len=36 hopStart=3 relay=0x68 priority=127)
+INFO  | ??:??:?? 212 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 212 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 212 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 212 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 217 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 217 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 217 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 217 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 222 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 222 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 222 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 222 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 227 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 227 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 227 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 227 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 232 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 232 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 232 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 232 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 237 [TrekLinkButton] TrekLinkSOS: Beacon retransmit
+INFO  | ??:??:?? 237 [TrekLinkButton] TrekLinkSOS: Broadcasting position (ping)
+INFO  | ??:??:?? 237 [TrekLinkButton] Send pos@0:6 to mesh (wantReplies=0)
+DEBUG | ??:??:?? 237 [TrekLinkButton] Skip position send; no fresh position since boot
+INFO  | ??:??:?? 240 [TrekLinkButton] SOS Button: Cancelling SOS mode (hold 3s)
+INFO  | ??:??:?? 240 [TrekLinkButton] TrekLinkSOS: SOS CANCELLED (owner=2)
+INFO  | ??:??:?? 240 [TrekLinkButton] TrekLinkSOS: Deactivating alarms (owner=2)
+DEBUG | ??:??:?? 243 [Power] Battery: usbPower=0, isCharging=0, batMv=3380, batPct=16
+DEBUG | ??:??:?? 303 [Power] Battery: usbPower=0, isCharging=0, batMv=3381, batPct=16
+DEBUG | ??:??:?? 311 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 311 [FallDetection] FallDetection: Freefall detected (0.20g)
+DEBUG | ??:??:?? 311 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 311 [FallDetection] FallDetection: Freefall too short (421ms), ignoring
+DEBUG | ??:??:?? 311 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 312 [FallDetection] FallDetection: Freefall detected (0.17g)
+DEBUG | ??:??:?? 312 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 312 [FallDetection] FallDetection: Freefall too short (115ms), ignoring
+DEBUG | ??:??:?? 334 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 334 [FallDetection] FallDetection: Freefall detected (0.21g)
+DEBUG | ??:??:?? 334 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 334 [FallDetection] FallDetection: Freefall too short (216ms), ignoring
+DEBUG | ??:??:?? 344 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 344 [FallDetection] FallDetection: Freefall detected (0.05g)
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: Freefall too short (421ms), ignoring
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: Freefall detected (0.05g)
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 345 [FallDetection] FallDetection: Freefall too short (115ms), ignoring
+DEBUG | ??:??:?? 363 [Power] Battery: usbPower=0, isCharging=0, batMv=3381, batPct=16
+DEBUG | ??:??:?? 372 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 372 [FallDetection] FallDetection: Freefall detected (0.09g)
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 1 -> 2
+WARN  | ??:??:?? 373 [FallDetection] FallDetection: Fall detected (freefall 523ms), monitoring for inactivity
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 2 -> 0
+INFO  | ??:??:?? 373 [FallDetection] FallDetection: Movement detected, user is OK
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: Freefall detected (0.06g)
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: Freefall too short (115ms), ignoring
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 0 -> 1
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: Freefall detected (0.27g)
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: State transition 1 -> 0
+DEBUG | ??:??:?? 373 [FallDetection] FallDetection: Freefall too short (216ms), ignoring
+DEBUG | ??:??:?? 423 [Power] Battery: usbPower=0, isCharging=0, batMv=3385, batPct=17
+[469117][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[469124][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[469134][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[469677][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[469684][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[469694][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[470432][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[470439][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[470449][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[470886][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[470893][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[470903][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[471336][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[471343][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[471353][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+DEBUG | ??:??:?? 483 [Power] Battery: usbPower=0, isCharging=0, batMv=3385, batPct=17
+DEBUG | ??:??:?? 543 [Power] Battery: usbPower=0, isCharging=0, batMv=3387, batPct=17
+DEBUG | ??:??:?? 603 [Power] Battery: usbPower=0, isCharging=0, batMv=3387, batPct=17
+DEBUG | ??:??:?? 663 [Power] Battery: usbPower=0, isCharging=0, batMv=3391, batPct=17
+DEBUG | ??:??:?? 723 [Power] Battery: usbPower=0, isCharging=0, batMv=3393, batPct=17
+[729097][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[729104][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[729114][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[730475][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[730482][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[730492][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[731392][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[731399][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[731409][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+DEBUG | ??:??:?? 731 [TrekLinkNav] Old calibration data: highestX = 0.000000, lowestX = 0.000000, highestY = 0.000000, lowestY = 0.000000, highestZ = 0.000000, lowestZ = 0.000000
+DEBUG | ??:??:?? 731 [TrekLinkNav] BMX160 calibration started for 30s
+[764335][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[764342][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[764352][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[765237][D][Tone.cpp:124] tone(): _pin=11, frequency=247 Hz, duration=62 ms
+[765244][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=247 Hz, duration=62 ms
+[765254][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[766128][D][Tone.cpp:124] tone(): _pin=11, frequency=277 Hz, duration=125 ms
+[766135][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=277 Hz, duration=125 ms
+[766146][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[766297][D][Tone.cpp:124] tone(): _pin=11, frequency=233 Hz, duration=125 ms
+[766305][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=233 Hz, duration=125 ms
+[766315][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+[766466][D][Tone.cpp:124] tone(): _pin=11, frequency=185 Hz, duration=250 ms
+[766474][D][Tone.cpp:31] tone_task(): Task received from queue TONE_START: _pin=11, frequency=185 Hz, duration=250 ms
+[766484][D][Tone.cpp:33] tone_task(): Setup LED controll on channel 0
+DEBUG | ??:??:?? 766 Save to disk 31
+DEBUG | ??:??:?? 766 Opening /prefs/config.proto, fullAtomic=1
+INFO  | ??:??:?? 767 Save /prefs/config.proto
+DEBUG | ??:??:?? 767 Opening /prefs/module.proto, fullAtomic=1
+INFO  | ??:??:?? 767 Save /prefs/module.proto
+DEBUG | ??:??:?? 767 Opening /prefs/channels.proto, fullAtomic=1
+INFO  | ??:??:?? 768 Save /prefs/channels.proto
+DEBUG | ??:??:?? 768 Opening /prefs/device.proto, fullAtomic=1
+INFO  | ??:??:?? 768 Save /prefs/device.proto
+DEBUG | ??:??:?? 768 Opening /prefs/nodes.proto, fullAtomic=0
+INFO  | ??:??:?? 769 Save /prefs/nodes.proto
+DEBUG | ??:??:?? 769 Opening /Messages_default.msgs, fullAtomic=0
+INFO  | ??:??:?? 769 Enter deep sleep forever
+INFO  | ??:??:?? 769 Disable bluetooth until reboot
+DEBUG | ??:??:?? 769 SX126x entering sleep mode
+INFO  | ??:??:?? 769 GPS deep sleep!
+INFO  | ??:??:?? 769 GPS power state move from ACTIVE to OFF
