@@ -1,0 +1,21 @@
+# TrekLink overlay check (specs/architecture design §4.3): stock paths stay as released upstream,
+# no variant flag outside variants/, and every catalogued override's stock code is unchanged.
+name: TrekLink overlay check
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  overlay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Overlay check
+        run: python3 treklink/tools/check_overlay.py
