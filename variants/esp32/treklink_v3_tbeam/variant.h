@@ -17,6 +17,12 @@
 #define TREKLINK_V3
 #endif
 
+// TrekLink: Meshtastic 2.7.26 (#9512) renamed the stock LED_PIN to LED_POWER. The TrekLink SOS strobe
+// (TrekLinkSOSGesture.cpp, TrekLinkSOSHelper.cpp) still tests LED_PIN, so alias it as v1 and v2 do.
+#if defined(LED_POWER) && !defined(LED_PIN)
+#define LED_PIN LED_POWER
+#endif
+
 // 3. Regional and timezone defaults
 #undef REGULATORY_LORA_REGIONCODE
 #define REGULATORY_LORA_REGIONCODE meshtastic_Config_LoRaConfig_RegionCode_MY_433
