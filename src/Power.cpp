@@ -14,6 +14,9 @@
  * For more information, see: https://meshtastic.org/
  */
 #include "power.h"
+#if defined(TREKLINK_V2) && defined(TREKLINK_CHARGE_FROM_VOLTAGE) // TrekLink
+#include "platform/extra_variants/treklink_v2/charge_detect.h"
+#endif
 #include "MessageStore.h"
 #include "NodeDB.h"
 #include "PowerFSM.h"
@@ -454,6 +457,9 @@ class AnalogBatteryLevel : public HasBatteryLevel
     /// source
     virtual bool isVbusIn() override
     {
+#if defined(TREKLINK_V2) && defined(TREKLINK_CHARGE_FROM_VOLTAGE) // TrekLink: v2 has no VBUS or PGOOD line
+        return treklinkExternalPower();
+#endif
 #ifdef HAS_SGM41562
         if (sgm41562 && sgm41562->refresh())
             return sgm41562->isInputPowerGood();
@@ -488,6 +494,9 @@ class AnalogBatteryLevel : public HasBatteryLevel
     /// we can't be smart enough to say 'full'?
     virtual bool isCharging() override
     {
+#if defined(TREKLINK_V2) && defined(TREKLINK_CHARGE_FROM_VOLTAGE) // TrekLink: v2 has no CHG line
+        return treklinkCharging();
+#endif
 #ifdef HAS_SGM41562
         if (sgm41562 && sgm41562->refresh())
             return sgm41562->isCharging();
