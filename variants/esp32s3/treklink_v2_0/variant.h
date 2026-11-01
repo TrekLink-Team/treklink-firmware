@@ -25,38 +25,38 @@
 // GPS Module (UART1 + Power Enable)
 #undef GPS_RX_PIN
 #undef GPS_TX_PIN
-#define GPS_RX_PIN 16   // ESP32 TX1 -> GPS RX
-#define GPS_TX_PIN 17   // GPS TX -> ESP32 RX1
-#define GPS_EN_PIN 15   // GPS Power Enable (Active-High)
+#define GPS_RX_PIN 16 // ESP32 TX1 -> GPS RX
+#define GPS_TX_PIN 17 // GPS TX -> ESP32 RX1
+#define GPS_EN_PIN 15 // GPS Power Enable (Active-High)
 #define PIN_GPS_EN GPS_EN_PIN
 #define GPS_UBLOX
 
 // User Interface Buttons
-#define BUTTON_PIN 0         // SELECT/MENU button (Meshtastic default)
-#define BUTTON_PIN_SOS 4     // Dedicated SOS button
-#define BUTTON_PIN_UP 7      // UP navigation button
-#define BUTTON_PIN_DOWN 8    // DOWN navigation button
-#define POWER_SENSE_PIN 13   // Power button sense (Active-Low)
+#define BUTTON_PIN 0       // SELECT/MENU button (Meshtastic default)
+#define BUTTON_PIN_SOS 4   // Dedicated SOS button
+#define BUTTON_PIN_UP 7    // UP navigation button
+#define BUTTON_PIN_DOWN 8  // DOWN navigation button
+#define POWER_SENSE_PIN 13 // Power button sense (Active-Low)
 
 // Battery Monitoring
-#define BATTERY_PIN 1        // ADC1_CH0 (GPIO 1)
+#define BATTERY_PIN 1 // ADC1_CH0 (GPIO 1)
 #define ADC_CHANNEL ADC1_GPIO1_CHANNEL
-#define ADC_MULTIPLIER 2.0   // Voltage divider ratio
+#define ADC_MULTIPLIER 2.0 // Voltage divider ratio
 // No charger status line reaches the MCU (BQ24074 CHG and PGOOD unconnected): infer external power and charging
 // from battery voltage steps (src/platform/extra_variants/treklink_v2/charge_detect.cpp).
 #define TREKLINK_CHARGE_FROM_VOLTAGE 1
 
 // Notifications
-#define PIN_BUZZER 11        // Buzzer pin
+#define PIN_BUZZER 11         // Buzzer pin
 #define BUZZER_LEDC_CHANNEL 0 // LEDC channel for buzzer
-#define PIN_VIBRATOR 12      // Vibration motor
+#define PIN_VIBRATOR 12       // Vibration motor
 #define PIN_VIBRATION PIN_VIBRATOR
-#define LED_PIN 2            // Notification LED
-#define LED_STATE_ON 0       // Active-Low LED
-#define LED_POWER LED_PIN    // TrekLink: Meshtastic 2.7.26 drives the heartbeat LED as LED_POWER
+#define LED_PIN 2         // Notification LED
+#define LED_STATE_ON 0    // Active-Low LED
+#define LED_POWER LED_PIN // TrekLink: Meshtastic 2.7.26 drives the heartbeat LED as LED_POWER
 
 // Power Management Latch
-#define POWER_LATCH_PIN 9    // Power Latch pin (Active-High)
+#define POWER_LATCH_PIN 9 // Power Latch pin (Active-High)
 
 // LoRa SX1268 SPI Configuration
 #define USE_SX1268
@@ -67,14 +67,14 @@
 #define LORA_MISO 39
 #define LORA_CS 14
 #define LORA_RESET 40
-#define LORA_DIO1 42         // SX1268 IRQ
-#define LORA_DIO2 41         // SX1268 BUSY (maps to SX126X_BUSY)
+#define LORA_DIO1 42 // SX1268 IRQ
+#define LORA_DIO2 41 // SX1268 BUSY (maps to SX126X_BUSY)
 
 #define SX126X_CS LORA_CS
 #define SX126X_DIO1 LORA_DIO1
 #define SX126X_BUSY LORA_DIO2
 #define SX126X_RESET LORA_RESET
-#define SX126X_RXEN 43       // RF switch RX enable pin
+#define SX126X_RXEN 43 // RF switch RX enable pin
 
 // Default LoRa region for TrekLink (Vietnam/Malaysia 433MHz)
 #define REGULATORY_LORA_REGIONCODE meshtastic_Config_LoRaConfig_RegionCode_MY_433
@@ -95,7 +95,7 @@
 #endif
 
 // Default canned message list
-#define CANNED_MESSAGE_MODULE_MESSAGES_DEFAULT                                                                                     \
-    "MEDICAL-HELP|LOST-HELP|SAFE|EVAC|LOW BAT|COMING|FOUND|LOST|"                                                                  \
-    "OK|NO|CHECK?|STOP|GO|WAIT ME|COME2ME|TURNBACK|MEET AT|REQST|"                                                                 \
+#define CANNED_MESSAGE_MODULE_MESSAGES_DEFAULT                                                                                   \
+    "MEDICAL-HELP|LOST-HELP|SAFE|EVAC|LOW BAT|COMING|FOUND|LOST|"                                                                \
+    "OK|NO|CHECK?|STOP|GO|WAIT ME|COME2ME|TURNBACK|MEET AT|REQST|"                                                               \
     "N|S|E|W|R|L|TRAIL|CHKPT|CAMP|DANGR|LO|HI|SPPLY|FD|WTER"
