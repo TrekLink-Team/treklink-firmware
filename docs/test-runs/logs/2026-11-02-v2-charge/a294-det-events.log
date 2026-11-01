@@ -1,0 +1,19 @@
+INFO  | ??:??:?? 0 Booted, wake cause 0 (boot count 1), reset_reason=reset
+INFO  | ??:??:?? 0 S:B:255,2.7.26.db34bca,treklink-v2,TrekLink-Team/treklink-firmware
+INFO  | ??:??:?? 0 MeshtasticOTA firmware not available
+INFO  | ??:??:?? 7 [TrekLinkCharge] TrekLink charge: external power connected (3618 mV, USB host)
+DEBUG | ??:??:?? 20 [GPS] Protocol Version:32.01
+DEBUG | ??:??:?? 67 [Power] Battery: usbPower=1, isCharging=1, batMv=3614, batPct=38
+DEBUG | ??:??:?? 127 [Power] Battery: usbPower=1, isCharging=1, batMv=3616, batPct=38
+inkCharge] TrekLink charge: external power connected (3618 mV)
+INFO  | ??:??:?? 196 [TrekLinkCharge] TrekLink charge: external power removed (3578 mV)
+INFO  | ??:??:?? 204 [TrekLinkCharge] TrekLink charge: external power connected (3590 mV, USB host)
+DEBUG | ??:??:?? 244 [Power] Battery: usbPower=1, isCharging=1, batMv=3613, batPct=38
+DEBUG | ??:??:?? 304 [Power] Battery: usbPower=1, isCharging=1, batMv=3617, batPct=38
+INFO  | ??:??:?? 702 [TrekLinkCharge] TrekLink charge: external power connected (3574 mV, USB host)
+DEBUG | ??:??:?? 722 [Power] Battery: usbPower=1, isCharging=1, batMv=3600, batPct=37
+DEBUG | ??:??:?? 782 [Power] Battery: usbPower=1, isCharging=1, batMv=3613, batPct=38
+DEBUG | ??:??:?? 842 [Power] Battery: usbPower=1, isCharging=1, batMv=3613, batPct=38
+DEBUG | ??:??:?? 902 [Power] Battery: usbPower=1, isCharging=1, batMv=3616, batPct=38
+DEBUG | ??:??:?? 962 [Power] Battery: usbPower=1, isCharging=1, batMv=3619, batPct=38
+DEBUG | ??:??:?? 1022 [Power] Battery: usbPower=1, isCharging=1, batMv=3621, batPct=39

@@ -24,3 +24,11 @@ void earlyInitVariant()
     pinMode(POWER_SENSE_PIN, INPUT_PULLUP);
 }
 #endif
+
+#if defined(TREKLINK_V2) && defined(TREKLINK_CHARGE_FROM_VOLTAGE)
+#include "charge_detect.h"
+void lateInitVariant()
+{
+    treklinkChargeDetectBegin();
+}
+#endif

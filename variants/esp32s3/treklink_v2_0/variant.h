@@ -42,6 +42,9 @@
 #define BATTERY_PIN 1        // ADC1_CH0 (GPIO 1)
 #define ADC_CHANNEL ADC1_GPIO1_CHANNEL
 #define ADC_MULTIPLIER 2.0   // Voltage divider ratio
+// No charger status line reaches the MCU (BQ24074 CHG and PGOOD unconnected): infer external power and charging
+// from battery voltage steps (src/platform/extra_variants/treklink_v2/charge_detect.cpp).
+#define TREKLINK_CHARGE_FROM_VOLTAGE 1
 
 // Notifications
 #define PIN_BUZZER 11        // Buzzer pin
