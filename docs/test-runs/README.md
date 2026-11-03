@@ -27,3 +27,4 @@ Each file records:
 | 2026-10-29 | v2 | [SOS field observation](2026-10-29-v2-sos-observation.md) | trigger observed; rest not tested |
 | 2026-10-29 | v2 | [Hardware run: SOS, fall, compass](2026-10-29-v2-hardware-run.md) | SOS trigger partial, buzzer fails after a beep, fall detection fails, compass fails uncalibrated |
 | 2026-11-02 | v2 | [Charge detection from battery voltage](2026-11-02-v2-charge-detection.md) | steps, PC and wall charger, charging and charged pass; transmit soak not tested |
+| 2026-11-04 | v2 | [Console and client API over USB CDC](2026-11-04-v2-usb-cdc-console.md) | all four units answer over USB, settings kept; flash with the default reset at 921600 |
