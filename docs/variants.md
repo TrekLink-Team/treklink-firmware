@@ -59,8 +59,11 @@ in `TrekLinkSOSGesture.cpp:118-120`.
    2026-10-29: the stillness check starts at impact and cancels at once, the shared IMU sleeps while
    the screen is off, and any stock beep detaches the buzzer from `BuzzerManager`. Details in
    [test-runs/2026-10-29-v2-hardware-run.md](test-runs/2026-10-29-v2-hardware-run.md).
-5. **v2 has no serial console on USB.** The `esp32-s3-devkitc-1` board leaves `Serial` on UART0, so
-   v2 logs and the client API are not reachable over USB without `-DARDUINO_USB_CDC_ON_BOOT=1`.
+5. **v2 console and client API run over USB CDC.** The `treklink-v2` env sets
+   `-DARDUINO_USB_CDC_ON_BOOT=1` (`variants/esp32s3/treklink_v2_0/platformio.ini`), so `Serial` is the
+   USB port and GPIO 43 (`SX126X_RXEN`) is no longer shared with UART0 TX. Earlier images left
+   `Serial` on UART0 and the USB port stayed silent (finding F1 in
+   [test-runs/2026-10-29-v2-hardware-run.md](test-runs/2026-10-29-v2-hardware-run.md)).
 6. **v4 fall detection probes its IMU on the wrong bus.** `QMI8658FallSensor::init()` uses I2C at
    0x6B (`src/modules/sensors/QMI8658FallSensor.cpp:25-33`); on the T-Beam Supreme the QMI8658 is on
    SPI (CS GPIO 34, INT GPIO 33) per LilyGo's hardware documentation. Not hardware-verified.
