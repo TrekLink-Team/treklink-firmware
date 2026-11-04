@@ -63,7 +63,10 @@ in `TrekLinkSOSGesture.cpp:118-120`.
    v2 logs and the client API are not reachable over USB without `-DARDUINO_USB_CDC_ON_BOOT=1`.
 6. **v4 fall detection probes its IMU on the wrong bus.** `QMI8658FallSensor::init()` uses I2C at
    0x6B (`src/modules/sensors/QMI8658FallSensor.cpp:25-33`); on the T-Beam Supreme the QMI8658 is on
-   SPI (CS GPIO 34, INT GPIO 33) per LilyGo's hardware documentation. Not hardware-verified.
+   SPI (CS GPIO 34, INT GPIO 33) per LilyGo's hardware documentation and the stock
+   `variants/esp32s3/tbeam-s3-core/pins_arduino.h:30-37`, sharing the SD card bus (SCK 36, MISO 37,
+   MOSI 35, SD CS 47). Branch `fix/v4-fall-sensor-units` starts it there on the SD card's `SPIClass`
+   under `spiLock`. Not built or hardware-verified yet.
 
 Code fixes for these are out of scope for documentation work; each needs a `fix/*` branch after a
 hardware reproduction.
