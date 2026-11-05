@@ -210,7 +210,7 @@ Full detail: `01-conventions/07-github-workflow-git-conventions.md`.
 | Rule | |
 |---|---|
 | Integration branch | **`dev`** (there is no `develop`) |
-| Branches | `main`, `dev`, `feat/*`, `fix/*`, `hotfix/*`, `docs/*`, `chore/*` |
+| Branches | `main`, `dev`, `feat/*`, `fix/*`, `hotfix/*`, `docs/*`, `chore/*`; `treklink-web` also has `staging`, the Vercel staging, promoted from `dev` by PR (D-094 amendment 2) |
 | Branch naming | `feat/TK-45-device-registration`. **Jira key only when the work is an Epic or a User Story** (D-024); housekeeping, CI, automation and conventions work carries no key: `fix/daily-report-reported-mentions` |
 | Commits | Conventional Commits, Jira key as scope: `feat(TK-45): add device FSM guard` |
 | Merge | Rebase & merge; Squash if multi-commit; **merge commits prohibited** |
