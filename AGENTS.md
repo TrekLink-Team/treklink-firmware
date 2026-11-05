@@ -28,6 +28,13 @@ repositories plus the graded academic reports.
    investigation.
 4. **Locate today** on `_docs/00-project-context/02-roadmap-and-milestones.md`, which sprint,
    which roadmap week, what is due.
+5. **Read your Jira tasks through the Atlassian MCP.** Task assignments live in Jira, project `TK`
+   (`treklink-capstone.atlassian.net`). If the Atlassian MCP server is not connected in your tool,
+   **ask the developer to connect it** before you plan or report any work, and say so plainly. Then
+   read the developer's open cards (assignee = them, not Done) and work from them. Move each card
+   as its state changes: In Progress when work starts, In Review when the PR opens, Done when it
+   merges, with the PR number on the card. A task handed out in the daily or in chat without a card
+   gets one. Rules: `01-conventions/10-jira-tracking-and-workflow.md` §2.4 (leader, 2026-11-05).
 
 Do this **autonomously, without being asked.** A developer should never have to tell you to follow
 the conventions. If you find yourself about to ask "should I follow the project conventions?", the
