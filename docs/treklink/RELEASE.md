@@ -6,8 +6,9 @@
 2. Create and push a tag matching `v*-treklink.*`, such as `v2.7.26-treklink.1`.
 3. Wait for the `TrekLink Firmware Release` workflow to build and publish the GitHub release.
 
-The manual workflow accepts an existing tag through its `tag` input. It checks out and builds that
-tag, which is useful when retrying a failed release workflow.
+To retry a failed release, run the workflow by hand on the existing tag, for example
+`gh workflow run treklink_release.yml --ref v2.7.26-treklink.1`. It takes no inputs (checkov
+CKV_GHA_7): the tag is the ref it runs on, and a run on a branch fails the tag check.
 
 ## Release assets
 
