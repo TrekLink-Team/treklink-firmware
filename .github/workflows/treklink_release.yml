@@ -81,6 +81,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
+          # The fork's scripts are stored without the executable bit, and build-esp32.sh runs bin/buildinfo.py directly.
+          chmod +x bin/*.py bin/*.sh
           bash bin/build-esp32.sh "$PIO_ENV"
 
       - name: Collect release images
