@@ -6,8 +6,7 @@ on:
       - v*-treklink.*
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   prepare:
@@ -20,9 +19,14 @@ jobs:
         id: release-tag
         env:
           REQUESTED_TAG: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$REF_TYPE" != tag ]]; then
+            echo "A release runs on a tag, not on a $REF_TYPE: $REQUESTED_TAG" >&2
+            exit 1
+          fi
           if [[ ! "$REQUESTED_TAG" =~ ^v[0-9A-Za-z._-]+-treklink\.[0-9A-Za-z._-]+$ ]]; then
             echo "Invalid TrekLink release tag: $REQUESTED_TAG" >&2
             exit 1
@@ -33,6 +37,8 @@ jobs:
     name: Build ${{ matrix.pio_env }}
     needs: prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

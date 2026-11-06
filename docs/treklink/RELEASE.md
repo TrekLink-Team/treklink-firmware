@@ -21,6 +21,6 @@ digests.
 
 ## Web application access
 
-The devices module reads `treklink-manifest.json` from this repository's GitHub releases. Devices
+The devices module of treklink-web (since treklink-web#404) reads `treklink-manifest.json` from this repository's GitHub releases. Devices
 API design 28 lists releases for a variant. API design 29 selects an image, verifies its SHA-256
 against the manifest, and serves it to the web application.
