@@ -106,6 +106,10 @@ void TrekLinkSOSHelper::sendPositionPacket()
     meshtastic_NodeInfoLite *node = nodeDB->getNodeNum() ? nodeDB->getMeshNode(nodeDB->getNodeNum()) : nullptr;
 
     if (node && nodeDB->hasValidPosition(node)) {
+        // nanopb encodes an OPTIONAL Position field only when its has_ flag is set (mesh.pb.h, Position FIELDLIST)
+        pos.has_latitude_i = true;
+        pos.has_longitude_i = true;
+        pos.has_altitude = true;
         pos.latitude_i = node->position.latitude_i;
         pos.longitude_i = node->position.longitude_i;
         pos.altitude = node->position.altitude;
