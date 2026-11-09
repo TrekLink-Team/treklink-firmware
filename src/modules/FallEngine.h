@@ -7,7 +7,7 @@
 // Per sample: |a| for free fall and impact triggers. Per 1 s block: the spread of |a|, its zero-crossing rate, the gyro
 // magnitude (bias learnt while the unit is mechanically still) and the gravity direction. Each block is QUIET (breathing
 // allowed), GAIT (walking or jogging rhythm), SHAKE (fast rhythmic shaking, as in a convulsion) or ACTIVE. After a trigger
-// and a 2 s settle, the engine watches up to 60 s:
+// and a 2 s settle, the engine watches until 60 s pass with no new trigger:
 //   - 6 GAIT blocks in the last 8: the person is up and walking, no alarm;
 //   - 6 SHAKE blocks in the last 10: pre-alarm (convulsion);
 //   - 10 QUIET blocks in the last 15, when the unit tilted 35 degrees or more from its pre-trigger direction, or the trigger
@@ -51,6 +51,16 @@ class FallEngine
     Reason reason = R_NONE; // reason of the last non-NONE event
     bool watching() const { return watch_; }
 
+    // Forget any free fall or watch in progress; call when the module resumes after a pre-alarm or SOS.
+    void reset()
+    {
+        inFf_ = prevHi_ = false;
+        watch_ = false;
+        n_ = 0;
+        haveBlk_ = false;
+        sx_ = sy_ = sz_ = 0;
+    }
+
     // t in ms, accel in m/s2, gyro in rad/s. Returns the most significant event of this sample.
     Event update(uint32_t t, float ax, float ay, float az, float gx, float gy, float gz)
     {
@@ -80,6 +90,7 @@ class FallEngine
         if (trig) {
             if (!watch_)
                 startWatch(t);
+            lastTrigT_ = t; // a later trigger keeps the watch open for another full window
             if (isImpact && a > peak_)
                 peak_ = a;
             if (ffEnded)
@@ -115,9 +126,9 @@ class FallEngine
 
   private:
     enum Cls : uint8_t { C_QUIET, C_GAIT, C_SHAKE, C_ACTIVE };
-    static constexpr int MAX_BLK = 128; // up to 128 samples a second
-    static constexpr int HIST = 16;     // block classes kept during a watch
-    static constexpr int GRAV = 8;      // gravity directions kept for the pre-trigger baseline
+    static constexpr int MAX_BLK = 64; // about 51 samples a block at 20 ms
+    static constexpr int HIST = 16;    // block classes kept during a watch
+    static constexpr int GRAV = 8;     // gravity directions kept for the pre-trigger baseline
 
     Params p_;
     // trigger state
@@ -135,7 +146,7 @@ class FallEngine
     int gravN_ = 0;
     // watch state
     bool watch_ = false, freefall_ = false, haveBase_ = false;
-    uint32_t trigT_ = 0, settleUntil_ = 0;
+    uint32_t trigT_ = 0, lastTrigT_ = 0;
     float peak_ = 0;
     float base_[3] = {0, 0, 1};
     uint8_t cls_[HIST];
@@ -149,7 +160,7 @@ class FallEngine
         peak_ = 0;
         clsN_ = 0;
         trigT_ = t;
-        settleUntil_ = t + p_.settleMs;
+        lastTrigT_ = t;
         // baseline: mean gravity direction of the kept blocks except the newest
         int m = gravN_ > 1 ? gravN_ - 1 : gravN_;
         haveBase_ = m > 0;
@@ -242,7 +253,7 @@ class FallEngine
             for (int k = 0; k < 3; k++)
                 grav_[gravN_ - 1][k] = g[k];
 
-            if (watch_ && t >= settleUntil_)
+            if (watch_ && t - trigT_ >= p_.settleMs)
                 out = judge(t, c, g);
         }
         n_ = 0;
@@ -291,7 +302,7 @@ class FallEngine
             reason = R_DOWN;
             return PREALARM;
         }
-        if (t - trigT_ >= p_.watchMs) {
+        if (t - lastTrigT_ >= p_.watchMs) {
             watch_ = false;
             reason = R_WINDOW_END;
             return RECOVERED;

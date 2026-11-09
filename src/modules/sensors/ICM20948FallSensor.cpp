@@ -11,6 +11,12 @@
 #include "configuration.h"
 #include "main.h"
 
+#ifdef TREKLINK_FALL_ENGINE
+#define FALL_FSS_TEXT "±16g, ±2000dps"
+#else
+#define FALL_FSS_TEXT "±8g, ±500dps"
+#endif
+
 bool ICM20948FallSensor::init()
 {
     // Check if the AccelerometerThread's singleton already initialized the hardware
@@ -35,7 +41,7 @@ bool ICM20948FallSensor::init()
             return false;
         }
 
-        LOG_INFO("ICM20948FallSensor: Initialized via singleton (±8g, ±500dps)");
+        LOG_INFO("ICM20948FallSensor: Initialized via singleton (%s)", FALL_FSS_TEXT);
         return true;
     }
 
@@ -91,7 +97,7 @@ bool ICM20948FallSensor::init()
 
     icm = &fallbackIcm;
     usingSingleton = false;
-    LOG_INFO("ICM20948FallSensor: Self-initialized (±8g, ±500dps, no compass)");
+    LOG_INFO("ICM20948FallSensor: Self-initialized (%s, no compass)", FALL_FSS_TEXT);
     return true;
 }
 
