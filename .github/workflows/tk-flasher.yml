@@ -59,7 +59,10 @@ jobs:
       - name: Generate third-party notices
         run: |
           set -euo pipefail
-          cargo install cargo-about --locked --version 0.9.3 --features cli
+          # The cache may already hold the binary; install only when the pinned version is missing
+          if ! cargo about --version 2>/dev/null | grep -q '0.9.3'; then
+            cargo install cargo-about --locked --force --version 0.9.3 --features cli
+          fi
           cargo about generate --locked about.hbs -o THIRD-PARTY-NOTICES.txt
 
       - name: Upload notices
