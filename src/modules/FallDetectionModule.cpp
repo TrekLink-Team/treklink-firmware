@@ -75,6 +75,9 @@ void FallDetectionModule::cancelFallAlarm()
     if (currentState == PRE_ALARM) {
         LOG_INFO("FallDetection: Fall alarm cancelled by user");
         deactivatePreAlarm();
+#ifdef TREKLINK_FALL_ENGINE
+        engine.reset();
+#endif
         transitionToState(MONITORING);
     }
 }
@@ -85,6 +88,9 @@ void FallDetectionModule::cancelAutoSOS()
         LOG_INFO("FallDetection: Auto-SOS cancelled by user");
         TrekLinkSOSHelper::instance().deactivateAlarms(OWNER_FALL);
         sosBuzzerOn = false;
+#ifdef TREKLINK_FALL_ENGINE
+        engine.reset();
+#endif
         transitionToState(MONITORING);
     }
 }

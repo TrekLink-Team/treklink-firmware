@@ -13,8 +13,10 @@ int main(int argc, char **argv)
         return 2;
     }
     FILE *f = std::fopen(argv[1], "r");
-    if (!f)
+    if (!f) {
+        std::fprintf(stderr, "cannot open %s\n", argv[1]);
         return 2;
+    }
     treklink::FallEngine e;
     char line[512];
     long t0 = -1;
