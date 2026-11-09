@@ -7,18 +7,18 @@ Each licence text is reproduced once, followed by the crates it covers.
 Overview
 --------
 {{#each overview}}
-{{{name}}} ({{count}} crates)
+{{{name}}} ({{count}} crates) {{!-- nosemgrep: javascript.express.security.audit.xss.mustache.explicit-unescape.template-explicit-unescape (plain-text notices, not HTML) --}}
 {{/each}}
 
 {{#each licenses}}
 --------------------------------------------------------------------------------
-{{{name}}} ({{id}})
+{{{name}}} ({{id}}) {{!-- nosemgrep: javascript.express.security.audit.xss.mustache.explicit-unescape.template-explicit-unescape (plain-text notices, not HTML) --}}
 
 Used by:
 {{#each used_by}}
-  - {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+  - {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}} {{!-- nosemgrep: javascript.express.security.audit.xss.mustache.explicit-unescape.template-explicit-unescape (plain-text notices, not HTML) --}}
 {{/each}}
 
-{{{text}}}
+{{{text}}} {{!-- nosemgrep: javascript.express.security.audit.xss.mustache.explicit-unescape.template-explicit-unescape (plain-text notices, not HTML) --}}
 
 {{/each}}

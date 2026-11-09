@@ -148,8 +148,7 @@ bridges the classic DTR and RTS sequence. After the job the unit is reset into t
 
 Flash baud: the connection always starts at 115200. Native USB (v2, v4) stays at 115200; a switch
 to a higher rate failed once on a v2. On a USB-UART bridge (v1, v3) press `b` on the menu to flash
-at 460800 instead; the header shows the baud the next job will use, and `b` again goes back to
-115200. The serial monitor and node info always use 115200, the firmware console rate.
+at 460800 instead; the header shows the baud the next job will use, and `b` again goes back to 115200. The serial monitor and node info always use 115200, the firmware console rate.
 
 Install limitation: `bin/device-install.sh` also writes the Meshtastic OTA loader
 (`mt-esp32-ota.bin` or `mt-esp32s3-ota.bin`) into the `ota_1` partition and a LittleFS image into
@@ -207,6 +206,7 @@ unit is not running Meshtastic and suggests the serial monitor. `r` retries.
 
   Also close anything else holding the port (a serial monitor, ModemManager probing a new
   device).
+
 - Windows, a v1 or v3 does not appear as a COM port: install the USB-UART driver. CP210x: the
   Silicon Labs "CP210x USB to UART Bridge VCP" driver. CH340: the WCH CH341SER driver. CH343 and
   CH9102: the WCH CH343SER driver. Check Device Manager under "Ports (COM and LPT)". The v2 and v4 native USB
@@ -254,7 +254,7 @@ archive holds the binary, this README, `LICENSE` (GPL-3.0) and `THIRD-PARTY-NOTI
 [cargo-about](https://github.com/EmbarkStudios/cargo-about) generates from `about.toml` and
 `about.hbs` with every licence text and the crates it covers. To generate it locally:
 
-```bash
+````bash
 cargo install cargo-about --locked --version 0.9.3 --features cli
 cargo about generate --locked about.hbs -o THIRD-PARTY-NOTICES.txt
 ``` The macOS x86_64 binary is cross-built on the Apple silicon
@@ -287,3 +287,4 @@ Not tested: anything that talks to a real unit (connect, chip detection, the par
 comparison, erase, write, MD5 verify, reset, 460800 baud on a USB-UART bridge, the v2 power latch
 timing, the DTR and RTS levels on a real board, the serial monitor output, the node info
 handshake), the macOS builds, and the Windows binary at run time.
+````
