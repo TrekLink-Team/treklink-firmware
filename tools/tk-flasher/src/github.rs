@@ -202,7 +202,8 @@ pub fn fetch_latest(
 }
 
 fn sanitize(tag: &str) -> String {
-    tag.chars()
+    let clean: String = tag
+        .chars()
         .map(|c| {
             if c.is_ascii_alphanumeric() || "._-".contains(c) {
                 c
@@ -210,7 +211,13 @@ fn sanitize(tag: &str) -> String {
                 '_'
             }
         })
-        .collect()
+        .collect();
+    // A leading dot would make "." or ".." (or a hidden folder) out of the tag.
+    if clean.is_empty() || clean.starts_with('.') {
+        format!("_{clean}")
+    } else {
+        clean
+    }
 }
 
 #[cfg(test)]
@@ -248,7 +255,9 @@ mod tests {
     #[test]
     fn tag_is_sanitized_for_a_directory_name() {
         assert_eq!(sanitize("v2.7.26-treklink.1"), "v2.7.26-treklink.1");
-        assert_eq!(sanitize("../x y"), ".._x_y");
+        assert_eq!(sanitize("../x y"), "_.._x_y");
+        assert_eq!(sanitize(".."), "_..");
+        assert_eq!(sanitize(""), "_");
     }
 
     /// Network test against the real latest release. Run with
@@ -262,22 +271,31 @@ mod tests {
             let img = &fetched.image;
             let install = layout::install_plan(img, v.chip()).unwrap();
             let update = layout::update_plan(img, v.chip()).unwrap();
+            let regions = layout::image_regions(img, v.chip()).unwrap();
             println!("{} {}: install {:?}", v.code(), fetched.tag, install);
             println!("{} {}: update {:?}", v.code(), fetched.tag, update);
             assert_eq!(install[0].offset, 0);
-            assert_eq!(update[0].offset, layout::bootloader_offset(v.chip()));
+            assert_eq!(update[0].offset, layout::APP_OFFSET);
             assert_eq!(
-                update[3].data.len(),
+                update[0].data.len(),
                 img.app.as_ref().unwrap().len().next_multiple_of(4)
             );
-            assert_eq!(update[2].data, layout::default_boot_app0());
+            assert_eq!(update[1].offset, layout::BOOT_APP0_OFFSET);
+            assert_eq!(update[1].data, layout::default_boot_app0());
+            assert_eq!(regions[0].offset, layout::bootloader_offset(v.chip()));
+            assert_eq!(
+                layout::partition_sector(img, v.chip()).unwrap(),
+                regions[1].data
+            );
+            let ota1 = layout::ota1_partition(img, v.chip()).unwrap();
+            println!("  ota_1: {} at 0x{:x}", ota1.label, ota1.offset);
             let other = if v.chip() == espflash::target::Chip::Esp32 {
                 espflash::target::Chip::Esp32s3
             } else {
                 espflash::target::Chip::Esp32
             };
             assert!(layout::install_plan(img, other).is_err());
-            let entries = layout::parse_partitions(&update[1].data).unwrap();
+            let entries = layout::parse_partitions(&regions[1].data).unwrap();
             for e in &entries {
                 println!(
                     "  partition {:<10} type {} sub 0x{:02x} at 0x{:06x} size 0x{:06x}",

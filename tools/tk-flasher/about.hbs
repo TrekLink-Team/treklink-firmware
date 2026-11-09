@@ -1,0 +1,24 @@
+Third-party software in tk-flasher
+==================================
+
+tk-flasher is distributed under GPL-3.0 (see LICENSE). It links the crates listed below.
+Each licence text is reproduced once, followed by the crates it covers.
+
+Overview
+--------
+{{#each overview}}
+{{{name}}} ({{count}} crates)
+{{/each}}
+
+{{#each licenses}}
+--------------------------------------------------------------------------------
+{{{name}}} ({{id}})
+
+Used by:
+{{#each used_by}}
+  - {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+
+{{{text}}}
+
+{{/each}}

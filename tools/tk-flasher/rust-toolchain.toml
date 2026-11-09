@@ -1,0 +1,5 @@
+# The toolchain tk-flasher is built and tested with, locally and in .github/workflows/tk-flasher.yml.
+[toolchain]
+channel = "1.97.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

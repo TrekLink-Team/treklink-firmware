@@ -57,7 +57,7 @@ fn check_image(what: &str, img: &ManifestImage, offset: u32) -> Result<(), Strin
             img.file_name
         ));
     }
-    if img.file_name.is_empty() || img.file_name.contains('/') || img.file_name.contains('\\') {
+    if !is_plain_asset_name(&img.file_name) {
         return Err(format!(
             "The manifest's file name '{}' is not a plain asset name.",
             img.file_name
@@ -67,6 +67,15 @@ fn check_image(what: &str, img: &ManifestImage, offset: u32) -> Result<(), Strin
         return Err(format!("The manifest lists {} with size 0.", img.file_name));
     }
     Ok(())
+}
+
+/// A release asset name that is safe to use as a file name in the download folder: no path
+/// separators, no drive or stream colon, no `..`, and no leading dot.
+pub fn is_plain_asset_name(name: &str) -> bool {
+    !name.is_empty()
+        && !name.starts_with('.')
+        && !name.contains("..")
+        && !name.contains(['/', '\\', ':'])
 }
 
 impl Manifest {
@@ -231,6 +240,31 @@ mod tests {
                 .select(Variant::V2)
                 .unwrap_err()
                 .contains("SHA-256")
+        );
+    }
+
+    #[test]
+    fn asset_names_must_be_plain() {
+        assert!(is_plain_asset_name("firmware-treklink-v2.factory.bin"));
+        for bad in [
+            "",
+            "../x.bin",
+            "a/b.bin",
+            "a\\b.bin",
+            "C:x.bin",
+            "x.bin:stream",
+            ".hidden.bin",
+            "a..b.bin",
+        ] {
+            assert!(!is_plain_asset_name(bad), "{bad}");
+        }
+        let bad = SAMPLE.replacen("firmware-treklink-v2.bin", "..firmware.bin", 1);
+        assert!(
+            parse(&bad)
+                .unwrap()
+                .select(Variant::V2)
+                .unwrap_err()
+                .contains("plain asset")
         );
     }
 

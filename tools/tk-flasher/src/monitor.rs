@@ -1,9 +1,12 @@
-//! Serial monitor that does not reset the unit.
+//! Serial monitor that does not reset the unit, and the line settings it shares with node info.
 //!
-//! An ESP32-S3 on native USB resets when RTS is high while DTR is low; a USB-UART bridge
-//! resets on RTS asserted with DTR released. Ports open with both lines asserted on most
-//! systems, so RTS is dropped first and DTR stays asserted. Neither step passes through a
-//! reset state, and DTR stays high so a CDC device still sees a host.
+//! Ports open with both DTR and RTS asserted on most systems. RTS is always released first,
+//! so no step passes through RTS asserted with DTR released, which is a reset on both links.
+//! - Native USB (ESP32-S3 USB Serial/JTAG): DTR stays asserted so a CDC device still sees a
+//!   host. The boot strap is only sampled at reset, so DTR does not hold GPIO0 at run time.
+//! - USB-UART bridge with the two-transistor auto-reset circuit (v1, v3): DTR asserted with RTS
+//!   released pulls GPIO0 low, and any reboot would then land in ROM download mode. DTR is
+//!   released as well, which leaves both EN and GPIO0 free.
 
 use std::collections::VecDeque;
 use std::io::Read;
@@ -13,7 +16,47 @@ use std::sync::mpsc::Sender;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use serialport::FlowControl;
+use serialport::{FlowControl, SerialPort};
+
+use crate::variant::UsbLink;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CtrlLine {
+    Rts,
+    Dtr,
+}
+
+/// The order and levels to set after opening a port, so the unit is neither reset nor left
+/// with GPIO0 held low.
+pub fn quiet_lines(link: UsbLink) -> [(CtrlLine, bool); 2] {
+    match link {
+        UsbLink::NativeUsb => [(CtrlLine::Rts, false), (CtrlLine::Dtr, true)],
+        UsbLink::UsbUart => [(CtrlLine::Rts, false), (CtrlLine::Dtr, false)],
+    }
+}
+
+/// Apply [`quiet_lines`] to an open port.
+pub fn set_quiet_lines<P: SerialPort + ?Sized>(port: &mut P, link: UsbLink) -> Result<(), String> {
+    for (line, level) in quiet_lines(link) {
+        match line {
+            CtrlLine::Rts => port
+                .write_request_to_send(level)
+                .map_err(|e| format!("Could not set RTS: {e}"))?,
+            CtrlLine::Dtr => port
+                .write_data_terminal_ready(level)
+                .map_err(|e| format!("Could not set DTR: {e}"))?,
+        }
+    }
+    Ok(())
+}
+
+/// How the lines end up, for the status line.
+pub fn describe_lines(link: UsbLink) -> &'static str {
+    match link {
+        UsbLink::NativeUsb => "RTS low then DTR high (native USB), no reset",
+        UsbLink::UsbUart => "RTS low then DTR low (USB-UART), no reset, GPIO0 free",
+    }
+}
 
 pub enum MonitorEvent {
     Data(Vec<u8>),
@@ -26,18 +69,18 @@ pub struct Monitor {
 }
 
 impl Monitor {
-    pub fn start(port: &str, baud: u32, tx: Sender<MonitorEvent>) -> Result<Monitor, String> {
+    pub fn start(
+        port: &str,
+        baud: u32,
+        link: UsbLink,
+        tx: Sender<MonitorEvent>,
+    ) -> Result<Monitor, String> {
         let mut serial = serialport::new(port, baud)
             .flow_control(FlowControl::None)
             .timeout(Duration::from_millis(100))
             .open()
             .map_err(|e| crate::flash::open_error(port, &e))?;
-        serial
-            .write_request_to_send(false)
-            .map_err(|e| format!("Could not set RTS: {e}"))?;
-        serial
-            .write_data_terminal_ready(true)
-            .map_err(|e| format!("Could not set DTR: {e}"))?;
+        set_quiet_lines(serial.as_mut(), link)?;
         let stop = Arc::new(AtomicBool::new(false));
         let flag = stop.clone();
         let handle = std::thread::spawn(move || {
@@ -146,6 +189,45 @@ impl Scrollback {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// (DTR, RTS) after each step from a start state. Reset on both links is RTS asserted
+    /// with DTR released; GPIO0 low on a USB-UART bridge is DTR asserted with RTS released.
+    fn walk(link: UsbLink, start: (bool, bool)) -> Vec<(bool, bool)> {
+        let (mut dtr, mut rts) = start;
+        quiet_lines(link)
+            .iter()
+            .map(|&(line, level)| {
+                match line {
+                    CtrlLine::Dtr => dtr = level,
+                    CtrlLine::Rts => rts = level,
+                }
+                (dtr, rts)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn line_sequences_never_reset_and_free_gpio0_on_usb_uart() {
+        for start in [(true, true), (false, false), (true, false)] {
+            for link in [UsbLink::NativeUsb, UsbLink::UsbUart] {
+                for (dtr, rts) in walk(link, start) {
+                    assert!(
+                        !(rts && !dtr),
+                        "{link:?} from {start:?} passes a reset state"
+                    );
+                }
+            }
+            assert_eq!(
+                *walk(UsbLink::UsbUart, start).last().unwrap(),
+                (false, false)
+            );
+            assert_eq!(
+                *walk(UsbLink::NativeUsb, start).last().unwrap(),
+                (true, false)
+            );
+        }
+        assert_eq!(quiet_lines(UsbLink::UsbUart)[0], (CtrlLine::Rts, false));
+    }
 
     #[test]
     fn scrollback_splits_lines_and_strips_colour() {
