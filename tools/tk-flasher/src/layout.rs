@@ -6,7 +6,10 @@
 //! The `.factory.bin` image that `bin/build-esp32.sh` copies is all of these merged at 0x0, so
 //! on an ESP32 its first 0x1000 bytes are padding.
 //!
-//! Update keeps settings because it never touches NVS (0x9000) or the LittleFS partition.
+//! Update writes only the application at 0x10000 and `boot_app0`, like `bin/device-update.sh`
+//! writes only the application. It never touches the bootloader, the partition table, NVS
+//! (0x9000) or the LittleFS partition, so settings survive. Because it keeps the partition table
+//! on the unit, the caller first compares that table with the image's and refuses on a mismatch.
 
 use std::fmt;
 
@@ -270,8 +273,9 @@ pub fn split_factory(factory: &[u8], chip: Chip) -> Result<FactoryParts<'_>, Str
     })
 }
 
-/// The regions Update writes and Verify checks: bootloader, partitions, boot_app0, app.
-pub fn update_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, String> {
+/// The four regions of an image at their standard offsets: bootloader, partitions, boot_app0
+/// and application, checked against the chip and against each other.
+pub fn image_regions(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, String> {
     let boot_off = bootloader_offset(chip);
     if img.has_parts() {
         let bootloader = img.bootloader.as_ref().unwrap();
@@ -332,6 +336,42 @@ pub fn update_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, Strin
     ])
 }
 
+fn take(regions: &[Region], name: &str) -> Region {
+    regions
+        .iter()
+        .find(|r| r.name == name)
+        .cloned()
+        .unwrap_or_else(|| unreachable!("image_regions always returns {name}"))
+}
+
+/// The regions Update writes: the application first, then `boot_app0`, so the boot selection
+/// points at slot 0 only once the application in it is complete.
+pub fn update_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, String> {
+    let regions = image_regions(img, chip)?;
+    Ok(vec![
+        take(&regions, "application"),
+        take(&regions, "boot_app0"),
+    ])
+}
+
+/// The image's partition table as it sits in flash after a write: one 4 KiB sector, padded
+/// with erased bytes. Update compares the MD5 of 0x8000..0x9000 on the unit with this.
+pub fn partition_sector(img: &FirmwareImage, chip: Chip) -> Result<Vec<u8>, String> {
+    let mut table = take(&image_regions(img, chip)?, "partitions").data;
+    table.resize(PARTITIONS_MAX_LEN, 0xFF);
+    Ok(table)
+}
+
+/// The `ota_1` partition (`flashApp` in the 4 MB table, `app1` in the 8 MB table), which
+/// `bin/device-install.sh` fills with the Meshtastic OTA loader.
+pub fn ota1_partition(img: &FirmwareImage, chip: Chip) -> Option<PartitionEntry> {
+    let table = partition_sector(img, chip).ok()?;
+    parse_partitions(&table)
+        .ok()?
+        .into_iter()
+        .find(|p| p.kind == 0 && p.subtype == 0x11)
+}
+
 /// The regions Install writes after a full erase: the factory image at 0x0, or the four
 /// parts when only parts were given.
 pub fn install_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, String> {
@@ -340,13 +380,20 @@ pub fn install_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, Stri
         let data = trim_erased(factory).to_vec();
         return Ok(vec![Region::new("factory image", FACTORY_OFFSET, data)]);
     }
-    update_plan(img, chip)
+    image_regions(img, chip)
 }
 
-/// Verify checks the regions that do not change while the unit runs. The factory image
+/// Verify checks the four regions that do not change while the unit runs. The factory image
 /// as a whole cannot be compared after first boot because NVS and LittleFS fill in.
 pub fn verify_plan(img: &FirmwareImage, chip: Chip) -> Result<Vec<Region>, String> {
-    update_plan(img, chip)
+    image_regions(img, chip)
+}
+
+/// Whether a Verify mismatch in this region fails the check. The bootloader is only written by
+/// Install, so after an Update it may be an older build; otadata changes when the unit switches
+/// app slots. Both are reported but do not fail Verify.
+pub fn verify_required(name: &str) -> bool {
+    matches!(name, "application" | "partitions" | "factory image")
 }
 
 #[cfg(test)]
@@ -437,7 +484,30 @@ pub mod tests {
     }
 
     #[test]
-    fn update_plan_from_factory_uses_standard_offsets() {
+    fn image_regions_from_factory_use_standard_offsets() {
+        for chip in [Chip::Esp32, Chip::Esp32s3] {
+            let (factory, app) = fake_factory(chip, 0x30000);
+            let img = FirmwareImage {
+                factory: Some(factory),
+                ..Default::default()
+            };
+            let regions = image_regions(&img, chip).unwrap();
+            let offsets: Vec<u32> = regions.iter().map(|r| r.offset).collect();
+            assert_eq!(
+                offsets,
+                vec![bootloader_offset(chip), 0x8000, 0xe000, 0x10000]
+            );
+            assert_eq!(regions[3].data, app);
+            assert_eq!(regions[2].data, default_boot_app0());
+            assert_eq!(regions[1].data.len(), 0x1000);
+            assert_eq!(regions[0].data.len() % SECTOR, 0);
+            assert!(regions.iter().all(|r| r.data.len() % 4 == 0));
+            assert_eq!(verify_plan(&img, chip).unwrap(), regions);
+        }
+    }
+
+    #[test]
+    fn update_writes_only_the_application_then_boot_app0() {
         for chip in [Chip::Esp32, Chip::Esp32s3] {
             let (factory, app) = fake_factory(chip, 0x30000);
             let img = FirmwareImage {
@@ -445,17 +515,63 @@ pub mod tests {
                 ..Default::default()
             };
             let plan = update_plan(&img, chip).unwrap();
-            let offsets: Vec<u32> = plan.iter().map(|r| r.offset).collect();
-            assert_eq!(
-                offsets,
-                vec![bootloader_offset(chip), 0x8000, 0xe000, 0x10000]
-            );
-            assert_eq!(plan[3].data, app);
-            assert_eq!(plan[2].data, default_boot_app0());
-            assert_eq!(plan[1].data.len(), 0x1000);
-            assert_eq!(plan[0].data.len() % SECTOR, 0);
-            assert!(plan.iter().all(|r| r.data.len() % 4 == 0));
+            let names: Vec<&str> = plan.iter().map(|r| r.name).collect();
+            assert_eq!(names, vec!["application", "boot_app0"]);
+            assert_eq!(plan[0].offset, 0x10000);
+            assert_eq!(plan[0].data, app);
+            assert_eq!(plan[1].offset, 0xe000);
+            assert_eq!(plan[1].data, default_boot_app0());
         }
+    }
+
+    #[test]
+    fn partition_sector_is_padded_to_one_sector() {
+        let chip = Chip::Esp32;
+        let (factory, _) = fake_factory(chip, 0x20000);
+        let from_factory = partition_sector(
+            &FirmwareImage {
+                factory: Some(factory),
+                ..Default::default()
+            },
+            chip,
+        )
+        .unwrap();
+        // A PlatformIO partitions.bin is 0xC00 bytes; in flash the rest of the sector is erased.
+        let from_parts = partition_sector(
+            &FirmwareImage {
+                app: Some(fake_esp_image(chip, 0x20000, 0x33)),
+                bootloader: Some(fake_esp_image(chip, 0x4000, 0x44)),
+                partitions: Some(table_4mb()),
+                ..Default::default()
+            },
+            chip,
+        )
+        .unwrap();
+        assert_eq!(from_factory.len(), 0x1000);
+        assert_eq!(from_factory, from_parts);
+        assert!(from_parts[0xC00..].iter().all(|&b| b == 0xFF));
+    }
+
+    #[test]
+    fn ota1_is_read_from_the_partition_table() {
+        let chip = Chip::Esp32;
+        let (factory, _) = fake_factory(chip, 0x20000);
+        let img = FirmwareImage {
+            factory: Some(factory),
+            ..Default::default()
+        };
+        let ota1 = ota1_partition(&img, chip).unwrap();
+        assert_eq!(ota1.label, "flashApp");
+        assert_eq!(ota1.offset, 0x260000);
+        assert!(ota1_partition(&FirmwareImage::default(), chip).is_none());
+    }
+
+    #[test]
+    fn verify_fails_only_on_application_or_partitions() {
+        assert!(verify_required("application"));
+        assert!(verify_required("partitions"));
+        assert!(!verify_required("bootloader"));
+        assert!(!verify_required("boot_app0"));
     }
 
     #[test]
@@ -467,7 +583,7 @@ pub mod tests {
             app: Some(app.clone()),
             ..Default::default()
         };
-        assert_eq!(update_plan(&img, chip).unwrap()[3].data, app);
+        assert_eq!(update_plan(&img, chip).unwrap()[0].data, app);
 
         let mut other = app.clone();
         other[100] ^= 0xFF;
@@ -524,13 +640,13 @@ pub mod tests {
             partitions: Some(table_4mb()),
             ..Default::default()
         };
-        let plan = update_plan(&img, chip).unwrap();
-        assert_eq!(plan[0].offset, 0x1000);
-        assert_eq!(plan[2].data, default_boot_app0());
-        assert_eq!(plan[3].data.len(), 0x12348);
-        assert_eq!(&plan[3].data[0x12345..], &[0xFF, 0xFF, 0xFF]);
+        let regions = image_regions(&img, chip).unwrap();
+        assert_eq!(regions[0].offset, 0x1000);
+        assert_eq!(regions[2].data, default_boot_app0());
+        assert_eq!(regions[3].data.len(), 0x12348);
+        assert_eq!(&regions[3].data[0x12345..], &[0xFF, 0xFF, 0xFF]);
         // Install with parts writes the same four regions.
-        assert_eq!(install_plan(&img, chip).unwrap(), plan);
+        assert_eq!(install_plan(&img, chip).unwrap(), regions);
     }
 
     #[test]

@@ -15,7 +15,7 @@ use crate::layout::{self, FirmwareImage, Region};
 use crate::monitor::{Monitor, MonitorEvent, Scrollback};
 use crate::nodeinfo::{self, NodeReport};
 use crate::ports::{self, PortEntry};
-use crate::variant::Variant;
+use crate::variant::{UsbLink, Variant};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Screen {
@@ -64,9 +64,7 @@ impl MenuItem {
         match self {
             MenuItem::Image => "1  Choose image (local file or latest GitHub release)",
             MenuItem::Install => "2  Install: erase all, write the factory image at 0x0",
-            MenuItem::Update => {
-                "3  Update: keep settings, write bootloader, partitions, boot_app0, app"
-            }
+            MenuItem::Update => "3  Update: keep settings, write the application and boot_app0",
             MenuItem::Verify => "4  Verify: compare the MD5 of each region with the file",
             MenuItem::Erase => "5  Erase only (asks to confirm)",
             MenuItem::Monitor => "6  Serial monitor (no reset)",
@@ -177,6 +175,8 @@ pub struct App {
 
     pub menu_state: ListState,
     pub message: Option<(String, bool)>,
+    /// Flash at 460800 on a USB-UART bridge (toggled with `b`). Native USB ignores it.
+    pub fast_uart: bool,
 
     pub image: Option<Arc<FirmwareImage>>,
     pub source_state: ListState,
@@ -219,6 +219,7 @@ impl App {
             variant: None,
             menu_state: ListState::default().with_selected(Some(0)),
             message: None,
+            fast_uart: false,
             image: None,
             source_state: ListState::default().with_selected(Some(0)),
             browser: None,
@@ -391,9 +392,9 @@ impl App {
         };
         let chip = variant.chip();
         let check = if img.factory.is_some() {
-            layout::install_plan(&img, chip).and_then(|_| layout::update_plan(&img, chip))
+            layout::install_plan(&img, chip).and_then(|_| layout::image_regions(&img, chip))
         } else {
-            layout::update_plan(&img, chip)
+            layout::image_regions(&img, chip)
         };
         match check {
             Ok(_) => {
@@ -521,6 +522,36 @@ impl App {
         self.screen = Screen::Menu;
     }
 
+    /// How the chosen port is wired: from its USB ID when known, else from the variant.
+    pub fn link(&self) -> UsbLink {
+        self.port
+            .as_ref()
+            .and_then(|p| p.classified())
+            .and_then(|c| c.link)
+            .or(self.variant.map(Variant::usb_link))
+            .unwrap_or(UsbLink::UsbUart)
+    }
+
+    /// The flash baud the next job will use.
+    pub fn flash_baud(&self) -> u32 {
+        self.port
+            .as_ref()
+            .map_or(flash::BAUD, |p| flash::flash_baud(p, self.fast_uart))
+    }
+
+    fn toggle_baud(&mut self) {
+        if self.port.as_ref().is_some_and(PortEntry::is_native_usb) {
+            self.fast_uart = false;
+            self.info("Native USB always flashes at 115200 baud.");
+            return;
+        }
+        self.fast_uart = !self.fast_uart;
+        self.info(format!(
+            "Flash baud for this USB-UART port: {}",
+            self.flash_baud()
+        ));
+    }
+
     /// A one-line warning when the port's USB ID does not fit the variant.
     pub fn port_warning(&self) -> Option<String> {
         let (port, variant) = (self.port.as_ref()?, self.variant?);
@@ -533,8 +564,8 @@ impl App {
                 c.hint,
                 variant.code(),
                 match variant.usb_link() {
-                    crate::variant::UsbLink::NativeUsb => "ESP32-S3 native USB",
-                    crate::variant::UsbLink::UsbUart => "a USB-UART bridge",
+                    UsbLink::NativeUsb => "ESP32-S3 native USB",
+                    UsbLink::UsbUart => "a USB-UART bridge",
                 }
             )
         })
@@ -557,6 +588,10 @@ impl App {
                 MenuItem::ALL[i]
             }
             KeyCode::Char('q') => MenuItem::Quit,
+            KeyCode::Char('b') => {
+                self.toggle_baud();
+                return;
+            }
             KeyCode::Enter => MenuItem::ALL[selected(&self.menu_state)],
             _ => return,
         };
@@ -748,7 +783,11 @@ impl App {
             return;
         }
         let parts = std::mem::take(&mut self.parts);
-        let (app_path, app) = parts.app.unwrap();
+        let Some((app_path, app)) = parts.app else {
+            self.error("No application image was picked.");
+            self.screen = Screen::ImageSource;
+            return;
+        };
         let mut notes = Vec::new();
         let names =
             |o: &Option<(PathBuf, Vec<u8>)>| o.as_ref().map(|(p, _)| p.display().to_string());
@@ -878,12 +917,18 @@ impl App {
             })
             .collect();
         let (tx, rx) = mpsc::channel();
+        let baud = flash::flash_baud(&port, self.fast_uart);
+        let img = self.image.as_deref();
         let job = Job {
+            baud,
+            partition_sector: img.and_then(|i| layout::partition_sector(i, variant.chip()).ok()),
+            ota1: img.and_then(|i| layout::ota1_partition(i, variant.chip())),
             port,
             variant,
             action,
             regions,
         };
+        log(&format!("flash baud {baud}"));
         std::thread::spawn(move || flash::run(job, tx));
         self.run = Some(RunView {
             action,
@@ -903,7 +948,8 @@ impl App {
             return;
         };
         let (tx, rx) = mpsc::channel();
-        match Monitor::start(&port.name, flash::BAUD, tx) {
+        let link = self.link();
+        match Monitor::start(&port.name, flash::BAUD, link, tx) {
             Ok(m) => {
                 log(&format!("monitor opened on {}", port.name));
                 self.monitor = Some(MonitorView {
@@ -913,9 +959,10 @@ impl App {
                     paused_at: None,
                     scroll: 0,
                     status: format!(
-                        "Monitoring {} at {} baud. DTR high, RTS low, no reset.",
+                        "Monitoring {} at {} baud. {}.",
                         port.name,
-                        flash::BAUD
+                        flash::BAUD,
+                        crate::monitor::describe_lines(link)
                     ),
                 });
                 self.screen = Screen::Monitor;
@@ -970,10 +1017,11 @@ impl App {
             self.error("Choose a port first.");
             return;
         };
-        log(&format!("node info on {}", port.name));
+        let link = self.link();
+        log(&format!("node info on {} ({link:?})", port.name));
         let (tx, rx) = mpsc::channel();
         std::thread::spawn(move || {
-            let _ = tx.send(nodeinfo::query(&port.name));
+            let _ = tx.send(nodeinfo::query(&port.name, link));
         });
         self.node = Some(NodeView { rx, result: None });
         self.screen = Screen::NodeInfo;

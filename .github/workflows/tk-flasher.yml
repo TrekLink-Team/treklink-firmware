@@ -19,7 +19,7 @@ defaults:
 
 jobs:
   check:
-    name: fmt, clippy, test
+    name: fmt, clippy, test, notices
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -29,10 +29,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # rustup reads tools/tk-flasher/rust-toolchain.toml (channel, clippy, rustfmt).
       - name: Install Rust
         run: |
-          rustup toolchain install stable --profile minimal --component clippy,rustfmt
-          rustup default stable
+          rustup toolchain install
+          rustup show active-toolchain
 
       - name: Restore cargo cache
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
@@ -40,8 +41,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cargo/bin/cargo-about
             tools/tk-flasher/target
-          key: tk-flasher-check-${{ runner.os }}-${{ hashFiles('tools/tk-flasher/Cargo.lock') }}
+          key: tk-flasher-check-${{ runner.os }}-${{ hashFiles('tools/tk-flasher/Cargo.lock', 'tools/tk-flasher/rust-toolchain.toml') }}
           restore-keys: |
             tk-flasher-check-${{ runner.os }}-
 
@@ -53,6 +55,20 @@ jobs:
 
       - name: cargo test
         run: cargo test --locked
+
+      - name: Generate third-party notices
+        run: |
+          set -euo pipefail
+          cargo install cargo-about --locked --version 0.9.3 --features cli
+          cargo about generate --locked about.hbs -o THIRD-PARTY-NOTICES.txt
+
+      - name: Upload notices
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: tk-flasher-notices
+          path: tools/tk-flasher/THIRD-PARTY-NOTICES.txt
+          if-no-files-found: error
+          retention-days: 7
 
   build:
     name: Build ${{ matrix.name }}
@@ -95,13 +111,14 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
+      # rustup reads tools/tk-flasher/rust-toolchain.toml; the target is added to that toolchain.
       - name: Install Rust
         env:
           TARGET: ${{ matrix.target }}
         run: |
-          rustup toolchain install stable --profile minimal
-          rustup default stable
+          rustup toolchain install
           rustup target add "$TARGET"
+          rustup show active-toolchain
 
       - name: Restore cargo cache
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
@@ -110,7 +127,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             tools/tk-flasher/target
-          key: tk-flasher-${{ matrix.target }}-${{ hashFiles('tools/tk-flasher/Cargo.lock') }}
+          key: tk-flasher-${{ matrix.target }}-${{ hashFiles('tools/tk-flasher/Cargo.lock', 'tools/tk-flasher/rust-toolchain.toml') }}
           restore-keys: |
             tk-flasher-${{ matrix.target }}-
 
@@ -125,6 +142,12 @@ jobs:
           TARGET: ${{ matrix.target }}
         run: cargo build --locked --release --target "$TARGET"
 
+      - name: Download notices
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: tk-flasher-notices
+          path: tools/tk-flasher/notices
+
       - name: Package
         env:
           TARGET: ${{ matrix.target }}
@@ -132,14 +155,18 @@ jobs:
           NAME: ${{ matrix.name }}
         run: |
           set -euo pipefail
+          files=("$EXE" README.md LICENSE THIRD-PARTY-NOTICES.txt)
           mkdir -p dist
           cp "target/$TARGET/release/$EXE" dist/
           cp README.md dist/
+          # The repository licence (GPL-3.0), which covers this tool.
+          cp ../../LICENSE dist/LICENSE
+          cp notices/THIRD-PARTY-NOTICES.txt dist/
           if [[ "$EXE" == *.exe ]]; then
-            (cd dist && 7z a "../tk-flasher-$NAME.zip" "$EXE" README.md)
+            (cd dist && 7z a "../tk-flasher-$NAME.zip" "${files[@]}")
           else
             # A tarball keeps the executable bit, which an artifact zip alone would drop.
-            tar -C dist -czf "tk-flasher-$NAME.tar.gz" "$EXE" README.md
+            tar -C dist -czf "tk-flasher-$NAME.tar.gz" "${files[@]}"
           fi
 
       - name: Upload artifact

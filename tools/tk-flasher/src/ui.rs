@@ -50,7 +50,9 @@ fn help_text(app: &App) -> &'static str {
     match app.screen {
         Screen::Ports => " Up/Down select   Enter choose   r refresh   q quit",
         Screen::Variants => " Up/Down or 1-4 select   Enter choose   Esc back to ports   q quit",
-        Screen::Menu => " Up/Down or 1-9 select   Enter run   q quit",
+        Screen::Menu => {
+            " Up/Down or 1-9 select   Enter run   b flash baud (USB-UART only)   q quit"
+        }
         Screen::ImageSource => " Up/Down or 1-3 select   Enter choose   Esc back",
         Screen::Browser => {
             if app.browser.as_ref().is_some_and(|b| b.goto.is_some()) {
@@ -91,7 +93,10 @@ fn draw_header(f: &mut Frame, app: &App, area: Rect) {
     let lines = vec![
         Line::from(vec![
             Span::styled(" TrekLink flasher ", Style::new().bold().fg(Color::Cyan)),
-            Span::raw(format!(" Port: {port}   Variant: {variant}")),
+            Span::raw(format!(
+                " Port: {port}   Variant: {variant}   Flash baud: {}",
+                app.flash_baud()
+            )),
         ]),
         Line::from(format!(" Image: {image}")),
     ];
@@ -377,10 +382,14 @@ fn draw_confirm(f: &mut Frame, app: &App, area: Rect) {
             lines.push(Line::from("This ERASES THE WHOLE FLASH: settings, node keys, channels and stored messages are lost.").red().bold());
             lines.push(Line::from("Then it writes:"));
             lines.extend(plan_rows(regions));
+            lines.push(Line::from("ota_1 stays empty: the Meshtastic OTA loader is not written, so over-the-air updates will not work until it is. LittleFS is formatted by the firmware on first boot.").yellow());
         }
         Action::Update => {
             lines.push(Line::from(
-                "Writes the regions below. Settings (NVS at 0x9000) and the file system are kept.",
+                "Writes only the application and boot_app0. The bootloader, the partition table, settings (NVS at 0x9000) and the file system are kept.",
+            ));
+            lines.push(Line::from(
+                "First the partition table on the unit is compared with the image's; if they differ, Update refuses and you need Install.",
             ));
             lines.extend(plan_rows(regions));
         }

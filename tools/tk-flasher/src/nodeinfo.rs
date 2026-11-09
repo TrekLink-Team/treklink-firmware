@@ -1,7 +1,7 @@
 //! Node info over the Meshtastic serial API (the `want_config_id` handshake).
 //!
-//! The port is opened the same way as the monitor (RTS low first, DTR high), so the unit
-//! is not reset. If nothing that parses as a Meshtastic frame arrives within a few seconds,
+//! The port is opened with the same line settings as the monitor (`monitor::quiet_lines`), so
+//! the unit is not reset and a USB-UART board is not left with GPIO0 held low. If nothing that parses as a Meshtastic frame arrives within a few seconds,
 //! the unit is reported as not running Meshtastic.
 
 use std::io;
@@ -13,7 +13,9 @@ use std::time::{Duration, Instant};
 use meshtastic::api::{StreamApi, StreamHandle};
 use meshtastic::protobufs::{self, from_radio};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
-use tokio_serial::{SerialPort, SerialStream};
+use tokio_serial::SerialStream;
+
+use crate::variant::UsbLink;
 
 const FIRST_REPLY: Duration = Duration::from_secs(6);
 const WHOLE_HANDSHAKE: Duration = Duration::from_secs(20);
@@ -186,26 +188,21 @@ fn hw_name(code: i32) -> Option<String> {
 }
 
 /// Run the handshake on a fresh single-threaded runtime. Blocks the calling thread.
-pub fn query(port: &str) -> Result<NodeReport, String> {
+pub fn query(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .map_err(|e| format!("Could not start the async runtime: {e}"))?;
-    rt.block_on(query_async(port))
+    rt.block_on(query_async(port, link))
 }
 
-async fn query_async(port: &str) -> Result<NodeReport, String> {
+async fn query_async(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     let builder = tokio_serial::new(port, crate::flash::BAUD)
         .flow_control(tokio_serial::FlowControl::None)
         .timeout(Duration::from_millis(10));
     let mut stream =
         SerialStream::open(&builder).map_err(|e| crate::flash::open_error(port, &e))?;
-    stream
-        .write_request_to_send(false)
-        .map_err(|e| format!("Could not set RTS: {e}"))?;
-    stream
-        .write_data_terminal_ready(true)
-        .map_err(|e| format!("Could not set DTR: {e}"))?;
+    crate::monitor::set_quiet_lines(&mut stream, link)?;
 
     let seen = Arc::new(Mutex::new(Vec::new()));
     let tee = Tee {
