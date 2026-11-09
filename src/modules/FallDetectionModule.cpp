@@ -331,8 +331,7 @@ int32_t FallDetectionModule::runOnce()
                 triggerAutoSOS();
             }
         } else {
-            treklink::FallEngine::Event ev =
-                engine.update((uint32_t)t, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
+            treklink::FallEngine::Event ev = engine.update((uint32_t)t, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
             if (ev == treklink::FallEngine::TRIGGER && currentState == MONITORING) {
                 transitionToState(INACTIVITY_DETECTED);
                 LOG_INFO("FallDetection: engine watching after %s",
