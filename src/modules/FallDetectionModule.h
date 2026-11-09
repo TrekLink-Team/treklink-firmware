@@ -69,19 +69,19 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     bool sosBuzzerOn;
 
     // Detection thresholds (tunable by self-calibration)
-    float freefallThreshold = 0.5f;          // g (<threshold indicates freefall)
-    float gyroStillnessThreshold = 0.1f;     // rad/s (gyro movement threshold)
-    static constexpr unsigned long FREEFALL_MIN_DURATION = 500;  // ms
-    static constexpr unsigned long INACTIVITY_DURATION = 10000;  // 10 seconds
-    static constexpr unsigned long PREALARM_TIMEOUT = 30000;     // 30 seconds
-    static constexpr unsigned long ALARM_BEEP_INTERVAL = 1000;   // 1 second beep interval
+    float freefallThreshold = 0.5f;                             // g (<threshold indicates freefall)
+    float gyroStillnessThreshold = 0.1f;                        // rad/s (gyro movement threshold)
+    static constexpr unsigned long FREEFALL_MIN_DURATION = 500; // ms
+    static constexpr unsigned long INACTIVITY_DURATION = 10000; // 10 seconds
+    static constexpr unsigned long PREALARM_TIMEOUT = 30000;    // 30 seconds
+    static constexpr unsigned long ALARM_BEEP_INTERVAL = 1000;  // 1 second beep interval
 
     // F12: SOS Morse LUT
     static constexpr bool SOS_LUT[28] = {
-        1,0,1,0,1,0,                       // S (...)
-        1,1,1,0,1,1,1,0,1,1,1,0,           // O (---)
-        1,0,1,0,1,0,                       // S (...)
-        0,0,0,0                             // Gap
+        1, 0, 1, 0, 1, 0,                   // S (...)
+        1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, // O (---)
+        1, 0, 1, 0, 1, 0,                   // S (...)
+        0, 0, 0, 0                          // Gap
     };
     static constexpr uint8_t SOS_LUT_LEN = 28;
 
@@ -89,8 +89,8 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
     enum CalPhase { CAL_NONE, CAL_COLLECTING, CAL_COMPLETE };
     CalPhase calPhase = CAL_NONE;
 
-    static constexpr int CAL_SAMPLES = 250;  // 5s @ 50Hz
-    static constexpr int CAL_RATE_MS = 20;   // 50Hz sampling during calibration
+    static constexpr int CAL_SAMPLES = 250; // 5s @ 50Hz
+    static constexpr int CAL_RATE_MS = 20;  // 50Hz sampling during calibration
     int calSampleCount = 0;
 
     struct CalStats {
@@ -131,7 +131,8 @@ extern FallDetectionModule *fallDetectionModule;
 
 #else // stub for non-TrekLink or TREKLINK_V3 builds
 
-class FallDetectionModule {
+class FallDetectionModule
+{
   public:
     void cancelFallAlarm() {}
     void cancelAutoSOS() {}
