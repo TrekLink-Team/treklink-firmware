@@ -5,6 +5,10 @@ on:
     tags:
       - tk-flasher-v*
   workflow_dispatch:
+  pull_request:
+    paths:
+      - tools/tk-flasher/**
+      - .github/workflows/tk-flasher.yml
 
 permissions: {}
 
