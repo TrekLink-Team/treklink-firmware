@@ -321,6 +321,41 @@ int32_t FallDetectionModule::runOnce()
         return 500;
     }
 
+#ifdef TREKLINK_FALL_ENGINE
+    {
+        const unsigned long t = millis();
+        if (currentState == PRE_ALARM) {
+            updateAlarmFeedback();
+            if ((t - prealarmStartTime) >= PREALARM_TIMEOUT) {
+                transitionToState(SOS_TRIGGERED);
+                triggerAutoSOS();
+            }
+        } else {
+            treklink::FallEngine::Event ev =
+                engine.update((uint32_t)t, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
+            if (ev == treklink::FallEngine::TRIGGER && currentState == MONITORING) {
+                transitionToState(INACTIVITY_DETECTED);
+                LOG_INFO("FallDetection: engine watching after %s",
+                         engine.reason == treklink::FallEngine::R_FREEFALL ? "free fall" : "impact");
+            } else if (ev == treklink::FallEngine::RECOVERED) {
+                transitionToState(MONITORING);
+                LOG_INFO("FallDetection: engine recovered (%s)",
+                         engine.reason == treklink::FallEngine::R_GAIT ? "walking" : "window end");
+            } else if (ev == treklink::FallEngine::PREALARM) {
+                static const char *why[] = {"", "", "", "", "", "shaking", "lying still", "down, no recovery"};
+                LOG_WARN("FallDetection: engine pre-alarm (%s)", why[engine.reason]);
+                prealarmStartTime = t;
+                lastAlarmBeepTime = t;
+                transitionToState(PRE_ALARM);
+                activatePreAlarm();
+            }
+        }
+        // Fixed rate: OSThread counts the interval from the end of this run, so subtract the time this run took
+        const unsigned long spent = millis() - t;
+        return spent >= (unsigned long)ENGINE_PERIOD_MS ? 1 : ENGINE_PERIOD_MS - (int32_t)spent;
+    }
+#endif
+
     float totalAccel = calculateTotalAcceleration(accel);
     float totalGyro = calculateTotalGyro(gyro);
     unsigned long now = millis();
