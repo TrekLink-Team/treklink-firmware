@@ -1,0 +1,149 @@
+name: tk-flasher
+
+on:
+  push:
+    tags:
+      - tk-flasher-v*
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: tools/tk-flasher
+
+jobs:
+  check:
+    name: fmt, clippy, test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
+          rustup default stable
+
+      - name: Restore cargo cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/tk-flasher/target
+          key: tk-flasher-check-${{ runner.os }}-${{ hashFiles('tools/tk-flasher/Cargo.lock') }}
+          restore-keys: |
+            tk-flasher-check-${{ runner.os }}-
+
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --locked
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: check
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: x86_64-linux
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+            exe: tk-flasher
+            test: true
+          - name: x86_64-windows
+            os: windows-2025
+            target: x86_64-pc-windows-msvc
+            exe: tk-flasher.exe
+            test: true
+          - name: aarch64-macos
+            os: macos-15
+            target: aarch64-apple-darwin
+            exe: tk-flasher
+            test: true
+          # Cross-compiled on the Apple silicon runner; the tests run on the native target.
+          - name: x86_64-macos
+            os: macos-15
+            target: x86_64-apple-darwin
+            exe: tk-flasher
+            test: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install musl tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Install Rust
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add "$TARGET"
+
+      - name: Restore cargo cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/tk-flasher/target
+          key: tk-flasher-${{ matrix.target }}-${{ hashFiles('tools/tk-flasher/Cargo.lock') }}
+          restore-keys: |
+            tk-flasher-${{ matrix.target }}-
+
+      - name: cargo test
+        if: matrix.test
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo test --locked --target "$TARGET"
+
+      - name: cargo build --release
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build --locked --release --target "$TARGET"
+
+      - name: Package
+        env:
+          TARGET: ${{ matrix.target }}
+          EXE: ${{ matrix.exe }}
+          NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp "target/$TARGET/release/$EXE" dist/
+          cp README.md dist/
+          if [[ "$EXE" == *.exe ]]; then
+            (cd dist && 7z a "../tk-flasher-$NAME.zip" "$EXE" README.md)
+          else
+            # A tarball keeps the executable bit, which an artifact zip alone would drop.
+            tar -C dist -czf "tk-flasher-$NAME.tar.gz" "$EXE" README.md
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: tk-flasher-${{ matrix.name }}
+          path: |
+            tools/tk-flasher/tk-flasher-${{ matrix.name }}.tar.gz
+            tools/tk-flasher/tk-flasher-${{ matrix.name }}.zip
+          if-no-files-found: error
+          retention-days: 30
