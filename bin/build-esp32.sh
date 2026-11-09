@@ -7,6 +7,7 @@ SHORT_VERSION=`bin/buildinfo.py short`
 
 BUILDDIR=.pio/build/$1
 OUTDIR=release
+mkdir -p $OUTDIR
 
 rm -f $OUTDIR/firmware*
 rm -r $OUTDIR/* || true
