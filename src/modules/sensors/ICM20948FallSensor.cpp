@@ -22,8 +22,14 @@ bool ICM20948FallSensor::init()
 
         // Set fall-detection-appropriate full scale on the already-initialized sensor
         ICM_20948_fss_t fss;
+#ifdef TREKLINK_FALL_ENGINE
+        // The fall engine needs unclipped impacts (worn falls measured 6 to 23 g on the 2026-11-09 v2 bench)
+        fss.a = gpm16;
+        fss.g = dps2000;
+#else
         fss.a = gpm8;
         fss.g = dps500;
+#endif
         if (icm->setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), fss) != ICM_20948_Stat_Ok) {
             LOG_WARN("ICM20948FallSensor: Full scale range setup failed on singleton");
             return false;
@@ -71,8 +77,13 @@ bool ICM20948FallSensor::init()
     }
 
     ICM_20948_fss_t fss;
+#ifdef TREKLINK_FALL_ENGINE
+    fss.a = gpm16;
+    fss.g = dps2000;
+#else
     fss.a = gpm8;
     fss.g = dps500;
+#endif
     if (fallbackIcm.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), fss) != ICM_20948_Stat_Ok) {
         LOG_WARN("ICM20948FallSensor: Full scale range setup failed");
         return false;
@@ -88,6 +99,12 @@ void ICM20948FallSensor::updateSensorData()
 {
     uint32_t now = millis();
     if (now - lastReadMs >= 10 || lastReadMs == 0) {
+#ifdef TREKLINK_FALL_ENGINE
+        // Stock ICM20948Sensor::runOnce() sleeps the shared chip once the screen is off (src/motion/ICM20948Sensor.cpp:54-61);
+        // the registers then hold a frozen sample and the engine would be blind after the screen timeout.
+        if (usingSingleton)
+            icm->sleep(false);
+#endif
         icm->getAGMT();
         lastReadMs = now;
     }

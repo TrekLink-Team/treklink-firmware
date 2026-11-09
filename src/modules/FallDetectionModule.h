@@ -8,6 +8,9 @@
 
 #include "FallSensorInterface.h"
 #include <Preferences.h>
+#ifdef TREKLINK_FALL_ENGINE
+#include "FallEngine.h"
+#endif
 
 // TrekLink message type discriminator (F8 - shared with TrekLinkSOSHelper.h)
 #ifndef TREKLINK_MSG_FALL
@@ -100,6 +103,11 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
 
     float calibratedFreefallThreshold = 0.5f;
     float calibratedGyroStillness = 0.1f;
+
+#ifdef TREKLINK_FALL_ENGINE
+    treklink::FallEngine engine;
+    static constexpr int32_t ENGINE_PERIOD_MS = 20; // 50 Hz
+#endif
 
     void collectCalibrationSample(const SensorVec3 &accel, const SensorVec3 &gyro);
     void finalizeCalibration();
