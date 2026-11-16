@@ -18,6 +18,7 @@ Scenario lines (blank lines and lines starting with # are skipped):
 Images are the panel's own pixels scaled up with nearest neighbour: lit pixels white on black, like the OLED.
 Needs Pillow.
 """
+
 import argparse
 import datetime
 import os
@@ -60,13 +61,16 @@ def nmea(body):
 
 
 def feed_gps(master_fd, lat, lon, alt, stop):
-    """Writes a fixed GGA and RMC fix once a second, the way a GPS module does."""
+    """Write a fixed GGA and RMC fix once a second, the way a GPS module does."""
+
     def dm(value, is_lat):
         hemi = ("N" if value >= 0 else "S") if is_lat else ("E" if value >= 0 else "W")
         value = abs(value)
         deg = int(value)
         minutes = (value - deg) * 60
-        return (f"{deg:02d}{minutes:07.4f}" if is_lat else f"{deg:03d}{minutes:07.4f}"), hemi
+        return (
+            f"{deg:02d}{minutes:07.4f}" if is_lat else f"{deg:03d}{minutes:07.4f}"
+        ), hemi
 
     la, lah = dm(lat, True)
     lo, loh = dm(lon, False)
@@ -87,7 +91,9 @@ def feed_gps(master_fd, lat, lon, alt, stop):
             now = datetime.datetime.now(datetime.timezone.utc)
             hms = now.strftime("%H%M%S.00")
             dmy = now.strftime("%d%m%y")
-            data = nmea(f"GPGGA,{hms},{la},{lah},{lo},{loh},1,08,0.9,{alt:.1f},M,0.0,M,,")
+            data = nmea(
+                f"GPGGA,{hms},{la},{lah},{lo},{loh},1,08,0.9,{alt:.1f},M,0.0,M,,"
+            )
             data += nmea(f"GPRMC,{hms},A,{la},{lah},{lo},{loh},0.0,0.0,{dmy},,,A")
             try:
                 os.write(master_fd, data.encode())
@@ -104,22 +110,54 @@ def pbm_to_png(pbm, png, scale):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--variant", required=True, choices=["v2", "v3", "v4"])
     ap.add_argument("--scenario", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--binary", type=Path, help="default: .pio/build/treklink-screencap-<variant>/meshtasticd")
+    ap.add_argument(
+        "--binary",
+        type=Path,
+        help="default: .pio/build/treklink-screencap-<variant>/meshtasticd",
+    )
     ap.add_argument("--scale", type=int, default=4)
-    ap.add_argument("--boot-wait", type=int, default=4000, help="ms to wait after start before the first step")
-    ap.add_argument("--hwid", default="02:00:00:00:A1:23", help="virtual MAC; sets the node ID shown on screen")
-    ap.add_argument("--gps", help="simulate a GPS fix: LAT,LON[,ALT_M] (a made-up position)")
-    ap.add_argument("--load-state", type=Path, help="start from a node state saved by --save-state")
-    ap.add_argument("--save-state", type=Path, help="keep the node state (prefs) here when the scenario ends")
+    ap.add_argument(
+        "--boot-wait",
+        type=int,
+        default=4000,
+        help="ms to wait after start before the first step",
+    )
+    ap.add_argument(
+        "--hwid",
+        default="02:00:00:00:A1:23",
+        help="virtual MAC; sets the node ID shown on screen",
+    )
+    ap.add_argument(
+        "--gps", help="simulate a GPS fix: LAT,LON[,ALT_M] (a made-up position)"
+    )
+    ap.add_argument(
+        "--load-state", type=Path, help="start from a node state saved by --save-state"
+    )
+    ap.add_argument(
+        "--save-state",
+        type=Path,
+        help="keep the node state (prefs) here when the scenario ends",
+    )
     args = ap.parse_args()
 
-    binary = args.binary or REPO / ".pio" / "build" / f"treklink-screencap-{args.variant}" / "meshtasticd"
+    binary = (
+        args.binary
+        or REPO
+        / ".pio"
+        / "build"
+        / f"treklink-screencap-{args.variant}"
+        / "meshtasticd"
+    )
     if not binary.exists():
-        sys.exit(f"{binary} not found; build it with: pio run -e treklink-screencap-{args.variant}")
+        sys.exit(
+            f"{binary} not found; build it with: pio run -e treklink-screencap-{args.variant}"
+        )
 
     args.out.mkdir(parents=True, exist_ok=True)
     fsdir = Path(tempfile.mkdtemp(prefix="treklink-screencap-"))
@@ -133,15 +171,37 @@ def main():
         master_fd, slave_fd = pty.openpty()
         env["TREKLINK_SCREENCAP_GPS"] = os.ttyname(slave_fd)
         threading.Thread(
-            target=feed_gps, args=(master_fd, parts[0], parts[1], parts[2] if len(parts) > 2 else 0.0, gps_stop),
+            target=feed_gps,
+            args=(
+                master_fd,
+                parts[0],
+                parts[1],
+                parts[2] if len(parts) > 2 else 0.0,
+                gps_stop,
+            ),
             daemon=True,
         ).start()
     proc = subprocess.Popen(
-        [str(binary), "-s", "-d", str(fsdir), "-p", str(free_tcp_port()), "-h", args.hwid],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=fsdir, env=env,
+        [
+            str(binary),
+            "-s",
+            "-d",
+            str(fsdir),
+            "-p",
+            str(free_tcp_port()),
+            "-h",
+            args.hwid,
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=fsdir,
+        env=env,
     )
     replies = queue.Queue()
-    threading.Thread(target=read_lines, args=(proc.stdout, replies, log), daemon=True).start()
+    threading.Thread(
+        target=read_lines, args=(proc.stdout, replies, log), daemon=True
+    ).start()
 
     def send(cmd, expect=None, timeout=10):
         proc.stdin.write((cmd + "\n").encode())
@@ -160,7 +220,9 @@ def main():
                 raise RuntimeError(f"{cmd}: {reply}")
             if reply.startswith(expect):
                 return reply
-        raise RuntimeError(f"{cmd}: no '{expect}' within {timeout} s (see {args.out / 'firmware.log'})")
+        raise RuntimeError(
+            f"{cmd}: no '{expect}' within {timeout} s (see {args.out / 'firmware.log'})"
+        )
 
     shots = 0
     try:
@@ -170,7 +232,9 @@ def main():
             if not parts or parts[0].startswith("#"):
                 continue
             if proc.poll() is not None:
-                raise RuntimeError(f"firmware exited with {proc.returncode} before line {number}")
+                raise RuntimeError(
+                    f"firmware exited with {proc.returncode} before line {number}"
+                )
             if parts[0] == "press" and len(parts) == 3:
                 send(f"press {parts[1]} {parts[2]}", "SCREENCAP pressed")
                 wait_for("SCREENCAP released", int(parts[2]) / 1000 + 5)
@@ -196,7 +260,9 @@ def main():
         log.close()
         if args.save_state:
             shutil.rmtree(args.save_state, ignore_errors=True)
-            shutil.copytree(fsdir, args.save_state, ignore=shutil.ignore_patterns("*.pbm"))
+            shutil.copytree(
+                fsdir, args.save_state, ignore=shutil.ignore_patterns("*.pbm")
+            )
         shutil.rmtree(fsdir, ignore_errors=True)
     print(f"{shots} screens saved in {args.out}")
 

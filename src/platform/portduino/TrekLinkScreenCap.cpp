@@ -70,7 +70,7 @@ class ScreenCapThread : public concurrency::OSThread
   protected:
     int32_t runOnce() override
     {
-        if (held && millis() >= releaseAt) {
+        if (held && (int32_t)(millis() - releaseAt) >= 0) {
             held->setPressed(false);
             held = nullptr;
             puts("SCREENCAP released");
@@ -78,14 +78,15 @@ class ScreenCapThread : public concurrency::OSThread
         }
 
         struct pollfd in = {STDIN_FILENO, POLLIN, 0};
-        while (poll(&in, 1, 0) > 0 && (in.revents & POLLIN)) {
+        while (poll(&in, 1, 0) > 0) {
             char c;
-            if (read(STDIN_FILENO, &c, 1) != 1)
-                break;
+            // The script that started us is gone (stdin closed): exit instead of running on as an orphan.
+            if (!(in.revents & POLLIN) || read(STDIN_FILENO, &c, 1) != 1)
+                _exit(0);
             if (c == '\n') {
                 handle(line);
                 line.clear();
-            } else {
+            } else if (line.size() < 512) {
                 line += c;
             }
         }

@@ -3,6 +3,7 @@
 #if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP)
 
 #include "CaptureDisplay.h"
+#include <algorithm>
 #include <stdio.h>
 
 CaptureDisplay *CaptureDisplay::instance = nullptr;

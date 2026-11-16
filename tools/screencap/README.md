@@ -38,19 +38,19 @@ made-up GPS fix on a trail near Sa Pa (`GPS=lat,lon,alt` overrides it, `GPS=` tu
 
 One step per line; blank lines and lines starting with `#` are skipped.
 
-| Step | Meaning |
-|---|---|
-| `press <button> <ms>` | Hold a button for that many milliseconds, then release it |
-| `wait <ms>` | Let the firmware run |
-| `heading <degrees>` | Point the simulated compass (v2 only, which has the ICM-20948) |
-| `shot <name>` | Save the current screen as `<name>.png` |
+| Step                  | Meaning                                                        |
+| --------------------- | -------------------------------------------------------------- |
+| `press <button> <ms>` | Hold a button for that many milliseconds, then release it      |
+| `wait <ms>`           | Let the firmware run                                           |
+| `heading <degrees>`   | Point the simulated compass (v2 only, which has the ICM-20948) |
+| `shot <name>`         | Save the current screen as `<name>.png`                        |
 
 Buttons follow the hardware:
 
-| Variant | Buttons | Firmware behaviour |
-|---|---|---|
-| v2 | `up`, `down`, `menu`, `sos` | DOWN next, UP previous, MENU select; MENU held 300 ms shuts down; SOS held 3 s |
-| v3, v4 | `user` (the middle user button) | Short press next, 500 ms select or menu, 3 s hold SOS |
+| Variant | Buttons                         | Firmware behaviour                                                             |
+| ------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| v2      | `up`, `down`, `menu`, `sos`     | DOWN next, UP previous, MENU select; MENU held 300 ms shuts down; SOS held 3 s |
+| v3, v4  | `user` (the middle user button) | Short press next, 500 ms select or menu, 3 s hold SOS                          |
 
 To run one scenario by hand:
 

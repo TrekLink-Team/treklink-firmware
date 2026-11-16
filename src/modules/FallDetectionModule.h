@@ -4,7 +4,8 @@
 #include "concurrency/OSThread.h"
 #include "configuration.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3) && !defined(TREKLINK_SCREENCAP)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3) &&                   \
+    !defined(TREKLINK_SCREENCAP)
 
 #include "FallSensorInterface.h"
 #include <Preferences.h>
