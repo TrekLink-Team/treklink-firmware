@@ -104,7 +104,9 @@
 #ifdef TREKLINK_VARIANT
 #include "modules/TrekLinkVariantValidation.h"
 #include "modules/FallDetectionModule.h"
-#if defined(TREKLINK_V2)
+#if defined(TREKLINK_SCREENCAP)
+// no motion sensor on the host
+#elif defined(TREKLINK_V2)
 #include "modules/sensors/ICM20948FallSensor.h"
 #elif defined(TREKLINK_V4)
 #include "modules/sensors/QMI8658FallSensor.h"
@@ -215,7 +217,8 @@ void setupModules()
     
 #if !defined(TREKLINK_V3)
     // TrekLink fall detection — inject sensor adapter for current variant
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C
+// The native screen capture build has no motion sensor, so it runs without fall detection.
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && !defined(TREKLINK_SCREENCAP)
 #if defined(TREKLINK_V2)
     fallDetectionModule = new FallDetectionModule(new ICM20948FallSensor());
     LOG_INFO("TrekLink Fall Detection Module initialized (ICM-20948)");

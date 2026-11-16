@@ -1,0 +1,27 @@
+# TrekLink v2, the frame carousel from the home frame, once round.
+wait 20000
+shot 10-frame-1
+press down 120
+wait 1200
+shot 10-frame-2
+press down 120
+wait 1200
+shot 10-frame-3
+press down 120
+wait 1200
+shot 10-frame-4
+press down 120
+wait 1200
+shot 10-frame-5
+press down 120
+wait 1200
+shot 10-frame-6
+press down 120
+wait 1200
+shot 10-frame-7
+press down 120
+wait 1200
+shot 10-frame-8
+press down 120
+wait 1200
+shot 10-frame-9

@@ -21,6 +21,7 @@
 #include "LSM6DS3Sensor.h"
 #include "MPU6050Sensor.h"
 #include "MotionSensor.h"
+#include "ScreenCapMotionSensor.h"
 #ifdef HAS_QMA6100P
 #include "QMA6100PSensor.h"
 #endif
@@ -110,7 +111,11 @@ class AccelerometerThread : public concurrency::OSThread
             break;
 #endif
         case ScanI2C::DeviceType::ICM20948:
+#if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP)
+            sensor = new ScreenCapMotionSensor(device); // no I2C on the host (tools/screencap)
+#else
             sensor = new ICM20948Sensor(device);
+#endif
             break;
         case ScanI2C::DeviceType::ICM42607P:
             sensor = new ICM42607PSensor(device);

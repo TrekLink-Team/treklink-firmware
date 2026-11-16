@@ -1,0 +1,45 @@
+# TrekLink v4, the menu of carousel frame 7: open it and step through its entries.
+wait 7000
+press user 120
+wait 800
+press user 120
+wait 800
+press user 120
+wait 800
+press user 120
+wait 800
+press user 120
+wait 800
+press user 120
+wait 800
+wait 600
+press user 700
+wait 1200
+shot 27-menu-frame-7-01
+press user 120
+wait 900
+shot 27-menu-frame-7-02
+press user 120
+wait 900
+shot 27-menu-frame-7-03
+press user 120
+wait 900
+shot 27-menu-frame-7-04
+press user 120
+wait 900
+shot 27-menu-frame-7-05
+press user 120
+wait 900
+shot 27-menu-frame-7-06
+press user 120
+wait 900
+shot 27-menu-frame-7-07
+press user 120
+wait 900
+shot 27-menu-frame-7-08
+press user 120
+wait 900
+shot 27-menu-frame-7-09
+press user 120
+wait 900
+shot 27-menu-frame-7-10

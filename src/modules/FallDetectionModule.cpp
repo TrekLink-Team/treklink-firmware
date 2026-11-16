@@ -11,7 +11,7 @@
 
 #include "FallDetectionModule.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3) && !defined(TREKLINK_SCREENCAP)
 
 #include "BuzzerManager.h"
 #include "TrekLinkSOSHelper.h"

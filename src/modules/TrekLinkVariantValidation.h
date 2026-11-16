@@ -38,7 +38,7 @@
 #ifndef BUTTON_PIN_SOS
 #error "TrekLink v2.0 requires BUTTON_PIN_SOS (dedicated SOS button)"
 #endif
-#ifndef PIN_BUZZER
+#if !defined(PIN_BUZZER) && !defined(TREKLINK_SCREENCAP) // the capture build has no buzzer to drive
 #error "TrekLink v2.0 requires PIN_BUZZER (buzzer for SOS alarm)"
 #endif
 #endif
@@ -67,11 +67,14 @@
 // 3. Common TrekLink requirements
 // ========================================================================
 
+// The native screen capture build (tools/screencap) has no I2C bus; its display lives in memory.
+#ifndef TREKLINK_SCREENCAP
 #ifndef I2C_SDA
 #error "TrekLink requires I2C_SDA (I2C bus for OLED/sensors)"
 #endif
 #ifndef I2C_SCL
 #error "TrekLink requires I2C_SCL (I2C bus for OLED/sensors)"
+#endif
 #endif
 
 // ========================================================================

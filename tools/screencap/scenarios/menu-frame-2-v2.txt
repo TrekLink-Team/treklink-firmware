@@ -1,0 +1,35 @@
+# TrekLink v2, the menu of carousel frame 2: open it and step through its entries.
+wait 7000
+press down 120
+wait 800
+wait 600
+press menu 120
+wait 1200
+shot 22-menu-frame-2-01
+press down 120
+wait 900
+shot 22-menu-frame-2-02
+press down 120
+wait 900
+shot 22-menu-frame-2-03
+press down 120
+wait 900
+shot 22-menu-frame-2-04
+press down 120
+wait 900
+shot 22-menu-frame-2-05
+press down 120
+wait 900
+shot 22-menu-frame-2-06
+press down 120
+wait 900
+shot 22-menu-frame-2-07
+press down 120
+wait 900
+shot 22-menu-frame-2-08
+press down 120
+wait 900
+shot 22-menu-frame-2-09
+press down 120
+wait 900
+shot 22-menu-frame-2-10

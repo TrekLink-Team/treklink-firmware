@@ -1,0 +1,39 @@
+# TrekLink v2, GPS fix and compass calibration: Position screen, GPS Action menu, Compass Calibrate, the
+# 30 s calibration window while the unit turns, and the screen after the window ends. Needs --gps.
+wait 20000
+press down 120
+wait 900
+press down 120
+wait 900
+press down 120
+wait 900
+press down 120
+wait 1500
+shot 40-position-fix
+press menu 120
+wait 1200
+shot 41-gps-action
+press down 120
+wait 700
+press down 120
+wait 700
+press down 120
+wait 700
+press down 120
+wait 700
+press down 120
+wait 700
+press down 120
+wait 700
+press down 120
+wait 900
+shot 42-gps-action-compass-calibrate
+press menu 120
+wait 1500
+shot 43-calibrating-start
+heading 120
+wait 6000
+shot 44-calibrating-turning
+heading 240
+wait 26000
+shot 45-after-calibration

@@ -1,0 +1,48 @@
+# TrekLink v4, first boot: splash with region UNSET, welcome dialog, region picker, MY_433 chosen, reboot.
+wait 200
+shot 01-boot-region-unset
+wait 5000
+shot 02-welcome
+press user 700
+wait 1200
+shot 03-region-picker
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+press user 120
+wait 250
+wait 200
+shot 04-region-my433
+press user 700
+wait 1200
+shot 05-rebooting
+wait 9000
+shot 06-boot-region-my433
+wait 6000

@@ -4,7 +4,7 @@
 #include "concurrency/OSThread.h"
 #include "configuration.h"
 
-#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3)
+#if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_VARIANT) && !defined(TREKLINK_V3) && !defined(TREKLINK_SCREENCAP)
 
 #include "FallSensorInterface.h"
 #include <Preferences.h>
@@ -129,7 +129,7 @@ class FallDetectionModule : public SinglePortModule, public concurrency::OSThrea
 
 extern FallDetectionModule *fallDetectionModule;
 
-#else // stub for non-TrekLink or TREKLINK_V3 builds
+#else // stub for non-TrekLink, TREKLINK_V3 and screen capture builds
 
 class FallDetectionModule
 {
