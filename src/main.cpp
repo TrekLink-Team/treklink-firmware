@@ -32,6 +32,9 @@
 #include "detect/einkScan.h"
 #include "graphics/Screen.h"
 #include "main.h"
+#if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP)
+#include "platform/portduino/TrekLinkScreenCap.h"
+#endif
 #include "mesh/generated/meshtastic/config.pb.h"
 #include "meshUtils.h"
 #include "modules/Modules.h"
@@ -582,6 +585,11 @@ void setup()
 #if HAS_SCREEN
     auto screenInfo = i2cScanner->firstScreen();
     screen_found = screenInfo.type != ScanI2C::DeviceType::NONE ? screenInfo.address : ScanI2C::ADDRESS_NONE;
+#if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP)
+    // TrekLink screen capture: no I2C bus on the host, so report the 128x64 OLED every TrekLink unit carries.
+    screen_found = ScanI2C::DeviceAddress(ScanI2C::I2CPort::WIRE, 0x3c);
+    screenInfo.type = ScanI2C::DeviceType::SCREEN_SSD1306;
+#endif
 
     if (screen_found.port != ScanI2C::I2CPort::NO_I2C) {
         switch (screenInfo.type) {
@@ -674,6 +682,11 @@ void setup()
 
 #if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_ACCELEROMETER
     auto acc_info = i2cScanner->firstAccelerometer();
+#if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP) && defined(TREKLINK_V2)
+    // TrekLink screen capture: the v2's ICM-20948, simulated by ScreenCapMotionSensor.
+    acc_info.type = ScanI2C::DeviceType::ICM20948;
+    acc_info.address = ScanI2C::DeviceAddress(ScanI2C::I2CPort::WIRE, 0x68);
+#endif
     accelerometer_found = acc_info.type != ScanI2C::DeviceType::NONE ? acc_info.address : accelerometer_found;
     LOG_DEBUG("acc_info = %i", acc_info.type);
 #endif
@@ -991,6 +1004,9 @@ void setup()
         config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
         screen->setup();
     }
+#ifdef TREKLINK_SCREENCAP
+    screenCapStart();
+#endif
 #else
     if (screen_found.port != ScanI2C::I2CPort::NO_I2C && screen)
         screen->setup();

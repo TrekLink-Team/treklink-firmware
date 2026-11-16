@@ -1,0 +1,9 @@
+# TrekLink v4, SOS on with the SOS control, then off with the same control.
+wait 7000
+press user 3300
+wait 1200
+shot 30-sos-active
+wait 5000
+press user 3300
+wait 1200
+shot 31-sos-cancelled

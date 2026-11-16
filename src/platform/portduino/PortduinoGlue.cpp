@@ -7,6 +7,7 @@
 #include "target_specific.h"
 
 #include "PortduinoGlue.h"
+#include "TrekLinkScreenCap.h"
 #include "SHA256.h"
 #include "api/ServerAPI.h"
 #include "meshUtils.h"
@@ -283,6 +284,14 @@ void portduinoSetup()
         uint32_t seed = TCPPort;
         HardwareRNG::seed(seed);
         randomSeed(seed);
+#ifdef TREKLINK_SCREENCAP
+        screenCapBindButtons(); // the default 64 simulated pins already exist here
+        // A simulated GPS: tools/screencap feeds NMEA into a pseudo-terminal and passes its path here.
+        if (const char *gpsPath = getenv("TREKLINK_SCREENCAP_GPS")) {
+            Serial1.setPath(gpsPath);
+            portduino_config.has_gps = 1;
+        }
+#endif
         return;
     }
 
@@ -587,7 +596,14 @@ void portduinoSetup()
         }
     }
 
+#ifdef TREKLINK_SCREENCAP
+    if (max_GPIO < TREKLINK_SCREENCAP_MAX_PIN)
+        max_GPIO = TREKLINK_SCREENCAP_MAX_PIN;
+#endif
     gpioInit(max_GPIO + 1); // Done here so we can inform Portduino how many GPIOs we need.
+#ifdef TREKLINK_SCREENCAP
+    screenCapBindButtons();
+#endif
 
     // Need to bind all the configured GPIO pins so they're not simulated
     // TODO: If one of these fails, we should log and terminate

@@ -29,6 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAS_SCREEN
 #include "EInkParallelDisplay.h"
 #include <OLEDDisplay.h>
+#if defined(ARCH_PORTDUINO) && defined(TREKLINK_SCREENCAP)
+#include "graphics/CaptureDisplay.h"
+#endif
 
 #include "DisplayFormatters.h"
 #include "TimeFormatters.h"
@@ -460,6 +463,9 @@ Screen::Screen(ScanI2C::DeviceAddress address, meshtastic_Config_DisplayConfig_O
 #elif defined(USE_ST7567)
     dispdev = new ST7567Wire(address.address, -1, -1, geometry,
                              (address.port == ScanI2C::I2CPort::WIRE1) ? HW_I2C::I2C_TWO : HW_I2C::I2C_ONE);
+#elif ARCH_PORTDUINO && defined(TREKLINK_SCREENCAP)
+    // TrekLink screen capture (tools/screencap): draw into memory instead of a panel.
+    dispdev = new CaptureDisplay(geometry);
 #elif ARCH_PORTDUINO
     if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
         if (portduino_config.displayPanel != no_screen) {
