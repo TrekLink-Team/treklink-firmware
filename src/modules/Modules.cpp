@@ -102,8 +102,8 @@
 #endif
 
 #ifdef TREKLINK_VARIANT
-#include "modules/TrekLinkVariantValidation.h"
 #include "modules/FallDetectionModule.h"
+#include "modules/TrekLinkVariantValidation.h"
 #if defined(TREKLINK_SCREENCAP)
 // no motion sensor on the host
 #elif defined(TREKLINK_V2)
@@ -214,7 +214,7 @@ void setupModules()
     trekLinkSOSGesture = new TrekLinkSOSGesture();
     LOG_INFO("TrekLink SOS Gesture Module initialized (BUTTON_PIN=%d)", BUTTON_PIN);
 #endif
-    
+
 #if !defined(TREKLINK_V3)
     // TrekLink fall detection — inject sensor adapter for current variant
 // The native screen capture build has no motion sensor, so it runs without fall detection.

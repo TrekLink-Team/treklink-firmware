@@ -7,8 +7,8 @@
 #include "target_specific.h"
 
 #include "PortduinoGlue.h"
-#include "TrekLinkScreenCap.h"
 #include "SHA256.h"
+#include "TrekLinkScreenCap.h"
 #include "api/ServerAPI.h"
 #include "meshUtils.h"
 #include <ErriezCRC32.h>
