@@ -145,6 +145,8 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
+            release-assets/firmware-treklink.bin
+            release-assets/firmware-treklink.factory.bin
             release-assets/firmware-treklink-v2.bin
             release-assets/firmware-treklink-v2.factory.bin
             release-assets/firmware-treklink-v3-tbeam.bin
