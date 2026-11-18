@@ -10,6 +10,16 @@ from pathlib import Path
 
 VARIANTS = (
     {
+        "variantCode": "v1",
+        "pioEnv": "treklink",
+        "chip": "esp32",
+        "app": {"fileName": "firmware-treklink.bin", "offset": 0x10000},
+        "factory": {
+            "fileName": "firmware-treklink.factory.bin",
+            "offset": 0x0,
+        },
+    },
+    {
         "variantCode": "v2",
         "pioEnv": "treklink-v2",
         "chip": "esp32s3",

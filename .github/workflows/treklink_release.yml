@@ -43,6 +43,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - pio_env: treklink
           - pio_env: treklink-v2
           - pio_env: treklink-v3-tbeam
           - pio_env: treklink-v4-supreme
