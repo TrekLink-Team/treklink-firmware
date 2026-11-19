@@ -1,8 +1,9 @@
 /*
- * QMI8658FallSensor — FallSensorInterface adapter for QMI8658 (via SensorLib)
+ * QMI8658FallSensor: FallSensorInterface adapter for QMI8658 (via SensorLib)
  *
  * Used by TrekLink v4.0 (LilyGo T-Beam Supreme with onboard QMI8658 IMU).
- * The QMI8658 is on the secondary I2C bus: SDA=17, SCL=18 (I2C_SDA/I2C_SCL).
+ * The QMI8658 is on SPI, sharing the SD card bus (SCK 36, MISO 37, MOSI 35) with chip select
+ * IMU_CS 34 (variants/esp32s3/tbeam-s3-core/pins_arduino.h:30-37).
  */
 
 #pragma once
@@ -12,6 +13,7 @@
 #if !defined(ARCH_STM32WL) && !MESHTASTIC_EXCLUDE_I2C && defined(TREKLINK_V4) && __has_include(<SensorQMI8658.hpp>)
 
 #include "../FallSensorInterface.h"
+#include <SPI.h>
 #include <SensorQMI8658.hpp>
 #include <Wire.h>
 
