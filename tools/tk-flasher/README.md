@@ -191,8 +191,26 @@ node number, long and short name, firmware version, hardware model, battery, LoR
 TrekLink variant. The firmware does not send the variant over the API: the tool looks for the
 `Variant: TrekLink ...` boot log line, and otherwise infers it from the hardware model (TBEAM is
 v3, LILYGO_TBEAM_S3_CORE is v4, a `TrekLink` default name on another model means v1 or v2) and
-says that it is inferred. If no Meshtastic reply arrives within 6 seconds the screen says the
-unit is not running Meshtastic and suggests the serial monitor. `r` retries.
+says that it is inferred. If no Meshtastic reply arrives within 6 seconds the screen reports the
+reply timeout and suggests the serial monitor. If the stream closes before any reply, the screen
+reports that closure with the reader error when available, or `closed` otherwise. `r` retries.
+
+Serial reads returning `TimedOut` or `WouldBlock` are retried after 10 ms using a Tokio timer
+that wakes the reader. Real errors and EOF still end the stream. This prevents a transient
+no-data error from shutting down the Meshtastic reader.
+
+The source evidence for issue #41 is:
+
+- [tokio-serial 5.5.0, `src/lib.rs` lines 323 to 332](https://docs.rs/crate/tokio-serial/5.5.0/source/src/lib.rs#L323-L332)
+  delegates Windows reads to Tokio's named-pipe client.
+- [mio-serial 5.0.7, `src/lib.rs` lines 817 to 835](https://docs.rs/crate/mio-serial/5.0.7/source/src/lib.rs#L817-L835)
+  overrides the serial timeout to wait for at least one byte, so the builder's 10 ms timeout
+  alone does not establish the cause of the Windows failure.
+- [meshtastic 0.1.9, `src/connections/handlers.rs` lines 64 to 87](https://docs.rs/crate/meshtastic/0.1.9/source/src/connections/handlers.rs#L64-L87)
+  ends the reader on EOF or any read error.
+- [meshtastic 0.1.9, `src/connections/stream_api.rs` lines 610 to 625](https://docs.rs/crate/meshtastic/0.1.9/source/src/connections/stream_api.rs#L610-L625)
+  joins the workers at disconnect and returns the read error first. Node info uses this result
+  to explain early closure. The original Windows read result still needs a hardware run.
 
 ## Troubleshooting
 

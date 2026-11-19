@@ -4,6 +4,7 @@
 //! the unit is not reset and a USB-UART board is not left with GPIO0 held low. If nothing that parses as a Meshtastic frame arrives within a few seconds,
 //! the unit is reported as not running Meshtastic.
 
+use std::future::Future;
 use std::io;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -20,6 +21,7 @@ use crate::variant::UsbLink;
 const FIRST_REPLY: Duration = Duration::from_secs(6);
 const WHOLE_HANDSHAKE: Duration = Duration::from_secs(20);
 const TEXT_CAP: usize = 64 * 1024;
+const READ_RETRY: Duration = Duration::from_millis(10);
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct NodeReport {
@@ -65,30 +67,55 @@ impl NodeReport {
 
 /// Copies every byte read into a buffer so plain-text boot logs (which carry the
 /// `Variant: TrekLink ...` line) can be searched after the handshake.
-struct Tee {
-    inner: SerialStream,
+struct Tee<S> {
+    inner: S,
     seen: Arc<Mutex<Vec<u8>>>,
+    read_retry: Option<Pin<Box<tokio::time::Sleep>>>,
 }
 
-impl AsyncRead for Tee {
+impl<S: AsyncRead + Unpin> AsyncRead for Tee<S> {
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
-        let before = buf.filled().len();
-        let r = Pin::new(&mut self.inner).poll_read(cx, buf);
-        if let Poll::Ready(Ok(())) = &r
-            && let Ok(mut seen) = self.seen.lock()
-            && seen.len() < TEXT_CAP
-        {
-            seen.extend_from_slice(&buf.filled()[before..]);
+        if buf.remaining() == 0 {
+            return Poll::Ready(Ok(()));
         }
-        r
+        loop {
+            if let Some(retry) = &mut self.read_retry {
+                std::task::ready!(retry.as_mut().poll(cx));
+                self.read_retry = None;
+            }
+            let before = buf.filled().len();
+            let r = Pin::new(&mut self.inner).poll_read(cx, buf);
+            match &r {
+                Poll::Ready(Err(e))
+                    if matches!(
+                        e.kind(),
+                        io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
+                    ) =>
+                {
+                    // Meshtastic ends its reader on any error. A timer registers the
+                    // waker even if the serial driver did not, without a busy retry loop.
+                    self.read_retry = Some(Box::pin(tokio::time::sleep(READ_RETRY)));
+                    continue;
+                }
+                Poll::Ready(Ok(())) => {
+                    if let Ok(mut seen) = self.seen.lock()
+                        && seen.len() < TEXT_CAP
+                    {
+                        seen.extend_from_slice(&buf.filled()[before..]);
+                    }
+                }
+                _ => {}
+            }
+            return r;
+        }
     }
 }
 
-impl AsyncWrite for Tee {
+impl<S: AsyncWrite + Unpin> AsyncWrite for Tee<S> {
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -187,6 +214,27 @@ fn hw_name(code: i32) -> Option<String> {
         .map(|h| h.as_str_name().to_string())
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ReceiveEnd {
+    Complete,
+    TimedOut,
+    Closed,
+}
+
+fn receive_error(end: ReceiveEnd, got_any: bool, stream_error: Option<&str>) -> Option<String> {
+    match (end, got_any) {
+        (ReceiveEnd::Closed, false) => Some(format!(
+            "The serial stream closed before the node answered: {}",
+            stream_error.unwrap_or("closed")
+        )),
+        (ReceiveEnd::TimedOut, false) => Some(format!(
+            "No Meshtastic reply within {} s. The unit is not running Meshtastic, is still booting, or has serial disabled. Try the serial monitor to see what it prints.",
+            FIRST_REPLY.as_secs()
+        )),
+        _ => None,
+    }
+}
+
 /// Run the handshake on a fresh single-threaded runtime. Blocks the calling thread.
 pub fn query(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     let rt = tokio::runtime::Builder::new_current_thread()
@@ -208,6 +256,7 @@ async fn query_async(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     let tee = Tee {
         inner: stream,
         seen: seen.clone(),
+        read_retry: None,
     };
     let (mut rx, api) = StreamApi::new()
         .connect(StreamHandle::from_stream(tee))
@@ -221,36 +270,32 @@ async fn query_async(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     let start = Instant::now();
     let mut report = NodeReport::default();
     let mut got_any = false;
-    let mut timed_out = false;
-    while !report.complete {
+    let end = loop {
+        if report.complete {
+            break ReceiveEnd::Complete;
+        }
         let limit = if got_any {
             WHOLE_HANDSHAKE
         } else {
             FIRST_REPLY
         };
         let Some(wait) = limit.checked_sub(start.elapsed()) else {
-            timed_out = true;
-            break;
+            break ReceiveEnd::TimedOut;
         };
         match tokio::time::timeout(wait, rx.recv()).await {
-            Err(_) => {
-                timed_out = true;
-                break;
-            }
-            Ok(None) => break,
+            Err(_) => break ReceiveEnd::TimedOut,
+            Ok(None) => break ReceiveEnd::Closed,
             Ok(Some(fr)) => {
                 got_any = true;
                 apply(&mut report, fr, config_id);
             }
         }
-    }
-    let _ = api.disconnect().await;
+    };
+    // disconnect joins the workers and returns the read error before other errors.
+    let stream_error = api.disconnect().await.err().map(|e| e.to_string());
 
-    if !got_any {
-        return Err(format!(
-            "No Meshtastic reply within {} s. The unit is not running Meshtastic, is still booting, or has serial disabled. Try the serial monitor to see what it prints.",
-            FIRST_REPLY.as_secs()
-        ));
+    if let Some(error) = receive_error(end, got_any, stream_error.as_deref()) {
+        return Err(error);
     }
     if report.variant.is_none()
         && let Ok(bytes) = seen.lock()
@@ -262,7 +307,7 @@ async fn query_async(port: &str, link: UsbLink) -> Result<NodeReport, String> {
     {
         report.variant = variant_from_hw(hw, report.long_name.as_deref());
     }
-    if timed_out && !report.complete {
+    if end == ReceiveEnd::TimedOut {
         crate::applog::log(
             "node info: handshake timed out before config_complete_id; showing partial data",
         );
@@ -273,6 +318,173 @@ async fn query_async(port: &str, link: UsbLink) -> Result<NodeReport, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::VecDeque;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::task::{Wake, Waker};
+
+    struct ScriptedRead {
+        reads: VecDeque<io::Result<Vec<u8>>>,
+        polls: usize,
+    }
+
+    impl AsyncRead for ScriptedRead {
+        fn poll_read(
+            mut self: Pin<&mut Self>,
+            _cx: &mut Context<'_>,
+            buf: &mut ReadBuf<'_>,
+        ) -> Poll<io::Result<()>> {
+            self.polls += 1;
+            match self.reads.pop_front() {
+                Some(Ok(bytes)) => {
+                    buf.put_slice(&bytes);
+                    Poll::Ready(Ok(()))
+                }
+                Some(Err(error)) => Poll::Ready(Err(error)),
+                None => Poll::Pending,
+            }
+        }
+    }
+
+    impl AsyncWrite for ScriptedRead {
+        fn poll_write(
+            self: Pin<&mut Self>,
+            _cx: &mut Context<'_>,
+            data: &[u8],
+        ) -> Poll<io::Result<usize>> {
+            Poll::Ready(Ok(data.len()))
+        }
+
+        fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            Poll::Ready(Ok(()))
+        }
+
+        fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            Poll::Ready(Ok(()))
+        }
+    }
+
+    fn tee(reads: impl IntoIterator<Item = io::Result<Vec<u8>>>) -> Tee<ScriptedRead> {
+        Tee {
+            inner: ScriptedRead {
+                reads: reads.into_iter().collect(),
+                polls: 0,
+            },
+            seen: Arc::new(Mutex::new(Vec::new())),
+            read_retry: None,
+        }
+    }
+
+    #[derive(Default)]
+    struct WakeFlag(AtomicBool);
+
+    impl Wake for WakeFlag {
+        fn wake(self: Arc<Self>) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    fn runtime() -> tokio::runtime::Runtime {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+    }
+
+    #[test]
+    fn tee_retries_transient_errors_and_wakes_before_passing_bytes() {
+        runtime().block_on(async {
+            for kind in [io::ErrorKind::TimedOut, io::ErrorKind::WouldBlock] {
+                let mut tee = tee([Err(kind.into()), Ok(b"node".to_vec())]);
+                let wake = Arc::new(WakeFlag::default());
+                let waker = Waker::from(wake.clone());
+                let mut cx = Context::from_waker(&waker);
+                let mut bytes = [0; 8];
+                let mut buf = ReadBuf::new(&mut bytes);
+                buf.put_slice(b"old");
+
+                assert!(Pin::new(&mut tee).poll_read(&mut cx, &mut buf).is_pending());
+                assert_eq!(buf.filled(), b"old");
+                assert!(tee.seen.lock().unwrap().is_empty());
+                // One driver poll must yield to the timer instead of spinning.
+                assert_eq!(tee.inner.polls, 1);
+
+                tokio::time::sleep(READ_RETRY * 2).await;
+                assert!(wake.0.load(Ordering::SeqCst));
+                assert!(matches!(
+                    Pin::new(&mut tee).poll_read(&mut cx, &mut buf),
+                    Poll::Ready(Ok(()))
+                ));
+                assert_eq!(buf.filled(), b"oldnode");
+                assert_eq!(*tee.seen.lock().unwrap(), b"node");
+                assert_eq!(tee.inner.polls, 2);
+            }
+        });
+    }
+
+    #[test]
+    fn tee_passes_fatal_errors_and_eof_through() {
+        let mut bytes = [0; 8];
+        let mut buf = ReadBuf::new(&mut bytes);
+        let mut cx = Context::from_waker(Waker::noop());
+        let mut failed = tee([Err(io::Error::new(io::ErrorKind::BrokenPipe, "unplugged"))]);
+        let Poll::Ready(Err(error)) = Pin::new(&mut failed).poll_read(&mut cx, &mut buf) else {
+            panic!("fatal error was swallowed");
+        };
+        assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+        assert_eq!(error.to_string(), "unplugged");
+        let mut eof = tee([Ok(Vec::new())]);
+        assert!(matches!(
+            Pin::new(&mut eof).poll_read(&mut cx, &mut buf),
+            Poll::Ready(Ok(()))
+        ));
+        assert!(buf.filled().is_empty());
+    }
+
+    #[test]
+    fn closed_without_a_reader_error_is_reported_as_closed() {
+        assert_eq!(
+            receive_error(ReceiveEnd::Closed, false, None).as_deref(),
+            Some("The serial stream closed before the node answered: closed")
+        );
+    }
+
+    #[test]
+    fn only_a_real_timeout_reports_the_reply_deadline() {
+        let error = receive_error(ReceiveEnd::TimedOut, false, Some("cleanup error")).unwrap();
+        assert!(error.starts_with("No Meshtastic reply within 6 s."));
+        assert!(!error.contains("closed"));
+    }
+
+    #[test]
+    fn received_packets_preserve_complete_and_partial_reports() {
+        for end in [
+            ReceiveEnd::Complete,
+            ReceiveEnd::TimedOut,
+            ReceiveEnd::Closed,
+        ] {
+            assert_eq!(receive_error(end, true, Some("unplugged")), None);
+        }
+    }
+
+    #[test]
+    fn closed_stream_reports_the_meshtastic_reader_error() {
+        runtime().block_on(async {
+            let tee = tee([Err(io::Error::new(io::ErrorKind::BrokenPipe, "unplugged"))]);
+            let (mut rx, api) = StreamApi::new()
+                .connect(StreamHandle::from_stream(tee))
+                .await;
+            let api = api.configure(7).await.unwrap();
+            let packet = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+                .await
+                .expect("reader failure should close the packet channel");
+            assert!(packet.is_none());
+            let error = api.disconnect().await.err().map(|e| e.to_string());
+            let message = receive_error(ReceiveEnd::Closed, false, error.as_deref()).unwrap();
+            assert!(message.starts_with("The serial stream closed before the node answered:"));
+            assert!(message.contains("unplugged"));
+            assert!(!message.contains("within 6 s"));
+        });
+    }
 
     #[test]
     fn variant_line_is_found_in_boot_text() {
